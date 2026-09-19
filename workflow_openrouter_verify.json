@@ -1,0 +1,105 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-09-19T11:30:00.000Z",
+  "name": "FinOps OpenRouter Verify & Data Ingestion",
+  "nodes": [
+    {
+      "id": "webhook-openrouter-trigger",
+      "type": "webhook",
+      "width": 240,
+      "height": 100,
+      "position": { "x": 100, "y": 250 },
+      "positionAbsolute": { "x": 100, "y": 250 },
+      "data": {
+        "label": "Webhook Trigger",
+        "toolId": "webhook",
+        "inputs": {
+          "path": "finops-openrouter-verify",
+          "method": "POST",
+          "responseMode": "respondWithNode",
+          "authentication": "none",
+          "options": {}
+        },
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      }
+    },
+    {
+      "id": "http-openrouter-auth-key",
+      "type": "action",
+      "width": 240,
+      "height": 94,
+      "position": { "x": 380, "y": 250 },
+      "positionAbsolute": { "x": 380, "y": 250 },
+      "data": {
+        "label": "OpenRouter Workspace Keys",
+        "toolId": "http.request",
+        "inputs": {
+          "url": "https://openrouter.ai/api/v1/keys",
+          "method": "GET",
+          "headers": {
+            "Authorization": "={{ 'Bearer ' + ($json.body.apiKey || $json.apiKey) }}",
+            "Content-Type": "application/json"
+          },
+          "options": {
+            "ignoreErrors": true
+          }
+        }
+      }
+    },
+    {
+      "id": "code-format-ingestion-response",
+      "type": "action",
+      "width": 260,
+      "height": 110,
+      "position": { "x": 660, "y": 250 },
+      "positionAbsolute": { "x": 660, "y": 250 },
+      "data": {
+        "label": "Ingestion & Allocation Processor",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "let triggerInput = {};\ntry {\n  triggerInput = $('webhook-openrouter-trigger').first().json.body || $('Webhook Trigger').first().json.body || $json.body || {};\n} catch (e) {\n  triggerInput = $json.body || {};\n}\n\nconst httpResponse = $json;\n\nif (httpResponse.statusCode === 401 || httpResponse.error || (httpResponse.body && httpResponse.body.error)) {\n  const errMsg = httpResponse.body?.error?.message || httpResponse.error || 'Unauthorized: Invalid OpenRouter Management API Key.';\n  return {\n    success: false,\n    error: errMsg\n  };\n}\n\nconst rawData = httpResponse.body?.data || httpResponse.data || [];\n\nif (Array.isArray(rawData)) {\n  let totalUsage = 0;\n  let totalLimit = 0;\n  let hasLimits = false;\n  let totalRemaining = 0;\n\n  const parsedKeys = rawData.map(k => {\n    const u = typeof k.usage === 'number' ? k.usage : 0;\n    const l = typeof k.limit === 'number' ? k.limit : null;\n    const r = typeof k.limit_remaining === 'number' ? k.limit_remaining : (l !== null ? Math.max(0, l - u) : null);\n\n    totalUsage += u;\n    if (l !== null) {\n      totalLimit += l;\n      hasLimits = true;\n    }\n    if (r !== null) {\n      totalRemaining += r;\n    }\n\n    return {\n      name: k.name || 'Unnamed Key',\n      label: k.label || '',\n      usage: Number(u.toFixed(4)),\n      limit: l !== null ? Number(l.toFixed(2)) : null,\n      remaining: r !== null ? Number(r.toFixed(4)) : null,\n      createdAt: k.created_at || null,\n      disabled: Boolean(k.disabled)\n    };\n  });\n\n  const connectionId = 'or_conn_' + Math.random().toString(36).substring(2, 10);\n\n  return {\n    success: true,\n    connectionId: connectionId,\n    connectionName: triggerInput.connectionName || 'Enterprise OpenRouter Gateway',\n    productTag: 'SHARED_GATEWAY',\n    workspaceId: rawData[0]?.workspace_id || 'shared_workspace',\n    totalUsage: Number(totalUsage.toFixed(2)),\n    creditLimit: hasLimits ? Number(totalLimit.toFixed(2)) : null,\n    remainingBalance: hasLimits ? Number(totalRemaining.toFixed(2)) : null,\n    keyLabel: 'Workspace Provisioning Key',\n    isFreeTier: false,\n    recordsIngested: parsedKeys.length,\n    keysList: parsedKeys,\n    lastSyncedAt: new Date().toISOString()\n  };\n}\n\nconst keyData = rawData;\nconst usage = typeof keyData.usage === 'number' ? Number(keyData.usage.toFixed(4)) : (Number(keyData.usage) || 0);\nconst limit = typeof keyData.limit === 'number' ? Number(keyData.limit.toFixed(2)) : (keyData.limit !== null && keyData.limit !== undefined ? Number(keyData.limit) : null);\nconst remaining = typeof keyData.limit_remaining === 'number'\n  ? Number(keyData.limit_remaining.toFixed(4))\n  : (limit !== null ? Number(Math.max(0, limit - usage).toFixed(4)) : null);\n\nconst connectionId = 'or_conn_' + Math.random().toString(36).substring(2, 10);\n\nreturn {\n  success: true,\n  connectionId: connectionId,\n  connectionName: triggerInput.connectionName || 'Enterprise OpenRouter Gateway',\n  productTag: 'SHARED_GATEWAY',\n  totalUsage: usage,\n  creditLimit: limit,\n  remainingBalance: remaining,\n  keyLabel: keyData.label || triggerInput.connectionName || 'Enterprise Key',\n  isFreeTier: Boolean(keyData.is_free_tier),\n  recordsIngested: 1,\n  keysList: [{\n    name: keyData.name || triggerInput.connectionName || 'Primary Key',\n    label: keyData.label || '',\n    usage: usage,\n    limit: limit,\n    remaining: remaining\n  }],\n  lastSyncedAt: new Date().toISOString()\n};"
+        }
+      }
+    },
+    {
+      "id": "respond-webhook-openrouter",
+      "type": "action",
+      "width": 240,
+      "height": 94,
+      "position": { "x": 960, "y": 250 },
+      "positionAbsolute": { "x": 960, "y": 250 },
+      "data": {
+        "label": "Respond to Frontend",
+        "toolId": "webhook.respond",
+        "inputs": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": "={{ $json.success ? 200 : 401 }}"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "webhook-openrouter-trigger",
+      "target": "http-openrouter-auth-key"
+    },
+    {
+      "id": "edge-2",
+      "source": "http-openrouter-auth-key",
+      "target": "code-format-ingestion-response"
+    },
+    {
+      "id": "edge-3",
+      "source": "code-format-ingestion-response",
+      "target": "respond-webhook-openrouter"
+    }
+  ]
+}

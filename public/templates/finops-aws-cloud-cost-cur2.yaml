@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  FinOps Platform - Configure Cloud Cost & Usage Reports (Phase 2).
+  Creates S3 Bucket for CUR 2.0 (FOCUS 1.0 standard Parquet export),
+  attaches S3 Bucket Policy for AWS Billing Data Exports, and grants
+  S3 & KMS read access to the FinOps IAM role.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Required Configuration
+        Parameters:
+          - S3BucketName
+          - ExportName
+      - Label:
+          default: IAM & Encryption Options
+        Parameters:
+          - IAMRoleName
+          - KmsKeyArn
+    ParameterLabels:
+      S3BucketName:
+        default: "S3 Bucket Name *"
+      ExportName:
+        default: "Data Export Name *"
+      IAMRoleName:
+        default: "Existing FinOps IAM Role Name"
+      KmsKeyArn:
+        default: "SSE-KMS Key ARN (Optional)"
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: >-
+      Name of the S3 Bucket created in your AWS account to receive
+      CUR 2.0 (FOCUS 1.0) Parquet cost export files.
+    AllowedPattern: '^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$'
+    ConstraintDescription: >-
+      S3 Bucket name must be 3-63 characters, start and end with a lowercase letter or number, and contain only lowercase letters, numbers, hyphens, and periods (no uppercase, no underscores).
+
+  ExportName:
+    Type: String
+    Default: FinOpsFocusCostExport
+    Description: Name of the AWS Billing Data Export (CUR 2.0 FOCUS format).
+
+  IAMRoleName:
+    Type: String
+    Default: FinOpsAwsIntegrationRole
+    Description: Existing FinOps IAM Role created in Phase 1 to grant S3 & KMS read access to.
+
+  KmsKeyArn:
+    Type: String
+    Default: ''
+    Description: (Optional) KMS Key ARN for S3 Bucket encryption. Leave blank for default AWS-managed SSE-S3 encryption.
+
+  CreateBcmExport:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Set to 'true' to create AWS BCM Data Export automatically, or 'false' to create S3 Bucket and Policies only.
+
+Conditions:
+  HasKmsKey: !Not [!Equals [!Ref KmsKeyArn, '']]
+  ShouldCreateBcmExport: !And
+    - !Equals [!Ref 'AWS::Region', 'us-east-1']
+    - !Equals [!Ref CreateBcmExport, 'true']
+  IsUsEast1: !Equals [!Ref 'AWS::Region', 'us-east-1']
+
+Resources:
+  FinOpsCurS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+
+  FinOpsCurS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FinOpsCurS3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: EnableAWSDataExportsWrite
+            Effect: Allow
+            Principal:
+              Service: bcm-data-exports.amazonaws.com
+            Action:
+              - s3:PutObject
+              - s3:GetBucketAcl
+            Resource:
+              - !Sub 'arn:aws:s3:::${S3BucketName}'
+              - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref 'AWS::AccountId'
+
+  FinOpsCurReadPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: FinOpsCurReadPolicy
+      Roles:
+        - !Ref IAMRoleName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: S3CurReadAccess
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource:
+              - !Sub 'arn:aws:s3:::${S3BucketName}'
+              - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+
+  FinOpsKmsDecryptPolicy:
+    Type: AWS::IAM::Policy
+    Condition: HasKmsKey
+    Properties:
+      PolicyName: FinOpsKmsDecryptPolicy
+      Roles:
+        - !Ref IAMRoleName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: KMSDecryptAccess
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+            Resource: !Ref KmsKeyArn
+
+  FinOpsBCMDataExport:
+    Type: AWS::BCMDataExports::Export
+    Condition: ShouldCreateBcmExport
+    DependsOn: FinOpsCurS3BucketPolicy
+    Properties:
+      Export:
+        Name: !Ref ExportName
+        Description: 'FinOps Platform - FOCUS 1.0 Cost Export'
+        DataQuery:
+          QueryStatement: 'SELECT bill_payer_account_id, line_item_usage_account_id, line_item_usage_start_date, line_item_usage_end_date, line_item_product_code, line_item_usage_type, line_item_operation, line_item_unblended_cost, line_item_blended_cost, line_item_line_item_description, line_item_resource_id FROM COST_AND_USAGE_REPORT'
+          TableConfigurations:
+            COST_AND_USAGE_REPORT:
+              TIME_GRANULARITY: DAILY
+              INCLUDE_RESOURCES: 'TRUE'
+              INCLUDE_SPLIT_COST_ALLOCATION_DATA: 'TRUE'
+              INCLUDE_MANUAL_DISCOUNT_COMPATIBILITY: 'FALSE'
+        RefreshCadence:
+          Frequency: SYNCHRONOUS
+        DestinationConfigurations:
+          S3Destination:
+            S3Bucket: !Ref FinOpsCurS3Bucket
+            S3Prefix: !Ref ExportName
+            S3Region: !Ref 'AWS::Region'
+            S3OutputConfigurations:
+              OutputType: CUSTOM
+              Format: PARQUET
+              Compression: PARQUET
+              Overwrite: OVERWRITE_REPORT
+
+Outputs:
+  S3BucketArn:
+    Description: ARN of the created S3 Bucket for CUR 2.0 Parquet exports.
+    Value: !GetAtt FinOpsCurS3Bucket.Arn
+
+  S3BucketName:
+    Description: Name of the created S3 Bucket.
+    Value: !Ref S3BucketName
+
+  ExportName:
+    Description: Name of the configured AWS Data Export.
+    Value: !Ref ExportName

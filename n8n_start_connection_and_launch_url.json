@@ -1,0 +1,113 @@
+{
+  "name": "Start Connection & CloudFormation Launch URL (n8n)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "finops-aws-start",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1a8a4f90-1c22-48ea-b1cb-9a86b3e10011",
+      "name": "Webhook (Start)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "finops-aws-start"
+    },
+    {
+      "parameters": {
+        "jsCode": "function generateRandomHex(length) {\n  const chars = '0123456789abcdef';\n  let result = '';\n  for (let i = 0; i < length; i++) {\n    result += chars[Math.floor(Math.random() * chars.length)];\n  }\n  return result;\n}\n\nconst body = $input.first().json.body || $input.first().json;\n\nconst region = body.region;\nconst connectionName = body.connectionName;\nconst roleName = body.roleName || 'FinOpsAwsIntegrationRole';\nconst stackName = body.stackName || (connectionName || 'AWS').replace(/[^a-zA-Z0-9-]/g, '-');\nconst userId = body.userId || 'default_user';\nconst awsAccountId = body.awsAccountId;\nconst provider = body.provider || 'aws';\nconst setupMethod = body.setupMethod || 'cloudformation';\nconst platformAccountId = body.platformAccountId || '864981730114';\nconst templateUrl = body.templateUrl || 'https://square-pulse-public.s3.ap-south-1.amazonaws.com/templates/finops-aws-cloud-cost-role.yaml';\n\nconst connectionId = body.connectionId || `conn_${generateRandomHex(12)}`;\nconst externalId = body.externalId || `ext_${generateRandomHex(24)}`;\n\nconst queryParts = [\n  'templateURL=' + encodeURIComponent(templateUrl),\n  'stackName=' + encodeURIComponent(stackName),\n  'param_PlatformAccountId=' + encodeURIComponent(platformAccountId),\n  'param_ExternalId=' + encodeURIComponent(externalId),\n  'param_IAMRoleName=' + encodeURIComponent(roleName)\n];\n\nconst queryString = queryParts.join('&');\nconst cloudFormationLaunchUrl = `https://${region}.console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/quickcreate?${queryString}`;\n\nreturn {\n  userId,\n  connectionId,\n  externalId,\n  platformAccountId,\n  awsAccountId,\n  roleName,\n  stackName,\n  region,\n  connectionName,\n  cloudFormationLaunchUrl,\n  provider,\n  setupMethod,\n  status: 'cloudformation_pending',\n  roleStatus: 'unverified',\n  createdAt: new Date().toISOString()\n};"
+      },
+      "id": "2a8a4f90-1c22-48ea-b1cb-9a86b3e10012",
+      "name": "Generate Launch URL & Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "awsconnections",
+        "fields": "userId, connectionId, provider, connectionName, region, setupMethod, stackName, roleName, externalId, platformAccountId, awsAccountId, cloudFormationLaunchUrl, status, roleStatus, createdAt",
+        "options": {}
+      },
+      "id": "3a8a4f90-1c22-48ea-b1cb-9a86b3e10013",
+      "name": "MongoDB (Insert Connection)",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [
+        740,
+        300
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "YOUR_N8N_MONGO_CREDENTIAL_ID",
+          "name": "MongoDB Atlas finops_3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Generate Launch URL & Record').item.json }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "4a8a4f90-1c22-48ea-b1cb-9a86b3e10014",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook (Start)": {
+      "main": [
+        [
+          {
+            "node": "Generate Launch URL & Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Launch URL & Record": {
+      "main": [
+        [
+          {
+            "node": "MongoDB (Insert Connection)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB (Insert Connection)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

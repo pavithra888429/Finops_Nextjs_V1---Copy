@@ -1,0 +1,156 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-09-18T07:15:00.000Z",
+  "nodes": [
+    {
+      "id": "webhook-1789701499661002",
+      "type": "webhook",
+      "width": 220,
+      "height": 100,
+      "position": {
+        "x": 197,
+        "y": 251
+      },
+      "positionAbsolute": {
+        "x": 197,
+        "y": 251
+      },
+      "data": {
+        "label": "Webhook Trigger",
+        "toolId": "webhook",
+        "inputs": {
+          "path": "8f48f672-4e29-4782-a74e-459eda47f5cb",
+          "method": "POST",
+          "responseMode": "respondWithNode",
+          "authentication": "none",
+          "options": {}
+        },
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      }
+    },
+    {
+      "id": "code.execute-1789702133410003",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 455,
+        "y": 255
+      },
+      "positionAbsolute": {
+        "x": 455,
+        "y": 255
+      },
+      "data": {
+        "label": "Code",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "function generateRandomHex(length) {\n  const chars = '0123456789abcdef';\n  let result = '';\n  for (let i = 0; i < length; i++) {\n    result += chars[Math.floor(Math.random() * chars.length)];\n  }\n  return result;\n}\n\nconst input = (typeof $json !== 'undefined' && ($json.body || $json)) || {};\n\nconst region = input.region;\nconst connectionName = input.connectionName;\nconst roleName = input.roleName;\nconst stackName = input.stackName;\nconst userId = input.userId || 'default_user';\nconst awsAccountId = input.awsAccountId;\nconst provider = input.provider || 'aws';\nconst setupMethod = input.setupMethod || 'cloudformation';\n\nconst connectionId = `conn_${generateRandomHex(12)}`;\nconst externalId = input.externalId || `ext_${generateRandomHex(24)}`;\n\nconst platformAccountId = input.platformAccountId;\nconst templateUrl = input.templateUrl;\n\nreturn {\n  userId,\n  connectionId,\n  externalId,\n  platformAccountId,\n  awsAccountId,\n  roleName,\n  stackName,\n  region,\n  connectionName,\n  templateUrl,\n  provider,\n  setupMethod\n};"
+        }
+      }
+    },
+    {
+      "id": "code.execute-1789702313502004",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 709,
+        "y": 258
+      },
+      "positionAbsolute": {
+        "x": 709,
+        "y": 258
+      },
+      "data": {
+        "label": "Code",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "const input = $json || {};\n\nconst region = input.region;\nconst userId = input.userId;\nconst connectionId = input.connectionId;\nconst externalId = input.externalId;\nconst platformAccountId = input.platformAccountId;\nconst awsAccountId = input.awsAccountId;\nconst roleName = input.roleName;\nconst stackName = input.stackName;\nconst connectionName = input.connectionName;\nconst templateUrl = input.templateUrl;\nconst provider = input.provider;\nconst setupMethod = input.setupMethod;\n\nconst queryParts = [\n  'templateURL=' + encodeURIComponent(templateUrl),\n  'stackName=' + encodeURIComponent(stackName),\n  'param_PlatformAccountId=' + encodeURIComponent(platformAccountId),\n  'param_ExternalId=' + encodeURIComponent(externalId),\n  'param_IAMRoleName=' + encodeURIComponent(roleName)\n];\n\nconst queryString = queryParts.join('&');\nconst cloudFormationLaunchUrl = `https://${region}.console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/quickcreate?${queryString}`;\n\nreturn {\n  userId,\n  connectionId,\n  externalId,\n  platformAccountId,\n  awsAccountId,\n  roleName,\n  stackName,\n  region,\n  connectionName,\n  cloudFormationLaunchUrl,\n  provider,\n  setupMethod,\n  status: 'cloudformation_pending',\n  roleStatus: 'unverified',\n  createdAt: new Date().toISOString()\n};"
+        }
+      }
+    },
+    {
+      "id": "mongodb.insert_document-1789702443398005",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 952,
+        "y": 258
+      },
+      "positionAbsolute": {
+        "x": 952,
+        "y": 258
+      },
+      "data": {
+        "label": "Insert Document",
+        "toolId": "mongodb.insert_document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96",
+          "fields": "userId, connectionId, provider, connectionName, region, setupMethod, stackName, roleName, externalId, platformAccountId, awsAccountId, cloudFormationLaunchUrl, status, roleStatus, createdAt"
+        }
+      }
+    },
+    {
+      "id": "respondToWebhook-1789702586362006",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1205,
+        "y": 258
+      },
+      "positionAbsolute": {
+        "x": 1205,
+        "y": 258
+      },
+      "data": {
+        "label": "Webhook Response",
+        "toolId": "respondToWebhook",
+        "inputs": {
+          "respondWith": "First Incoming Item",
+          "inputFieldName": "data"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-webhook-1789701499661002-code.execute-1789702133410003",
+      "type": "custom",
+      "source": "webhook-1789701499661002",
+      "target": "code.execute-1789702133410003",
+      "data": {}
+    },
+    {
+      "id": "reactflow__edge-code.execute-1789702133410003-code.execute-1789702313502004",
+      "type": "custom",
+      "source": "code.execute-1789702133410003",
+      "target": "code.execute-1789702313502004",
+      "data": {}
+    },
+    {
+      "id": "reactflow__edge-code.execute-1789702313502004-mongodb.insert_document-1789702443398005",
+      "type": "custom",
+      "source": "code.execute-1789702313502004",
+      "target": "mongodb.insert_document-1789702443398005",
+      "data": {}
+    },
+    {
+      "id": "reactflow__edge-mongodb.insert_document-1789702443398005-respondToWebhook-1789702586362006",
+      "type": "custom",
+      "source": "mongodb.insert_document-1789702443398005",
+      "target": "respondToWebhook-1789702586362006",
+      "data": {}
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-09-19T12:15:00.000Z",
+  "name": "FinOps OpenRouter Full Telemetry & Analytics Sync",
+  "nodes": [
+    {
+      "id": "webhook-openrouter-telemetry-trigger",
+      "type": "webhook",
+      "width": 240,
+      "height": 100,
+      "position": { "x": 60, "y": 250 },
+      "positionAbsolute": { "x": 60, "y": 250 },
+      "data": {
+        "label": "Webhook Trigger",
+        "toolId": "webhook",
+        "inputs": {
+          "path": "e9f53cdf-69b1-4668-8375-d5a8f133c6db",
+          "method": "POST",
+          "responseMode": "respondWithNode",
+          "authentication": "none",
+          "options": {}
+        },
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      }
+    },
+    {
+      "id": "http-fetch-workspace-keys",
+      "type": "action",
+      "width": 240,
+      "height": 94,
+      "position": { "x": 340, "y": 250 },
+      "positionAbsolute": { "x": 340, "y": 250 },
+      "data": {
+        "label": "Fetch Workspace Keys",
+        "toolId": "http.request",
+        "inputs": {
+          "url": "https://openrouter.ai/api/v1/keys",
+          "method": "GET",
+          "headers": {
+            "Authorization": "={{ 'Bearer ' + ($json.body.apiKey || $json.apiKey) }}",
+            "Content-Type": "application/json"
+          },
+          "options": {
+            "ignoreErrors": true
+          }
+        }
+      }
+    },
+    {
+      "id": "code-prepare-query-dates",
+      "type": "action",
+      "width": 260,
+      "height": 110,
+      "position": { "x": 620, "y": 250 },
+      "positionAbsolute": { "x": 620, "y": 250 },
+      "data": {
+        "label": "Prepare Dynamic Date Range",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "let triggerInput = {};\ntry {\n  triggerInput = $('webhook-openrouter-telemetry-trigger').first().json.body || {};\n} catch (e) {\n  triggerInput = {};\n}\n\nconst httpResponse = $json;\nconst keysList = httpResponse.body?.data || httpResponse.data || [];\n\n// Find earliest created_at among keys, or default to 365 days ago\nlet earliestDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);\nkeysList.forEach(k => {\n  if (k.created_at) {\n    const d = new Date(k.created_at);\n    if (d < earliestDate) earliestDate = d;\n  }\n});\n\nconst startDate = earliestDate.toISOString();\nconst endDate = new Date().toISOString(); // Today dynamically (now)\nconst apiKey = triggerInput.apiKey || '';\n\nreturn {\n  apiKey: apiKey,\n  startDate: startDate,\n  endDate: endDate,\n  keysList: keysList,\n  connectionName: triggerInput.connectionName || 'Enterprise OpenRouter Gateway',\n  productTag: triggerInput.productTag || 'SHARED_GATEWAY'\n};"
+        }
+      }
+    },
+    {
+      "id": "http-fetch-datewise-analytics",
+      "type": "action",
+      "width": 250,
+      "height": 100,
+      "position": { "x": 920, "y": 250 },
+      "positionAbsolute": { "x": 920, "y": 250 },
+      "data": {
+        "label": "Fetch Date & Model Telemetry",
+        "toolId": "http.request",
+        "inputs": {
+          "url": "https://openrouter.ai/api/v1/analytics/query",
+          "method": "POST",
+          "headers": {
+            "Authorization": "={{ 'Bearer ' + $json.apiKey }}",
+            "Content-Type": "application/json"
+          },
+          "body": "={\n  \"metrics\": [\"cost\", \"prompt_tokens\", \"completion_tokens\", \"cached_tokens\", \"request_count\"],\n  \"dimensions\": [\"model\", \"date\"],\n  \"time_range\": {\n    \"start\": $json.startDate,\n    \"end\": $json.endDate\n  },\n  \"granularity\": \"day\"\n}",
+          "options": {
+            "ignoreErrors": true
+          }
+        }
+      }
+    },
+    {
+      "id": "http-fetch-app-analytics",
+      "type": "action",
+      "width": 250,
+      "height": 100,
+      "position": { "x": 1210, "y": 250 },
+      "positionAbsolute": { "x": 1210, "y": 250 },
+      "data": {
+        "label": "Fetch App Breakdown",
+        "toolId": "http.request",
+        "inputs": {
+          "url": "https://openrouter.ai/api/v1/analytics/query",
+          "method": "POST",
+          "headers": {
+            "Authorization": "={{ 'Bearer ' + $('code-prepare-query-dates').first().json.apiKey }}",
+            "Content-Type": "application/json"
+          },
+          "body": "={\n  \"metrics\": [\"cost\", \"prompt_tokens\", \"completion_tokens\", \"request_count\"],\n  \"dimensions\": [\"app\"],\n  \"time_range\": {\n    \"start\": $('code-prepare-query-dates').first().json.startDate,\n    \"end\": $('code-prepare-query-dates').first().json.endDate\n  }\n}",
+          "options": {
+            "ignoreErrors": true
+          }
+        }
+      }
+    },
+    {
+      "id": "code-master-telemetry-aggregator",
+      "type": "action",
+      "width": 270,
+      "height": 120,
+      "position": { "x": 1500, "y": 250 },
+      "positionAbsolute": { "x": 1500, "y": 250 },
+      "data": {
+        "label": "Master Telemetry Aggregator",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "let prepData = {};\ntry {\n  prepData = $('code-prepare-query-dates').first().json || $('Prepare Dynamic Date Range').first().json || {};\n} catch (e) {\n  prepData = {};\n}\n\nlet dateAnalyticsResp = {};\ntry {\n  dateAnalyticsResp = $('http-fetch-datewise-analytics').first().json || {};\n} catch (e) {\n  dateAnalyticsResp = {};\n}\n\nconst rawKeys = prepData.keysList || [];\nconst rawDateAnalytics = dateAnalyticsResp.body?.data || dateAnalyticsResp.data || [];\nconst rawAppAnalytics = $json.body?.data || $json.data || [];\n\n// 1. Process Date-Wise Telemetry Rows strictly from API\nlet totalSpend = 0;\nlet totalPromptTokens = 0;\nlet totalCompletionTokens = 0;\nlet totalCachedTokens = 0;\nlet totalRequests = 0;\n\nconst dateWiseTelemetry = Array.isArray(rawDateAnalytics) ? rawDateAnalytics.map(row => {\n  const cost = typeof row.cost === 'number' ? Number(row.cost.toFixed(4)) : (Number(row.cost) || 0);\n  const promptTok = Number(row.prompt_tokens || row.input_tokens || 0);\n  const compTok = Number(row.completion_tokens || row.output_tokens || 0);\n  const cachedTok = Number(row.cached_tokens || 0);\n  const requests = Number(row.request_count || 0);\n\n  totalSpend += cost;\n  totalPromptTokens += promptTok;\n  totalCompletionTokens += compTok;\n  totalCachedTokens += cachedTok;\n  totalRequests += requests;\n\n  return {\n    date: row.date || '',\n    model: row.model || '',\n    keyName: row.key_name || row.key || '',\n    keyLabel: row.key_label || '',\n    app: row.app || '',\n    promptTokens: promptTok,\n    completionTokens: compTok,\n    cachedTokens: cachedTok,\n    cached: cachedTok > 0,\n    cost: cost,\n    requests: requests\n  };\n}) : [];\n\n// 2. Compute Unit Economics from live totals\nconst totalTokens = totalPromptTokens + totalCompletionTokens;\nconst cacheHitRate = totalPromptTokens > 0 \n  ? Number(((totalCachedTokens / totalPromptTokens) * 100).toFixed(1)) \n  : 0;\nconst blendedPerMillion = totalTokens > 0 \n  ? Number(((totalSpend / totalTokens) * 1000000).toFixed(2)) \n  : 0;\n\n// 3. Aggregate Model Breakdown\nconst modelMap = {};\ndateWiseTelemetry.forEach(t => {\n  if (t.model) {\n    if (!modelMap[t.model]) {\n      modelMap[t.model] = {\n        model: t.model,\n        cost: 0,\n        promptTokens: 0,\n        completionTokens: 0,\n        cachedTokens: 0,\n        requests: 0\n      };\n    }\n    modelMap[t.model].cost += t.cost;\n    modelMap[t.model].promptTokens += t.promptTokens;\n    modelMap[t.model].completionTokens += t.completionTokens;\n    modelMap[t.model].cachedTokens += t.cachedTokens;\n    modelMap[t.model].requests += t.requests;\n  }\n});\n\nconst modelBreakdown = Object.values(modelMap).map(m => ({\n  ...m,\n  cost: Number(m.cost.toFixed(4)),\n  share: totalSpend > 0 ? Number(((m.cost / totalSpend) * 100).toFixed(1)) : 0\n}));\n\n// 4. Process App Breakdown strictly from API\nconst appBreakdown = Array.isArray(rawAppAnalytics) ? rawAppAnalytics.map(a => ({\n  app: a.app || '',\n  cost: Number((Number(a.cost) || 0).toFixed(4)),\n  promptTokens: Number(a.prompt_tokens || 0),\n  completionTokens: Number(a.completion_tokens || 0),\n  requests: Number(a.request_count || 0)\n})) : [];\n\n// 5. Calculate total usage across keys\nlet keysTotalUsage = 0;\nlet keysTotalLimit = 0;\nlet keysTotalRemaining = 0;\n\nconst parsedKeys = rawKeys.map(k => {\n  const u = typeof k.usage === 'number' ? k.usage : 0;\n  const l = typeof k.limit === 'number' ? k.limit : null;\n  const r = typeof k.limit_remaining === 'number' ? k.limit_remaining : (l !== null ? Math.max(0, l - u) : null);\n  keysTotalUsage += u;\n  if (l !== null) keysTotalLimit += l;\n  if (r !== null) keysTotalRemaining += r;\n  return {\n    name: k.name || '',\n    label: k.label || '',\n    usage: Number(u.toFixed(4)),\n    limit: l !== null ? Number(l.toFixed(2)) : null,\n    remaining: r !== null ? Number(r.toFixed(4)) : null,\n    createdAt: k.created_at || null,\n    disabled: Boolean(k.disabled)\n  };\n});\n\n// 6. FinOps FOCUS 1.0 Standard Normalization\nconst focusRecords = dateWiseTelemetry.map((t, idx) => ({\n  ChargePeriodStart: t.date ? `${t.date}T00:00:00.000Z` : prepData.startDate,\n  ChargePeriodEnd: t.date ? `${t.date}T23:59:59.999Z` : prepData.endDate,\n  ProviderName: 'OpenRouter',\n  BillingAccountId: rawKeys[0]?.workspace_id || 'openrouter-workspace',\n  SubAccountId: t.keyLabel || 'primary-key',\n  SubAccountName: t.keyName || 'Workspace Key',\n  ServiceName: 'OpenRouter AI Inference',\n  ServiceCategory: 'AI and Machine Learning',\n  SkuId: t.model,\n  UsageQuantity: t.promptTokens + t.completionTokens,\n  UsageUnit: 'Tokens',\n  BilledCost: t.cost,\n  EffectiveCost: t.cost,\n  Tags: {\n    Application: t.app || 'Direct API',\n    Product: prepData.productTag || 'SHARED_GATEWAY',\n    Environment: 'Production'\n  }\n}));\n\nconst finalTotalCost = totalSpend > 0 ? Number(totalSpend.toFixed(2)) : Number(keysTotalUsage.toFixed(2));\n\nreturn {\n  success: true,\n  connectionId: 'or_conn_' + Math.random().toString(36).substring(2, 10),\n  connectionName: prepData.connectionName || 'Enterprise OpenRouter Gateway',\n  productTag: prepData.productTag || 'SHARED_GATEWAY',\n  workspaceId: rawKeys[0]?.workspace_id || '',\n  \n  // FinOps KPI Summary (Strictly Live)\n  totalUsage: finalTotalCost,\n  creditLimit: Number(keysTotalLimit.toFixed(2)),\n  remainingBalance: Number(keysTotalRemaining.toFixed(2)),\n  totalTokens: totalTokens,\n  totalPromptTokens: totalPromptTokens,\n  totalCompletionTokens: totalCompletionTokens,\n  totalCachedTokens: totalCachedTokens,\n  cacheHitRate: cacheHitRate,\n  blendedRate: `$${blendedPerMillion} / 1M`,\n  totalRequests: totalRequests,\n\n  // FinOps FOCUS 1.0 Normalized Dataset\n  focusRecords: focusRecords,\n\n  // Granular Live Arrays\n  keysList: parsedKeys,\n  dateWiseTelemetry: dateWiseTelemetry,\n  modelBreakdown: modelBreakdown,\n  appBreakdown: appBreakdown,\n  startDate: prepData.startDate,\n  endDate: prepData.endDate,\n  lastSyncedAt: new Date().toISOString()\n};"
+        }
+      }
+    },
+    {
+      "id": "respond-webhook-telemetry",
+      "type": "action",
+      "width": 240,
+      "height": 94,
+      "position": { "x": 1810, "y": 250 },
+      "positionAbsolute": { "x": 1810, "y": 250 },
+      "data": {
+        "label": "Respond to Frontend",
+        "toolId": "webhook.respond",
+        "inputs": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": "={{ $json.success ? 200 : 401 }}"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-tel-1",
+      "source": "webhook-openrouter-telemetry-trigger",
+      "target": "http-fetch-workspace-keys"
+    },
+    {
+      "id": "edge-tel-2",
+      "source": "http-fetch-workspace-keys",
+      "target": "code-prepare-query-dates"
+    },
+    {
+      "id": "edge-tel-3",
+      "source": "code-prepare-query-dates",
+      "target": "http-fetch-datewise-analytics"
+    },
+    {
+      "id": "edge-tel-4",
+      "source": "http-fetch-datewise-analytics",
+      "target": "http-fetch-app-analytics"
+    },
+    {
+      "id": "edge-tel-5",
+      "source": "http-fetch-app-analytics",
+      "target": "code-master-telemetry-aggregator"
+    },
+    {
+      "id": "edge-tel-6",
+      "source": "code-master-telemetry-aggregator",
+      "target": "respond-webhook-telemetry"
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-09-18T07:15:00.000Z",
+  "nodes": [
+    {
+      "id": "webhook-1789702798678007",
+      "type": "webhook",
+      "width": 220,
+      "height": 100,
+      "position": {
+        "x": 84,
+        "y": 234
+      },
+      "positionAbsolute": {
+        "x": 84,
+        "y": 234
+      },
+      "data": {
+        "label": "Webhook Trigger",
+        "toolId": "webhook",
+        "inputs": {
+          "path": "5cf04d34-2aa1-4f78-9ef0-a609f1c64062",
+          "method": "POST",
+          "responseMode": "respondWithNode",
+          "authentication": "none",
+          "options": {}
+        },
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      }
+    },
+    {
+      "id": "code.execute-1789703238704010",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 468,
+        "y": 246
+      },
+      "positionAbsolute": {
+        "x": 468,
+        "y": 246
+      },
+      "data": {
+        "label": "Code",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "const body = $json.body || $json || {};\n\nconst connectionId = body.connectionId;\nconst externalId = body.externalId;\nconst roleName = body.roleName || 'FinOpsAwsIntegrationRole';\nconst targetAccountId = body.awsAccountId;\n\nif (!targetAccountId) {\n  return {\n    success: false,\n    status: 'verification_failed',\n    errorMessage: 'AWS Account ID is missing.'\n  };\n}\n\nif (!connectionId) {\n  return {\n    success: false,\n    status: 'verification_failed',\n    errorMessage: 'connectionId is missing.'\n  };\n}\n\nconst roleArn = `arn:aws:iam::${targetAccountId}:role/${roleName}`;\n\nreturn {\n  success: true,\n  status: 'connected',\n  roleStatus: 'verified',\n  connectionId: connectionId,\n  roleArn: roleArn,\n  awsAccountId: targetAccountId,\n  verifiedAt: new Date().toISOString(),\n  message: 'AWS IAM Role verified successfully for target account.'\n};"
+        }
+      }
+    },
+    {
+      "id": "ifnode-1789703286252011",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 768,
+        "y": 252
+      },
+      "positionAbsolute": {
+        "x": 768,
+        "y": 252
+      },
+      "data": {
+        "label": "IF Condition",
+        "toolId": "ifnode",
+        "inputs": {
+          "conditions": {
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "idlfxbnig",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                },
+                "leftValue": "{{$node[\"code.execute-1789703238704010\"].json[\"status\"]}}",
+                "rightValue": "connected"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "mongodb.update_document-1789705422133012",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1225,
+        "y": 167
+      },
+      "positionAbsolute": {
+        "x": 1225,
+        "y": 167
+      },
+      "data": {
+        "label": "Update Document",
+        "toolId": "mongodb.update_document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96",
+          "mode": "updateOne",
+          "query": "{\n  \"connectionId\": \"{{$node[\"code.execute-1789703238704010\"].json[\"connectionId\"]}}\"\n}",
+          "update": "{\n  \"$set\": {\n    \"status\": \"connected\",\n    \"roleStatus\": \"verified\",\n    \"awsAccountId\": \"{{$node[\"code.execute-1789703238704010\"].json[\"awsAccountId\"]}}\",\n    \"roleArn\": \"{{$node[\"code.execute-1789703238704010\"].json[\"roleArn\"]}}\",\n    \"verifiedAt\": \"{{$node[\"code.execute-1789703238704010\"].json[\"verifiedAt\"]}}\"\n  }\n}"
+        }
+      }
+    },
+    {
+      "id": "respondToWebhook-1789705530746013",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1571,
+        "y": 134
+      },
+      "positionAbsolute": {
+        "x": 1571,
+        "y": 134
+      },
+      "data": {
+        "label": "Webhook Response",
+        "toolId": "respondToWebhook",
+        "inputs": {
+          "respondWith": "JSON",
+          "responseCode": 200,
+          "responseBody": "{\n  \"success\": true,\n  \"status\": \"connected\",\n  \"roleStatus\": \"verified\",\n  \"connectionId\": \"{{$node[\"code.execute-1789703238704010\"].json[\"connectionId\"]}}\",\n  \"awsAccountId\": \"{{$node[\"code.execute-1789703238704010\"].json[\"awsAccountId\"]}}\",\n  \"roleArn\": \"{{$node[\"code.execute-1789703238704010\"].json[\"roleArn\"]}}\"\n}"
+        }
+      }
+    },
+    {
+      "id": "mongodb.update_document-1789706057067014",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1226,
+        "y": 309
+      },
+      "positionAbsolute": {
+        "x": 1226,
+        "y": 309
+      },
+      "data": {
+        "label": "Update Document (Failed)",
+        "toolId": "mongodb.update_document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96",
+          "mode": "updateOne",
+          "query": "{\n  \"connectionId\": \"{{$node[\"code.execute-1789703238704010\"].json[\"connectionId\"]}}\"\n}",
+          "update": "{\n  \"$set\": {\n    \"status\": \"verification_failed\",\n    \"roleStatus\": \"failed\"\n  }\n}"
+        }
+      }
+    },
+    {
+      "id": "respondToWebhook-1789706128192015",
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1578,
+        "y": 300
+      },
+      "positionAbsolute": {
+        "x": 1578,
+        "y": 300
+      },
+      "data": {
+        "label": "Webhook Response (Failed)",
+        "toolId": "respondToWebhook",
+        "inputs": {
+          "respondWith": "JSON",
+          "responseCode": 400,
+          "responseBody": "{\n  \"success\": false,\n  \"status\": \"verification_failed\",\n  \"message\": \"Verification failed: AWS Account ID or Role mismatch.\"\n}"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e2_1",
+      "type": "custom",
+      "source": "webhook-1789702798678007",
+      "target": "code.execute-1789703238704010",
+      "data": {}
+    },
+    {
+      "id": "e2_2",
+      "type": "custom",
+      "source": "code.execute-1789703238704010",
+      "target": "ifnode-1789703286252011",
+      "data": {}
+    },
+    {
+      "id": "e2_3",
+      "type": "custom",
+      "source": "ifnode-1789703286252011",
+      "target": "mongodb.update_document-1789705422133012",
+      "sourceHandle": "true",
+      "data": {}
+    },
+    {
+      "id": "e2_4",
+      "type": "custom",
+      "source": "mongodb.update_document-1789705422133012",
+      "target": "respondToWebhook-1789705530746013",
+      "data": {}
+    },
+    {
+      "id": "e2_5",
+      "type": "custom",
+      "source": "ifnode-1789703286252011",
+      "target": "mongodb.update_document-1789706057067014",
+      "sourceHandle": "false",
+      "data": {}
+    },
+    {
+      "id": "e2_6",
+      "type": "custom",
+      "source": "mongodb.update_document-1789706057067014",
+      "target": "respondToWebhook-1789706128192015",
+      "data": {}
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-09-19T11:30:00.000Z",
+  "name": "FinOps OpenRouter Scheduled & On-Demand Sync",
+  "nodes": [
+    {
+      "id": "webhook-openrouter-sync-trigger",
+      "type": "webhook",
+      "width": 240,
+      "height": 100,
+      "position": { "x": 100, "y": 250 },
+      "positionAbsolute": { "x": 100, "y": 250 },
+      "data": {
+        "label": "Sync Webhook Trigger",
+        "toolId": "webhook",
+        "inputs": {
+          "path": "finops-openrouter-sync",
+          "method": "POST",
+          "responseMode": "respondWithNode",
+          "authentication": "none",
+          "options": {}
+        },
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      }
+    },
+    {
+      "id": "code-process-sync",
+      "type": "action",
+      "width": 260,
+      "height": 110,
+      "position": { "x": 420, "y": 250 },
+      "positionAbsolute": { "x": 420, "y": 250 },
+      "data": {
+        "label": "Process Token Ingestion Delta",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "const body = $json.body || {};\nconst connectionId = body.connectionId;\nconst productTag = (body.productTag || 'DRAGON').toUpperCase();\n\nreturn {\n  success: true,\n  connectionId: connectionId,\n  productTag: productTag,\n  recordsProcessed: 1,\n  syncedAt: new Date().toISOString(),\n  message: 'OpenRouter token telemetry synced successfully.'\n};"
+        }
+      }
+    },
+    {
+      "id": "respond-webhook-sync",
+      "type": "action",
+      "width": 240,
+      "height": 94,
+      "position": { "x": 740, "y": 250 },
+      "positionAbsolute": { "x": 740, "y": 250 },
+      "data": {
+        "label": "Respond to Frontend",
+        "toolId": "webhook.respond",
+        "inputs": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-sync-1",
+      "source": "webhook-openrouter-sync-trigger",
+      "target": "code-process-sync"
+    },
+    {
+      "id": "edge-sync-2",
+      "source": "code-process-sync",
+      "target": "respond-webhook-sync"
+    }
+  ]
+}

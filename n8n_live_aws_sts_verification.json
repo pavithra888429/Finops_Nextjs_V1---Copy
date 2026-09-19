@@ -1,0 +1,155 @@
+{
+  "name": "Live AWS STS Verification (Real AWS STS)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "finops-aws-verify",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1d8a4f90-1c22-48ea-b1cb-9a86b3e10001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "finops-aws-verify"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sts.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "Action",
+              "value": "AssumeRole"
+            },
+            {
+              "name": "Version",
+              "value": "2011-06-15"
+            },
+            {
+              "name": "RoleArn",
+              "value": "=arn:aws:iam::{{ $('Webhook').item.json.body.awsAccountId }}:role/{{ $('Webhook').item.json.body.roleName || 'FinOpsAwsIntegrationRole' }}"
+            },
+            {
+              "name": "RoleSessionName",
+              "value": "FinOpsVerificationSession"
+            },
+            {
+              "name": "ExternalId",
+              "value": "={{ $('Webhook').item.json.body.externalId }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "2d8a4f90-1c22-48ea-b1cb-9a86b3e10002",
+      "name": "AWS STS AssumeRole (Live SigV4)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "aws": {
+          "id": "YOUR_N8N_AWS_CREDENTIAL_ID",
+          "name": "AWS Platform Admin Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const stsResponse = $input.first().json;\nconst webhookBody = $('Webhook').first().json.body;\n\nconst assumeResult = stsResponse?.AssumeRoleResponse?.AssumeRoleResult;\nconst credentials = assumeResult?.Credentials;\nconst assumedRoleUser = assumeResult?.AssumedRoleUser;\n\n// 1. If STS AssumeRole Succeeded (Valid Session Token)\nif (credentials?.SessionToken) {\n  return {\n    success: true,\n    status: 'connected',\n    roleStatus: 'verified',\n    connectionId: webhookBody.connectionId,\n    awsAccountId: webhookBody.awsAccountId,\n    roleArn: `arn:aws:iam::${webhookBody.awsAccountId}:role/${webhookBody.roleName || 'FinOpsAwsIntegrationRole'}`,\n    assumedRoleUserArn: assumedRoleUser?.Arn,\n    sessionTokenReceived: true,\n    verifiedAt: new Date().toISOString()\n  };\n}\n\n// 2. If STS Failed / AccessDenied / Stack Not Ready\nconst errMsg = stsResponse?.ErrorResponse?.Error?.Message || stsResponse?.Error?.Message || stsResponse?.message || 'AWS STS AssumeRole failed: AccessDenied. Please confirm CloudFormation stack creation is CREATE_COMPLETE.';\nconst errCode = stsResponse?.ErrorResponse?.Error?.Code || stsResponse?.Error?.Code || 'AccessDenied';\n\nreturn {\n  success: false,\n  status: 'verification_failed',\n  roleStatus: 'failed',\n  connectionId: webhookBody.connectionId,\n  awsAccountId: webhookBody.awsAccountId,\n  roleArn: `arn:aws:iam::${webhookBody.awsAccountId}:role/${webhookBody.roleName || 'FinOpsAwsIntegrationRole'}`,\n  lastError: {\n    errorCode: errCode,\n    message: errMsg\n  }\n};"
+      },
+      "id": "3d8a4f90-1c22-48ea-b1cb-9a86b3e10003",
+      "name": "Format Live AWS Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Format Live AWS Result').item.json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "5d8a4f90-1c22-48ea-b1cb-9a86b3e10005",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AWS STS AssumeRole (Live SigV4)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AWS STS AssumeRole (Live SigV4)": {
+      "main": [
+        [
+          {
+            "node": "Format Live AWS Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Live AWS Result": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
