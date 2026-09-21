@@ -75,10 +75,14 @@ function CostAllocationMain() {
   };
 
   // Switch to detailed view when one specific product AND one specific provider are selected
-  const isDetailView = selectedProduct !== "all" && selectedProvider !== "all";
+  // OR when OpenRouter provider is selected (supporting "All Products" gateway drill-down view)
+  const isDetailView =
+    (selectedProduct !== "all" && selectedProvider !== "all") ||
+    selectedProvider === "openrouter";
 
   // Name resolution
   const getProductName = (id: string) => {
+    if (id === "all") return "All Products (OpenRouter Gateway)";
     if (id === "dragon") return "Dragon Suite";
     if (id === "okrian") return "Okrian";
     if (id === "unallocated") return "Unallocated";

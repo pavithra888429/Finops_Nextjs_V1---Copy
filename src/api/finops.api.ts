@@ -62,6 +62,21 @@ export interface OpenRouterWorkflowVerifyResponse {
   error?: string;
 }
 
+function extractWorkflowData(raw: any): any {
+  let data = raw?._responseData || raw?.items?.[0]?.json || (raw?.result !== null && raw?.result !== undefined ? raw?.result : null) || raw?.data || raw;
+  if (Array.isArray(data) && data.length > 0) {
+    const first = data[0];
+    if (first?.documents && Array.isArray(first.documents) && first.documents.length > 0) {
+      return { ...first, ...first.documents[0] };
+    }
+    return first;
+  }
+  if (data?.documents && Array.isArray(data.documents) && data.documents.length > 0) {
+    return { ...data, ...data.documents[0] };
+  }
+  return data;
+}
+
 export const finopsApi = {
   startConnection: async (params: {
     connectionName: string;
@@ -222,7 +237,7 @@ export const finopsApi = {
   ): Promise<OpenRouterWorkflowVerifyResponse> => {
     const webhookUrl =
       process.env.NEXT_PUBLIC_OPENROUTER_VERIFY_WEBHOOK_URL ||
-      'https://api.agents.snsihub.ai/webhook/e9f53cdf-69b1-4668-8375-d5a8f133c6db';
+      'https://api.agents.snsihub.ai/webhook/708dc830-0fa9-4ca8-8420-a52497ffbe40';
 
     try {
       const response = await axios.post(webhookUrl, payload, {
@@ -231,9 +246,7 @@ export const finopsApi = {
         },
         timeout: 25000,
       });
-      const raw = response.data;
-      const unwrap = raw?._responseData || raw?.items?.[0]?.json || raw?.data || raw;
-      return unwrap;
+      return extractWorkflowData(response.data);
     } catch (err: any) {
       if (err.response?.data?.error) {
         throw new Error(err.response.data.error);
@@ -248,10 +261,10 @@ export const finopsApi = {
     }
   },
 
-  syncOpenRouterConnection: async (payload: { connectionId?: string; productTag?: string }) => {
+  syncOpenRouterConnection: async (payload: { connectionId?: string; productTag?: string; apiKey?: string }) => {
     const webhookUrl =
       process.env.NEXT_PUBLIC_OPENROUTER_SYNC_WEBHOOK_URL ||
-      'https://api.agents.snsihub.ai/webhook/e9f53cdf-69b1-4668-8375-d5a8f133c6db';
+      'https://api.agents.snsihub.ai/webhook/708dc830-0fa9-4ca8-8420-a52497ffbe40';
 
     try {
       const response = await axios.post(webhookUrl, payload, {
@@ -260,9 +273,7 @@ export const finopsApi = {
         },
         timeout: 25000,
       });
-      const raw = response.data;
-      const unwrap = raw?._responseData || raw?.items?.[0]?.json || raw?.data || raw;
-      return unwrap;
+      return extractWorkflowData(response.data);
     } catch (err: any) {
       if (err.response?.data?.error) {
         throw new Error(err.response.data.error);
@@ -271,11 +282,19 @@ export const finopsApi = {
     }
   },
 
-  fetchOpenRouterTelemetry: async (payload: { apiKey?: string; connectionId?: string }) => {
+  fetchOpenRouterTelemetry: async (payload: {
+    apiKey?: string;
+    connectionId?: string;
+    connectionName?: string;
+    userId?: string;
+    productTag?: string;
+    environment?: string;
+    lastSyncedAt?: string;
+  }) => {
     const webhookUrl =
       process.env.NEXT_PUBLIC_OPENROUTER_TELEMETRY_WEBHOOK_URL ||
       process.env.NEXT_PUBLIC_OPENROUTER_VERIFY_WEBHOOK_URL ||
-      'https://api.agents.snsihub.ai/webhook/e9f53cdf-69b1-4668-8375-d5a8f133c6db';
+      'https://api.agents.snsihub.ai/webhook/708dc830-0fa9-4ca8-8420-a52497ffbe40';
 
     try {
       const response = await axios.post(webhookUrl, payload, {
@@ -284,9 +303,7 @@ export const finopsApi = {
         },
         timeout: 30000,
       });
-      const raw = response.data;
-      const unwrap = raw?._responseData || raw?.items?.[0]?.json || raw?.data || raw;
-      return unwrap;
+      return extractWorkflowData(response.data);
     } catch (err: any) {
       if (err.response?.data?.error) {
         throw new Error(err.response.data.error);

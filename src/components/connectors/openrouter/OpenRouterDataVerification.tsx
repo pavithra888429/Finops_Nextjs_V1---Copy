@@ -86,7 +86,21 @@ export function OpenRouterDataVerification({
       setPipelineStep('fetching_credits');
 
       const raw = (response as any)?.data || response;
-      const resData = raw?._responseData || raw?.items?.[0]?.json || raw?.data || raw;
+      let resData = raw?._responseData || raw?.items?.[0]?.json || (raw?.result !== null && raw?.result !== undefined ? raw?.result : null) || raw?.data || raw;
+      if (Array.isArray(resData) && resData.length > 0) {
+        const first = resData[0];
+        if (first?.documents && Array.isArray(first.documents) && first.documents.length > 0) {
+          resData = { ...first, ...first.documents[0] };
+        } else {
+          resData = first;
+        }
+      } else if (resData?.documents && Array.isArray(resData.documents) && resData.documents.length > 0) {
+        resData = { ...resData, ...resData.documents[0] };
+      }
+
+      if (!resData || resData.success === false || resData.error) {
+        throw new Error(resData?.error || 'OpenRouter API authentication or workflow execution failed.');
+      }
 
       await new Promise((r) => setTimeout(r, 600));
 
@@ -99,6 +113,7 @@ export function OpenRouterDataVerification({
         syncRes = await finopsApi.syncOpenRouterConnection({
           connectionId: resData.connectionId || formData.connectionName,
           productTag: formData.productTag || 'SHARED_GATEWAY',
+          apiKey: formData.apiKey,
         });
       } catch (syncErr: any) {
         console.warn('Sync workflow notice:', syncErr);
@@ -108,9 +123,7 @@ export function OpenRouterDataVerification({
         ? resData.keysList
         : [];
 
-      const totalKeysCount = rawKeys.length > 0 
-        ? rawKeys.length 
-        : (syncRes?.recordsProcessed !== undefined ? Number(syncRes.recordsProcessed) : Number(resData.recordsIngested ?? 1));
+      const totalKeysCount = rawKeys.length;
 
       const result: OpenRouterIngestionResult = {
         connectionId: resData.connectionId || formData.connectionName,

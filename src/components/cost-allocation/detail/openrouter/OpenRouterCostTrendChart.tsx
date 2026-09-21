@@ -14,18 +14,13 @@ interface OpenRouterTrendPoint {
 }
 
 const TREND_POINTS: OpenRouterTrendPoint[] = [
-  { date: '2026-08-11', label: 'Aug 11', costCurrent: 240, costPrevious: 210, usageCurrent: 480, usagePrevious: 420, resourceCurrent: 34, resourcePrevious: 30, service: 'Gemini 2.0 Flash', region: 'us-east-1' },
-  { date: '2026-08-14', label: 'Aug 14', costCurrent: 310, costPrevious: 260, usageCurrent: 620, usagePrevious: 510, resourceCurrent: 42, resourcePrevious: 36, service: 'Gemini 2.0 Flash', region: 'us-east-1' },
-  { date: '2026-08-17', label: 'Aug 17', costCurrent: 280, costPrevious: 240, usageCurrent: 560, usagePrevious: 480, resourceCurrent: 39, resourcePrevious: 35, service: 'Gemini 1.5 Flash', region: 'us-east-1' },
-  { date: '2026-08-20', label: 'Aug 20', costCurrent: 390, costPrevious: 320, usageCurrent: 780, usagePrevious: 640, resourceCurrent: 54, resourcePrevious: 45, service: 'Gemini 2.0 Flash', region: 'us-east-1' },
-  { date: '2026-08-23', label: 'Aug 23', costCurrent: 360, costPrevious: 310, usageCurrent: 720, usagePrevious: 610, resourceCurrent: 50, resourcePrevious: 44, service: 'Gemini 3 Flash Preview', region: 'us-east-1' },
-  { date: '2026-08-25', label: 'Aug 25', costCurrent: 492.20, costPrevious: 410.30, usageCurrent: 984, usagePrevious: 815, resourceCurrent: 68, resourcePrevious: 56, service: 'Gemini 2.0 Flash', region: 'us-east-1' },
-  { date: '2026-08-26', label: 'Aug 26', costCurrent: 420, costPrevious: 370, usageCurrent: 840, usagePrevious: 730, resourceCurrent: 59, resourcePrevious: 52, service: 'Gemini 1.5 Flash', region: 'us-east-1' },
-  { date: '2026-08-29', label: 'Aug 29', costCurrent: 460, costPrevious: 390, usageCurrent: 910, usagePrevious: 770, resourceCurrent: 64, resourcePrevious: 55, service: 'Gemini 2.0 Flash', region: 'us-east-1' },
-  { date: '2026-09-01', label: 'Sep 01', costCurrent: 440, costPrevious: 380, usageCurrent: 870, usagePrevious: 750, resourceCurrent: 62, resourcePrevious: 54, service: 'Gemini Embedding 001', region: 'us-east-1' },
-  { date: '2026-09-04', label: 'Sep 04', costCurrent: 520, costPrevious: 430, usageCurrent: 1030, usagePrevious: 860, resourceCurrent: 73, resourcePrevious: 60, service: 'Gemini 2.0 Flash', region: 'us-east-1' },
-  { date: '2026-09-07', label: 'Sep 07', costCurrent: 490, costPrevious: 410, usageCurrent: 970, usagePrevious: 810, resourceCurrent: 69, resourcePrevious: 58, service: 'Gemini 1.5 Flash', region: 'us-east-1' },
-  { date: '2026-09-10', label: 'Sep 10', costCurrent: 580, costPrevious: 460, usageCurrent: 1140, usagePrevious: 910, resourceCurrent: 81, resourcePrevious: 65, service: 'Gemini 2.0 Flash', region: 'us-east-1' },
+  { date: '2026-03-06', label: 'Mar 06', costCurrent: 3.25, costPrevious: 0, usageCurrent: 325, usagePrevious: 0, resourceCurrent: 1, resourcePrevious: 0, service: 'Prod API KEy chatbot', region: 'global' },
+  { date: '2026-04-10', label: 'Apr 10', costCurrent: 2.29, costPrevious: 1.5, usageCurrent: 229, usagePrevious: 150, resourceCurrent: 2, resourcePrevious: 1, service: 'Dev Key 1', region: 'global' },
+  { date: '2026-05-26', label: 'May 26', costCurrent: 6.21, costPrevious: 4.0, usageCurrent: 621, usagePrevious: 400, resourceCurrent: 3, resourcePrevious: 2, service: 'Code-Migration', region: 'global' },
+  { date: '2026-07-24', label: 'Jul 24', costCurrent: 3.60, costPrevious: 2.8, usageCurrent: 360, usagePrevious: 280, resourceCurrent: 4, resourcePrevious: 3, service: 'COE', region: 'global' },
+  { date: '2026-08-11', label: 'Aug 11', costCurrent: 4.60, costPrevious: 3.2, usageCurrent: 460, usagePrevious: 320, resourceCurrent: 8, resourcePrevious: 4, service: 'PF 1 Suite', region: 'global' },
+  { date: '2026-08-31', label: 'Aug 31', costCurrent: 6.45, costPrevious: 4.8, usageCurrent: 645, usagePrevious: 480, resourceCurrent: 10, resourcePrevious: 8, service: 'PF7-DT-01', region: 'global' },
+  { date: '2026-09-10', label: 'Sep 10', costCurrent: 0.08, costPrevious: 0.05, usageCurrent: 8, usagePrevious: 5, resourceCurrent: 11, resourcePrevious: 10, service: 'DS | 10/9/26', region: 'global' },
 ];
 
 export function OpenRouterCostTrendChart({
@@ -36,12 +31,12 @@ export function OpenRouterCostTrendChart({
   providerName?: string;
 }) {
   const [activeTab, setActiveTab] = useState<'cost' | 'usage' | 'resource'>('cost');
-  const [hoverIndex, setHoverIndex] = useState<number>(3); // Aug 20 default
+  const [hoverIndex, setHoverIndex] = useState<number>(5); // Aug 31 default
 
   const metricConfig = {
     cost: {
-      maxVal: 800,
-      ticks: [800, 600, 400, 200, 0],
+      maxVal: 8.0,
+      ticks: [8.0, 6.0, 4.0, 2.0, 0],
       axisLabel: 'Cost (USD)',
       titleSuffix: 'Cost Trend',
       currentKey: 'costCurrent' as const,
@@ -51,8 +46,8 @@ export function OpenRouterCostTrendChart({
       previousLabel: 'Cost (previous)',
     },
     usage: {
-      maxVal: 1200,
-      ticks: [1200, 900, 600, 300, 0],
+      maxVal: 800,
+      ticks: [800, 600, 400, 200, 0],
       axisLabel: 'Usage (Ktok)',
       titleSuffix: 'Usage Trend',
       currentKey: 'usageCurrent' as const,
@@ -62,15 +57,15 @@ export function OpenRouterCostTrendChart({
       previousLabel: 'Usage (previous)',
     },
     resource: {
-      maxVal: 100,
-      ticks: [100, 75, 50, 25, 0],
+      maxVal: 12,
+      ticks: [12, 9, 6, 3, 0],
       axisLabel: 'Resource Count',
-      titleSuffix: 'Resource Count Trend',
+      titleSuffix: 'Active Keys Trend',
       currentKey: 'resourceCurrent' as const,
       previousKey: 'resourcePrevious' as const,
-      formatValue: (v: number) => `${v} active`,
-      currentLabel: 'Resources (current)',
-      previousLabel: 'Resources (previous)',
+      formatValue: (v: number) => `${v} active keys`,
+      currentLabel: 'Keys (current)',
+      previousLabel: 'Keys (previous)',
     },
   };
 

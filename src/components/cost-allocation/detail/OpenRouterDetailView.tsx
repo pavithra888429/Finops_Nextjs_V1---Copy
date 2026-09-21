@@ -45,14 +45,51 @@ export function OpenRouterDetailView({
   const [savedConnection, setSavedConnection] = useState<any>(null);
 
   useEffect(() => {
+    let storedParsed: any = null;
     try {
       const stored = localStorage.getItem('finops_openrouter_connection');
       if (stored) {
-        setSavedConnection(JSON.parse(stored));
+        storedParsed = JSON.parse(stored);
+        setSavedConnection(storedParsed);
       }
     } catch (e) {
       console.warn('Error reading saved OpenRouter connection', e);
     }
+
+    // 2. Fetch live data from Workbench Webhook directly
+    const apiKey = storedParsed?.apiKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '';
+    finopsApi
+      .fetchOpenRouterTelemetry({
+        apiKey,
+        connectionId: storedParsed?.connectionId || 'Production OpenRouter',
+        connectionName: storedParsed?.connectionName || 'Production OpenRouter',
+        userId: storedParsed?.userId || 'default_user',
+        productTag: productId || 'SHARED_GATEWAY',
+        environment: environment || 'production',
+      })
+      .then((syncRes: any) => {
+        if (syncRes && (syncRes.keysList || syncRes.totalUsage !== undefined)) {
+          setSavedConnection((prev: any) => {
+            const merged = { ...(prev || {}), ...syncRes };
+            try {
+              localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
+            } catch (err) {}
+            return merged;
+          });
+          setLastSyncText('Workbench Webhook Live Sync');
+        }
+      })
+      .catch(() => {
+        // Fallback to local API if webhook offline
+        fetch('/api/finops/openrouter')
+          .then((r) => r.json())
+          .then((d) => {
+            if (d && d.success && d.keysList?.length > 0) {
+              setSavedConnection((p: any) => ({ ...(p || {}), ...d }));
+            }
+          })
+          .catch(() => {});
+      });
   }, []);
 
   const handleLiveSync = async () => {
@@ -62,6 +99,11 @@ export function OpenRouterDetailView({
       const syncRes = await finopsApi.fetchOpenRouterTelemetry({
         apiKey,
         connectionId: savedConnection?.connectionId || 'Enterprise OpenRouter Gateway',
+        connectionName: savedConnection?.connectionName || 'Production OpenRouter',
+        userId: savedConnection?.userId || 'usr_default',
+        productTag: productId || 'DRAGON',
+        environment: environment || 'production',
+        lastSyncedAt: savedConnection?.verifiedAt,
       });
 
       if (syncRes) {
@@ -69,6 +111,7 @@ export function OpenRouterDetailView({
           ...savedConnection,
           totalUsage: syncRes.totalUsage !== undefined ? Number(syncRes.totalUsage) : savedConnection?.totalUsage,
           keysList: Array.isArray(syncRes.keysList) ? syncRes.keysList : savedConnection?.keysList,
+          topModelsBySpend: Array.isArray(syncRes.topModelsBySpend) ? syncRes.topModelsBySpend : savedConnection?.topModelsBySpend,
           dateWiseTelemetry: Array.isArray(syncRes.dateWiseTelemetry) ? syncRes.dateWiseTelemetry : savedConnection?.dateWiseTelemetry,
           focusRecords: Array.isArray(syncRes.focusRecords) ? syncRes.focusRecords : savedConnection?.focusRecords,
           verifiedAt: new Date().toISOString(),
@@ -90,37 +133,31 @@ export function OpenRouterDetailView({
     if (savedConnection?.keysList && Array.isArray(savedConnection.keysList)) {
       return savedConnection.keysList;
     }
-    return [
-      { name: 'Prod API KEy chatbot', label: 'sk-or-v1-07f...d0e', usage: 3.1617 },
-      { name: 'PF7-DT-01', label: 'sk-or-v1-620...703', usage: 6.41 },
-      { name: 'Code-Migration', label: 'sk-or-v1-34a...ee1', usage: 6.208 },
-      { name: 'COE ', label: 'sk-or-v1-a0b...88a', usage: 3.601 },
-      { name: 'PF 1 - Aug 01', label: 'sk-or-v1-761...4c6', usage: 3.3887 },
-      { name: 'Dev Key 1', label: 'sk-or-v1-710...fc0', usage: 2.291 },
-      { name: 'PF 1 - Aug 05', label: 'sk-or-v1-9ed...041', usage: 1.2137 },
-      { name: 'DS | 10/9/26', label: 'sk-or-v1-c46...cc2', usage: 0.0799 },
-    ];
+    return [];
   }, [savedConnection]);
 
-  // Compute active metrics dynamically based on selected key
+  // Compute active metrics dynamically based strictly on real OpenRouter keys
   const dynamicKpiMetrics = useMemo(() => {
+    const sortedBySpend = [...availableKeys].sort((a: any, b: any) => (Number(b.usage) || 0) - (Number(a.usage) || 0));
+    const topKeyItem = sortedBySpend[0];
+    const activeCount = availableKeys.filter((k: any) => (Number(k.usage) || 0) > 0).length;
+    const idleCount = availableKeys.length - activeCount;
+
     if (selectedKey !== 'all') {
       const matched = availableKeys.find((k: any) => k.name === selectedKey);
-      const spend = matched?.usage ? Number(matched.usage) : 3.16;
+      const spend = matched?.usage ? Number(matched.usage) : 0;
+      const mSpend = matched?.usageMonthly ?? matched?.usage_monthly ?? 0;
       return {
         totalCost: Number(spend.toFixed(2)),
-        periodChange: 12.4,
-        dailyAvg: Number((spend / 30).toFixed(2)),
-        topModel: 'Gemini 2.0 Flash',
-        topModelCost: Number((spend * 0.58).toFixed(2)),
-        topModelShare: 58.2,
-        tokenVolume: `${(spend * 2.15).toFixed(1)}M`,
-        promptTokens: `${(spend * 1.7).toFixed(1)}M prompt`,
+        monthlySpend: Number(Number(mSpend).toFixed(2)),
         topKey: selectedKey,
         topKeyCost: Number(spend.toFixed(2)),
         topKeyShare: 100,
-        cacheHitRate: 1.3,
-        blendedRate: '$0.46 / 1M',
+        creditLimit: matched?.limit !== null && matched?.limit !== undefined ? Number(matched.limit) : null,
+        remainingBalance: matched?.remaining !== null && matched?.remaining !== undefined ? Number(matched.remaining) : null,
+        totalKeysCount: 1,
+        activeKeysCount: spend > 0 ? 1 : 0,
+        idleKeysCount: spend === 0 ? 1 : 0,
       };
     }
 
@@ -128,22 +165,26 @@ export function OpenRouterDetailView({
     const totalSpend =
       savedConnection?.totalUsage !== undefined && savedConnection?.totalUsage !== null
         ? Number(savedConnection.totalUsage)
-        : 26.35;
+        : availableKeys.reduce((acc: number, k: any) => acc + (Number(k.usage) || 0), 0);
+
+    const totalMonthly = availableKeys.reduce((acc: number, k: any) => acc + (Number(k.usageMonthly ?? k.usage_monthly) || 0), 0);
+    const topKeyCost = topKeyItem?.usage ? Number(topKeyItem.usage) : 0;
+    const topKeyShare = totalSpend > 0 ? Number(((topKeyCost / totalSpend) * 100).toFixed(1)) : 0;
+
+    const creditLimit = savedConnection?.creditLimit ?? availableKeys.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0);
+    const remainingBalance = savedConnection?.remainingBalance ?? availableKeys.reduce((acc: number, k: any) => acc + (Number(k.remaining) || 0), 0);
 
     return {
-      totalCost: totalSpend,
-      periodChange: 16.8,
-      dailyAvg: Number((totalSpend / 30).toFixed(2)),
-      topModel: 'Gemini 2.0 Flash',
-      topModelCost: Number((totalSpend * 0.54).toFixed(2)),
-      topModelShare: 54.0,
-      tokenVolume: `${(totalSpend * 2.21).toFixed(1)}M`,
-      promptTokens: `${(totalSpend * 1.78).toFixed(1)}M prompt`,
-      topKey: 'PF7-DT-01',
-      topKeyCost: 6.41,
-      topKeyShare: 24.3,
-      cacheHitRate: 2.4,
-      blendedRate: '$0.45 / 1M',
+      totalCost: Number(totalSpend.toFixed(2)),
+      monthlySpend: Number(totalMonthly.toFixed(2)),
+      topKey: topKeyItem?.name || 'Active Key',
+      topKeyCost: Number(topKeyCost.toFixed(2)),
+      topKeyShare,
+      creditLimit: creditLimit > 0 ? Number(creditLimit.toFixed(2)) : null,
+      remainingBalance: remainingBalance > 0 ? Number(remainingBalance.toFixed(2)) : null,
+      totalKeysCount: availableKeys.length,
+      activeKeysCount: activeCount,
+      idleKeysCount: idleCount,
     };
   }, [selectedKey, availableKeys, savedConnection]);
 
@@ -194,8 +235,8 @@ export function OpenRouterDetailView({
             <Database className="h-3.5 w-3.5" />
           </div>
           <div>
-            <span className="font-semibold text-white">FinOps FOCUS 1.0 Pipeline:</span>{' '}
-            <span className="text-slate-400 font-mono">OpenRouter API &gt; Telemetry Normalization &gt; FinOps DB</span>
+            <span className="font-semibold text-white">FinOps Pipeline:</span>{' '}
+            <span className="text-slate-400 font-mono">OpenRouter Keys API &gt; Telemetry Normalization &gt; MongoDB finops_3</span>
           </div>
         </div>
 
@@ -231,39 +272,48 @@ export function OpenRouterDetailView({
         onRemoveProvider={onBack}
       />
 
-      {/* 3. 6 Primary FinOps KPI Cards */}
+      {/* 3. 6 Primary FinOps KPI Cards (100% Real OpenRouter Metrics) */}
       <OpenRouterDetailKpis {...dynamicKpiMetrics} />
 
-      {/* 4. Middle Section 1: Cost Trend (5 cols) + Cost by AI Model (4 cols) + Cost by App (3 cols) */}
+      {/* 4. Middle Section 1: Cost Trend (5 cols) + Cost by Key (4 cols) + Gateway Infrastructure (3 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-5">
           <OpenRouterCostTrendChart productName={productName} providerName={providerName} />
         </div>
         <div className="lg:col-span-4">
-          <CostByModelCard />
+          <CostByModelCard keysList={availableKeys} />
         </div>
         <div className="lg:col-span-3">
-          <CostByAppCard />
+          <CostByAppCard keysList={availableKeys} />
         </div>
       </div>
 
-      {/* 5. Middle Section 2: API Key & Environment (4 cols) + Token & Caching Breakdown (5 cols) + Cost Attribution (3 cols) */}
+      {/* 5. Middle Section 2: Active API Keys (4 cols) + Quotas & Velocity (5 cols) + Spend Attribution (3 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-4">
-          <CostByKeyEnvCard productName={productName} selectedKey={selectedKey} />
+          <CostByKeyEnvCard
+            productName={productName}
+            selectedKey={selectedKey}
+            keysList={availableKeys}
+            onSelectKey={setSelectedKey}
+          />
         </div>
         <div className="lg:col-span-5">
-          <TokenCachingBreakdownCard />
+          <TokenCachingBreakdownCard keysList={availableKeys} />
         </div>
         <div className="lg:col-span-3">
-          <OpenRouterCostAttributionCard productName={productName} />
+          <OpenRouterCostAttributionCard
+            productName={productName}
+            keysList={availableKeys}
+            totalSpend={dynamicKpiMetrics.totalCost}
+          />
         </div>
       </div>
 
       {/* 6. Bottom Section: Top AI Cost Drivers (5 cols) + Detailed Ingestion Telemetry (7 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         <div className="lg:col-span-5">
-          <TopAiCostDriversTable productName={productName} />
+          <TopAiCostDriversTable productName={productName} keysList={availableKeys} />
         </div>
         <div className="lg:col-span-7">
           <DetailedOpenRouterUsageTable productName={productName} data={telemetryRows} />
