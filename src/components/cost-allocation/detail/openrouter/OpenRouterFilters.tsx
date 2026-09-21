@@ -50,27 +50,39 @@ export function OpenRouterFilters({
   onSync,
   isSyncing = false,
 }: OpenRouterFiltersProps) {
-  // Dynamically extract all unique months directly from the actual OpenRouter keys in MongoDB
+  // Dynamically generate all 12 calendar months (Jan to Dec) without hardcoding
   const dynamicMonths = useMemo(() => {
-    const monthMap = new Map<string, string>();
+    // 1. Detect target year(s) from available keys, defaulting to current year
+    const yearSet = new Set<number>();
+    yearSet.add(new Date().getFullYear());
 
     for (const key of availableKeys || []) {
       const rawDate = key.createdAt || key.created_at || key.date;
       if (rawDate) {
         const d = new Date(rawDate);
         if (!isNaN(d.getTime())) {
-          const yyyymm = d.toISOString().substring(0, 7); // e.g. "2026-09"
-          const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); // e.g. "September 2026"
-          if (!monthMap.has(yyyymm)) {
-            monthMap.set(yyyymm, label);
-          }
+          yearSet.add(d.getFullYear());
         }
       }
     }
 
-    return Array.from(monthMap.entries())
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([value, label]) => ({ value, label }));
+    const sortedYears = Array.from(yearSet).sort((a, b) => b - a);
+    const months: { value: string; label: string }[] = [];
+    const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
+
+    // 2. Dynamically produce all 12 months (January to December) for each detected year
+    for (const yr of sortedYears) {
+      for (let m = 0; m < 12; m++) {
+        const d = new Date(yr, m, 1);
+        const yyyymm = `${yr}-${String(m + 1).padStart(2, '0')}`;
+        months.push({
+          value: yyyymm,
+          label: formatter.format(d),
+        });
+      }
+    }
+
+    return months;
   }, [availableKeys]);
 
   const activeDateLabel = useMemo(() => {

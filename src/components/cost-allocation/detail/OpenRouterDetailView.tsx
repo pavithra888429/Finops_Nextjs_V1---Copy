@@ -196,11 +196,10 @@ export function OpenRouterDetailView({
 
     // 2. Dynamic month filter (e.g. "2026-09", "2026-08", etc.)
     if (dateRange && dateRange !== 'all') {
-      const monthFiltered = list.filter((k: any) => {
+      return list.filter((k: any) => {
         const dStr = k.createdAt || k.created_at || k.date || '';
         return dStr.startsWith(dateRange);
       });
-      return monthFiltered.length > 0 ? monthFiltered : list;
     }
 
     return list;
