@@ -172,10 +172,14 @@ export function DetailedOpenRouterUsageTable({
                     <span>{item.app}</span>
                   </div>
                 </td>
-                <td className="py-2.5 px-3">
-                  <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    {item.model}
-                  </span>
+                <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px]">
+                  {item.model && item.model !== item.keyName && !item.model.startsWith('PF') && item.model !== 'OpenRouter Model' ? (
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      {item.model}
+                    </span>
+                  ) : (
+                    <span>—</span>
+                  )}
                 </td>
                 <td className="py-2.5 px-3 text-right tabular-nums text-slate-300 font-mono text-[11px]">
                   {formatNumber(item.promptTokens)}

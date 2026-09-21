@@ -97,7 +97,7 @@ export async function GET() {
       keyName: d.SubServiceName || (d.service ? d.service.replace('OpenRouter - ', '') : 'API Key'),
       keyLabel: d.tags?.KeyLabel || '',
       app: d.tags?.Project || 'SHARED_GATEWAY',
-      model: d.SubServiceName || 'OpenRouter Model',
+      model: '',
       cost: Number(d.amortizedCost || 0),
       dailyCost: 0,
       weeklyCost: 0,
