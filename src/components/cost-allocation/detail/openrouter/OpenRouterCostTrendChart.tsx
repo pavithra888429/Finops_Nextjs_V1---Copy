@@ -46,16 +46,15 @@ export function OpenRouterCostTrendChart({
     const currentYear = '2026';
     const list = keysList && keysList.length > 0 ? keysList : [];
 
-    return months.map((m, idx) => {
+    // Pass 1: compute exact real spend and key counts for all 12 calendar months directly from DB
+    const monthlyData = months.map((m) => {
       const yyyymm = `${currentYear}-${m.num}`;
 
-      // Keys created in this month
       const keysInMonth = list.filter((k: any) => {
         const dStr = k.createdAt || k.created_at || k.date || '';
         return dStr.startsWith(yyyymm);
       });
 
-      // Keys created up to this month
       const keysUpToMonth = list.filter((k: any) => {
         const dStr = k.createdAt || k.created_at || k.date || '';
         return dStr.length >= 7 && dStr.substring(0, 7) <= yyyymm;
@@ -64,44 +63,51 @@ export function OpenRouterCostTrendChart({
       const isCurrentMonth = m.num === '09';
       const isFutureMonth = Number(m.num) > 9;
 
-      let costCurrent = 0;
-      let costPrevious = 0;
-      let service = 'No keys registered';
+      let cost = 0;
+      let topKeyName = 'No keys registered';
 
       if (isFutureMonth) {
-        // Zero spend for unrecorded future months (Zero mock data)
-        costCurrent = 0;
-        costPrevious = 0;
-        service = 'No DB records (Future month)';
+        cost = 0;
+        topKeyName = 'No DB records (Future month)';
       } else if (isCurrentMonth) {
         // Real-time September active 30-day spend from DB ($8.58)
-        costCurrent = list.reduce(
+        cost = list.reduce(
           (sum: number, k: any) => sum + (Number(k.usageMonthly ?? k.usage_monthly) || 0),
           0
         );
-        // Previous month actual spend
-        costPrevious = 6.45;
-        service = 'Live 30-Day Active Spend';
+        topKeyName = 'Live 30-Day Active Spend';
       } else if (keysInMonth.length > 0) {
-        costCurrent = keysInMonth.reduce((sum: number, k: any) => sum + (Number(k.usage) || 0), 0);
-        costPrevious = idx > 0 ? Number((costCurrent * 0.75).toFixed(2)) : 0;
-        const topKey = [...keysInMonth].sort((a: any, b: any) => (Number(b.usage) || 0) - (Number(a.usage) || 0))[0];
-        service = topKey?.name || 'OpenRouter Key';
+        cost = keysInMonth.reduce((sum: number, k: any) => sum + (Number(k.usage) || 0), 0);
+        const top = [...keysInMonth].sort((a: any, b: any) => (Number(b.usage) || 0) - (Number(a.usage) || 0))[0];
+        topKeyName = top?.name || 'OpenRouter Key';
       } else {
-        // Month with no keys in DB (Jan, Feb, Jun)
-        costCurrent = 0;
-        costPrevious = 0;
-        service = 'No activity recorded in DB';
+        cost = 0;
+        topKeyName = 'No activity recorded in DB';
       }
 
       return {
-        date: `${yyyymm}-01`,
-        label: m.label,
-        costCurrent: Number(costCurrent.toFixed(2)),
+        m,
+        yyyymm,
+        cost,
+        keysCount: isFutureMonth ? 0 : keysUpToMonth.length,
+        topKeyName,
+      };
+    });
+
+    // Pass 2: previous month spend is literally the actual spend of the immediately preceding month (idx - 1)
+    return monthlyData.map((d, idx) => {
+      const prev = idx > 0 ? monthlyData[idx - 1] : null;
+      const costPrevious = prev ? prev.cost : 0;
+      const resourcePrevious = prev ? prev.keysCount : 0;
+
+      return {
+        date: `${d.yyyymm}-01`,
+        label: d.m.label,
+        costCurrent: Number(d.cost.toFixed(2)),
         costPrevious: Number(costPrevious.toFixed(2)),
-        resourceCurrent: isFutureMonth ? 0 : keysUpToMonth.length,
-        resourcePrevious: isFutureMonth ? 0 : Math.max(0, keysUpToMonth.length - 2),
-        service,
+        resourceCurrent: d.keysCount,
+        resourcePrevious: resourcePrevious,
+        service: d.topKeyName,
         project: productName,
         provider: 'OpenRouter',
       };
@@ -431,13 +437,6 @@ export function OpenRouterCostTrendChart({
                   <span>Product:</span>
                 </div>
                 <span className="text-slate-300 truncate max-w-[120px]">{hoveredPoint.project || productName}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                  <span>Data Source:</span>
-                </div>
-                <span className="text-emerald-400 font-mono text-[10px]">MongoDB Atlas (Real)</span>
               </div>
             </div>
           </div>
