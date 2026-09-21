@@ -269,19 +269,30 @@ export const finopsApi = {
 
       return data;
     } catch (err: any) {
-      // If the workflow timed out waiting for response, check if MongoDB received the data in background
-      if (err.code === 'ECONNABORTED' || (err.message && err.message.toLowerCase().includes('timeout'))) {
-        try {
-          const dbRes = await axios.get('/api/finops/openrouter');
-          if (dbRes.data && (dbRes.data.keysList?.length > 0 || dbRes.data.totalUsage !== undefined)) {
-            return {
-              ...dbRes.data,
-              success: true,
-            };
-          }
-        } catch (dbErr) {
-          console.warn('DB fallback on timeout notice:', dbErr);
+      // 1. Fallback to direct Next.js ingestion (bypasses AgentBuilder sandbox queue in < 2 seconds)
+      try {
+        const directRes = await axios.post('/api/finops/openrouter', payload, { timeout: 20000 });
+        if (directRes.data && (directRes.data.keysList?.length > 0 || directRes.data.totalUsage !== undefined)) {
+          return {
+            ...directRes.data,
+            success: true,
+          };
         }
+      } catch (directErr) {
+        console.warn('Direct POST ingestion fallback notice:', directErr);
+      }
+
+      // 2. Fallback to existing MongoDB records
+      try {
+        const dbRes = await axios.get('/api/finops/openrouter');
+        if (dbRes.data && (dbRes.data.keysList?.length > 0 || dbRes.data.totalUsage !== undefined)) {
+          return {
+            ...dbRes.data,
+            success: true,
+          };
+        }
+      } catch (dbErr) {
+        console.warn('DB fallback notice:', dbErr);
       }
 
       if (err.response?.data?.error) {
