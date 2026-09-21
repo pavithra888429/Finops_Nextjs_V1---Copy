@@ -42,25 +42,43 @@ export function DetailFilters({
   setGroupBy,
   onResetFilters,
   onRemoveProduct,
-  onRemoveProvider,
-}: DetailFiltersProps) {
+  // Dynamically generate all 12 calendar months (Jan to Dec) without hardcoding
+  const dynamicMonths = React.useMemo(() => {
+    const targetYear = new Date().getFullYear();
+    const months: { value: string; label: string }[] = [];
+    const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
+
+    for (let m = 0; m < 12; m++) {
+      const d = new Date(targetYear, m, 1);
+      const yyyymm = `${targetYear}-${String(m + 1).padStart(2, '0')}`;
+      months.push({
+        value: yyyymm,
+        label: formatter.format(d),
+      });
+    }
+
+    return months;
+  }, []);
+
   return (
     <div className="space-y-2.5 w-full">
       {/* Row 1: Dropdown Selects */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        {/* Date Range */}
+        {/* Date Range / Billing Month */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Date range</span>
+          <span className="text-[10.5px] font-medium text-slate-400">Billing Month</span>
           <div className="relative">
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               className="h-8 appearance-none pl-8 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
             >
-              <option value="last30">Last 30 days</option>
-              <option value="last7">Last 7 days</option>
-              <option value="last90">Last 90 days</option>
-              <option value="ytd">Year to date</option>
+              <option value="all">All Months (Lifetime)</option>
+              {dynamicMonths.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
             </select>
             <Calendar className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
@@ -74,11 +92,11 @@ export function DetailFilters({
             <select
               value={comparePeriod}
               onChange={(e) => setComparePeriod(e.target.value)}
-              className="h-8 appearance-none pl-8 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
+              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
             >
-              <option value="prev30">Previous 30 days</option>
-              <option value="prevPeriod">Previous period</option>
-              <option value="samePeriodLastYear">Same period last year</option>
+              <option value="prevMonth">Previous month</option>
+              <option value="prevYear">Same month last year</option>
+              <option value="none">No comparison</option>
             </select>
             <Calendar className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />

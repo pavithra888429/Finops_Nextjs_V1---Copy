@@ -35,8 +35,8 @@ function CostAllocationMain() {
   const [selectedProduct, setSelectedProduct] = useState(urlProduct || "all");
   const [selectedProvider, setSelectedProvider] = useState(urlProvider || "all");
   const [selectedEnv, setSelectedEnv] = useState("production");
-  const [selectedDateRange, setSelectedDateRange] = useState("last30");
-  const [compareRange, setCompareRange] = useState("prev30");
+  const [selectedDateRange, setSelectedDateRange] = useState("all");
+  const [compareRange, setCompareRange] = useState("prevMonth");
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
   // Detailed view specific filter state
@@ -50,7 +50,7 @@ function CostAllocationMain() {
     selectedProduct !== "all" ||
     selectedProvider !== "all" ||
     selectedEnv !== "production" ||
-    selectedDateRange !== "last30" ||
+    selectedDateRange !== "all" ||
     searchQuery.trim() !== "";
 
   // Reset all overview filters to default
@@ -58,15 +58,15 @@ function CostAllocationMain() {
     setSelectedProduct("all");
     setSelectedProvider("all");
     setSelectedEnv("production");
-    setSelectedDateRange("last30");
-    setCompareRange("prev30");
+    setSelectedDateRange("all");
+    setCompareRange("prevMonth");
     setSearchQuery("");
   };
 
   // Reset detailed filters
   const handleResetDetailFilters = () => {
-    setSelectedDateRange("last30");
-    setCompareRange("prev30");
+    setSelectedDateRange("all");
+    setCompareRange("prevMonth");
     setSelectedEnv("production");
     setDetailAccount("all");
     setDetailRegion("all");
@@ -105,9 +105,11 @@ function CostAllocationMain() {
     if (selectedEnv === "development") envFactor = 0.15;
 
     let dateFactor = 1.0;
-    if (selectedDateRange === "last7") dateFactor = 7 / 30;
-    if (selectedDateRange === "last90") dateFactor = 3.0;
-    if (selectedDateRange === "ytd") dateFactor = 8.5;
+    if (selectedDateRange && selectedDateRange !== "all") {
+      // Month-specific variance e.g. "2026-09"
+      const monthNum = parseInt(selectedDateRange.split("-")[1] || "9", 10);
+      dateFactor = 0.88 + (monthNum * 0.02);
+    }
 
     return envFactor * dateFactor;
   }, [selectedEnv, selectedDateRange]);
