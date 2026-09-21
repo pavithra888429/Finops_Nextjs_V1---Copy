@@ -10,17 +10,18 @@ interface OpenRouterTrendPoint {
   resourceCurrent: number;
   resourcePrevious: number;
   service: string;
-  region: string;
+  project: string;
+  provider: string;
 }
 
 const TREND_POINTS: OpenRouterTrendPoint[] = [
-  { date: '2026-03-06', label: 'Mar 06', costCurrent: 3.25, costPrevious: 0, usageCurrent: 325, usagePrevious: 0, resourceCurrent: 1, resourcePrevious: 0, service: 'Prod API KEy chatbot', region: 'global' },
-  { date: '2026-04-10', label: 'Apr 10', costCurrent: 2.29, costPrevious: 1.5, usageCurrent: 229, usagePrevious: 150, resourceCurrent: 2, resourcePrevious: 1, service: 'Dev Key 1', region: 'global' },
-  { date: '2026-05-26', label: 'May 26', costCurrent: 6.21, costPrevious: 4.0, usageCurrent: 621, usagePrevious: 400, resourceCurrent: 3, resourcePrevious: 2, service: 'Code-Migration', region: 'global' },
-  { date: '2026-07-24', label: 'Jul 24', costCurrent: 3.60, costPrevious: 2.8, usageCurrent: 360, usagePrevious: 280, resourceCurrent: 4, resourcePrevious: 3, service: 'COE', region: 'global' },
-  { date: '2026-08-11', label: 'Aug 11', costCurrent: 4.60, costPrevious: 3.2, usageCurrent: 460, usagePrevious: 320, resourceCurrent: 8, resourcePrevious: 4, service: 'PF 1 Suite', region: 'global' },
-  { date: '2026-08-31', label: 'Aug 31', costCurrent: 6.45, costPrevious: 4.8, usageCurrent: 645, usagePrevious: 480, resourceCurrent: 10, resourcePrevious: 8, service: 'PF7-DT-01', region: 'global' },
-  { date: '2026-09-10', label: 'Sep 10', costCurrent: 0.08, costPrevious: 0.05, usageCurrent: 8, usagePrevious: 5, resourceCurrent: 11, resourcePrevious: 10, service: 'DS | 10/9/26', region: 'global' },
+  { date: '2026-03-06', label: 'Mar 06', costCurrent: 3.25, costPrevious: 0, usageCurrent: 325, usagePrevious: 0, resourceCurrent: 1, resourcePrevious: 0, service: 'Prod API KEy chatbot', project: 'Dragon Suite', provider: 'OpenRouter' },
+  { date: '2026-04-10', label: 'Apr 10', costCurrent: 2.29, costPrevious: 1.5, usageCurrent: 229, usagePrevious: 150, resourceCurrent: 2, resourcePrevious: 1, service: 'Dev Key 1', project: 'Okrian Dev', provider: 'OpenRouter' },
+  { date: '2026-05-26', label: 'May 26', costCurrent: 6.21, costPrevious: 4.0, usageCurrent: 621, usagePrevious: 400, resourceCurrent: 3, resourcePrevious: 2, service: 'Code-Migration', project: 'Workbench', provider: 'OpenRouter' },
+  { date: '2026-07-24', label: 'Jul 24', costCurrent: 3.60, costPrevious: 2.8, usageCurrent: 360, usagePrevious: 280, resourceCurrent: 4, resourcePrevious: 3, service: 'COE', project: 'Workbench COE', provider: 'OpenRouter' },
+  { date: '2026-08-11', label: 'Aug 11', costCurrent: 4.60, costPrevious: 3.2, usageCurrent: 460, usagePrevious: 320, resourceCurrent: 8, resourcePrevious: 4, service: 'PF 1 Suite', project: 'Shared Gateway', provider: 'OpenRouter' },
+  { date: '2026-08-31', label: 'Aug 31', costCurrent: 6.45, costPrevious: 4.8, usageCurrent: 645, usagePrevious: 480, resourceCurrent: 10, resourcePrevious: 8, service: 'PF7-DT-01', project: 'Platform Core', provider: 'OpenRouter' },
+  { date: '2026-09-10', label: 'Sep 10', costCurrent: 0.08, costPrevious: 0.05, usageCurrent: 8, usagePrevious: 5, resourceCurrent: 11, resourcePrevious: 10, service: 'DS | 10/9/26', project: 'Dragon Suite', provider: 'OpenRouter' },
 ];
 
 export function OpenRouterCostTrendChart({
@@ -289,13 +290,14 @@ export function OpenRouterCostTrendChart({
           }}
         >
           <div className="font-semibold text-white border-b border-dark-border/60 pb-1.5 mb-1.5 flex justify-between items-center text-[11px]">
-            <span>{hoveredPoint.label}, 2024</span>
+            <span>{hoveredPoint.label}, 2026</span>
+            <span className="text-[10px] text-blue-400 font-mono">OpenRouter</span>
           </div>
           <div className="space-y-1 text-[11px]">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-[#0070f3]" />
-                <span className="text-slate-300">Cost (current):</span>
+                <span className="text-slate-300">Spend (current):</span>
               </div>
               <span className="font-semibold text-white font-mono">
                 {currentCfg.formatValue(hoveredPoint[currentCfg.currentKey])}
@@ -304,26 +306,35 @@ export function OpenRouterCostTrendChart({
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-slate-500" />
-                <span className="text-slate-400">Cost (previous):</span>
+                <span className="text-slate-400">Spend (previous):</span>
               </div>
               <span className="font-normal text-slate-400 font-mono">
                 {currentCfg.formatValue(hoveredPoint[currentCfg.previousKey])}
               </span>
             </div>
             <div className="pt-1 mt-1 border-t border-dark-border/40 text-[10px] text-slate-400 flex flex-col gap-0.5">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  <span>Service:</span>
+                  <span>API Key:</span>
                 </div>
-                <span className="text-white font-medium">{hoveredPoint.service}</span>
+                <span className="text-white font-medium truncate max-w-[110px]" title={hoveredPoint.service}>
+                  {hoveredPoint.service}
+                </span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Region:</span>
+                  <span>Product:</span>
                 </div>
-                <span className="text-slate-300">{hoveredPoint.region}</span>
+                <span className="text-slate-300 truncate max-w-[110px]">{hoveredPoint.project || productName}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+                  <span>Gateway:</span>
+                </div>
+                <span className="text-blue-400 font-mono text-[10px]">OpenRouter AI</span>
               </div>
             </div>
           </div>
