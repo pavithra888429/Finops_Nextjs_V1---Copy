@@ -244,7 +244,7 @@ export const finopsApi = {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 25000,
+        timeout: 120000,
       });
       let data = extractWorkflowData(response.data);
 
@@ -269,6 +269,21 @@ export const finopsApi = {
 
       return data;
     } catch (err: any) {
+      // If the workflow timed out waiting for response, check if MongoDB received the data in background
+      if (err.code === 'ECONNABORTED' || (err.message && err.message.toLowerCase().includes('timeout'))) {
+        try {
+          const dbRes = await axios.get('/api/finops/openrouter');
+          if (dbRes.data && (dbRes.data.keysList?.length > 0 || dbRes.data.totalUsage !== undefined)) {
+            return {
+              ...dbRes.data,
+              success: true,
+            };
+          }
+        } catch (dbErr) {
+          console.warn('DB fallback on timeout notice:', dbErr);
+        }
+      }
+
       if (err.response?.data?.error) {
         throw new Error(err.response.data.error);
       }
@@ -292,7 +307,7 @@ export const finopsApi = {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 25000,
+        timeout: 120000,
       });
       let data = extractWorkflowData(response.data);
 
@@ -341,7 +356,7 @@ export const finopsApi = {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 30000,
+        timeout: 120000,
       });
       let data = extractWorkflowData(response.data);
 
@@ -387,7 +402,7 @@ export const finopsApi = {
     try {
       const response = await axios.post(webhookUrl, params, {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 20000,
+        timeout: 90000,
       });
       const data = extractWorkflowData(response.data);
       if (data && (data.keysList || data.totalUsage !== undefined)) {
