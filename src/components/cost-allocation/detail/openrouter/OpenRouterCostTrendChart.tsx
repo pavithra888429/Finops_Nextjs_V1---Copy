@@ -43,30 +43,30 @@ export function OpenRouterCostTrendChart({
       currentKey: 'costCurrent' as const,
       previousKey: 'costPrevious' as const,
       formatValue: (v: number) => `$${v.toFixed(2)}`,
-      currentLabel: 'Cost (current)',
-      previousLabel: 'Cost (previous)',
+      currentLabel: 'Spend (current)',
+      previousLabel: 'Spend (previous)',
     },
     usage: {
       maxVal: 800,
       ticks: [800, 600, 400, 200, 0],
-      axisLabel: 'Usage (Ktok)',
-      titleSuffix: 'Usage Trend',
+      axisLabel: 'Tokens (kTok)',
+      titleSuffix: 'Inference Tokens Trend',
       currentKey: 'usageCurrent' as const,
       previousKey: 'usagePrevious' as const,
-      formatValue: (v: number) => `${v.toLocaleString()}k tok`,
-      currentLabel: 'Usage (current)',
-      previousLabel: 'Usage (previous)',
+      formatValue: (v: number) => `${v.toLocaleString()}k tokens`,
+      currentLabel: 'Tokens (current)',
+      previousLabel: 'Tokens (previous)',
     },
     resource: {
       maxVal: 12,
       ticks: [12, 9, 6, 3, 0],
-      axisLabel: 'Resource Count',
+      axisLabel: 'Active Keys Count',
       titleSuffix: 'Active Keys Trend',
       currentKey: 'resourceCurrent' as const,
       previousKey: 'resourcePrevious' as const,
       formatValue: (v: number) => `${v} active keys`,
-      currentLabel: 'Keys (current)',
-      previousLabel: 'Keys (previous)',
+      currentLabel: 'Active Keys',
+      previousLabel: 'Previous Baseline',
     },
   };
 
@@ -297,7 +297,7 @@ export function OpenRouterCostTrendChart({
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-[#0070f3]" />
-                <span className="text-slate-300">Spend (current):</span>
+                <span className="text-slate-300">{currentCfg.currentLabel}:</span>
               </div>
               <span className="font-semibold text-white font-mono">
                 {currentCfg.formatValue(hoveredPoint[currentCfg.currentKey])}
@@ -306,7 +306,7 @@ export function OpenRouterCostTrendChart({
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-slate-500" />
-                <span className="text-slate-400">Spend (previous):</span>
+                <span className="text-slate-400">{currentCfg.previousLabel}:</span>
               </div>
               <span className="font-normal text-slate-400 font-mono">
                 {currentCfg.formatValue(hoveredPoint[currentCfg.previousKey])}
