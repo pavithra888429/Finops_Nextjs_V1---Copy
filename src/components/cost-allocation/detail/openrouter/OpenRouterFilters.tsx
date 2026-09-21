@@ -212,8 +212,8 @@ export function OpenRouterFilters({
             >
               <option value="key">API Key</option>
               <option value="model">AI Model</option>
+              <option value="provider">Model Provider</option>
               <option value="status">Key Status (Active/Standby)</option>
-              <option value="environment">Environment</option>
               <option value="month">Billing Month</option>
             </select>
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
