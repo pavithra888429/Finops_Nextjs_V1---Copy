@@ -18,7 +18,7 @@ export function TokenCachingBreakdownCard({ keysList = [] }: TokenCachingBreakdo
 
   const getItemsForTab = () => {
     if (activeTab === 'spend') {
-      return sortedBySpend.slice(0, 5).map((k) => {
+      return sortedBySpend.map((k) => {
         const cost = Number(k.usage || 0);
         const share = totalSpend > 0 ? Number(((cost / totalSpend) * 100).toFixed(1)) : 0;
         return {
@@ -31,7 +31,7 @@ export function TokenCachingBreakdownCard({ keysList = [] }: TokenCachingBreakdo
     }
 
     if (activeTab === 'limits') {
-      return sortedBySpend.slice(0, 5).map((k) => ({
+      return sortedBySpend.map((k) => ({
         name: k.name || 'Unnamed Key',
         detail: k.remaining !== null && k.remaining !== undefined ? `$${Number(k.remaining).toFixed(2)} remaining` : 'No limit set',
         cost: k.limit !== null && k.limit !== undefined ? Number(k.limit) : 0,
@@ -40,7 +40,7 @@ export function TokenCachingBreakdownCard({ keysList = [] }: TokenCachingBreakdo
     }
 
     if (activeTab === 'monthly') {
-      return sortedByMonthly.slice(0, 5).map((k) => {
+      return sortedByMonthly.map((k) => {
         const mCost = Number(k.usageMonthly ?? k.usage_monthly ?? 0);
         return {
           name: k.name || 'Unnamed Key',
@@ -52,7 +52,7 @@ export function TokenCachingBreakdownCard({ keysList = [] }: TokenCachingBreakdo
     }
 
     // weekly
-    return sortedByWeekly.slice(0, 5).map((k) => {
+    return sortedByWeekly.map((k) => {
       const wCost = Number(k.usageWeekly ?? k.usage_weekly ?? 0);
       return {
         name: k.name || 'Unnamed Key',
@@ -130,15 +130,15 @@ export function TokenCachingBreakdownCard({ keysList = [] }: TokenCachingBreakdo
       </div>
 
       {/* Breakdown Rows */}
-      <div className="space-y-3 pt-2 my-auto">
+      <div className="space-y-2.5 pt-2 max-h-56 overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-transparent hover:scrollbar-thumb-slate-600">
         {currentItems.length === 0 ? (
           <div className="py-6 text-center text-slate-500 text-xs">
             No keys available.
           </div>
         ) : (
           currentItems.map((item) => (
-            <div key={item.name} className="grid grid-cols-12 gap-2 items-center text-xs">
-              <span className="col-span-5 font-medium text-slate-200 truncate" title={item.name}>
+            <div key={item.name} className="grid grid-cols-12 gap-2 items-center text-xs group hover:bg-white/[0.02] p-1 rounded transition-colors">
+              <span className="col-span-5 font-medium text-slate-200 truncate group-hover:text-white transition-colors" title={item.name}>
                 {item.name}
               </span>
               <span className="col-span-4 text-slate-400 truncate text-[11px]">
