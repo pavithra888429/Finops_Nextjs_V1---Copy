@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Calendar, ChevronDown, SlidersHorizontal, RotateCcw, RotateCw, X, Key, Cpu } from 'lucide-react';
 
 interface OpenRouterFiltersProps {
@@ -16,7 +16,7 @@ interface OpenRouterFiltersProps {
   setSelectedModel: (v: string) => void;
   groupBy: string;
   setGroupBy: (v: string) => void;
-  availableKeys?: Array<{ name: string; label: string; usage: number }>;
+  availableKeys?: any[];
   onResetFilters: () => void;
   onRemoveProduct?: () => void;
   onRemoveProvider?: () => void;
@@ -46,6 +46,38 @@ export function OpenRouterFilters({
   onSync,
   isSyncing = false,
 }: OpenRouterFiltersProps) {
+  // Dynamically extract all unique months directly from the actual OpenRouter keys in MongoDB
+  const dynamicMonths = useMemo(() => {
+    const monthMap = new Map<string, string>();
+
+    for (const key of availableKeys || []) {
+      const rawDate = key.createdAt || key.created_at || key.date;
+      if (rawDate) {
+        const d = new Date(rawDate);
+        if (!isNaN(d.getTime())) {
+          const yyyymm = d.toISOString().substring(0, 7); // e.g. "2026-09"
+          const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); // e.g. "September 2026"
+          if (!monthMap.has(yyyymm)) {
+            monthMap.set(yyyymm, label);
+          }
+        }
+      }
+    }
+
+    return Array.from(monthMap.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([value, label]) => ({ value, label }));
+  }, [availableKeys]);
+
+  const activeDateLabel = useMemo(() => {
+    if (dateRange === 'all') return 'All Months (Lifetime)';
+    if (dateRange === 'last30') return 'Last 30 days';
+    if (dateRange === 'last7') return 'Last 7 days';
+    if (dateRange === 'today') return 'Today';
+    const found = dynamicMonths.find((m) => m.value === dateRange);
+    return found ? found.label : dateRange;
+  }, [dateRange, dynamicMonths]);
+
   const defaultKeys = [
     { name: 'Prod API KEy chatbot', label: 'sk-or-v1-07f...d0e' },
     { name: 'PF7-DT-01', label: 'sk-or-v1-620...703' },
@@ -70,10 +102,18 @@ export function OpenRouterFilters({
               onChange={(e) => setDateRange(e.target.value)}
               className="h-8 appearance-none pl-8 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
             >
+              <option value="all">All Months (Lifetime)</option>
               <option value="last30">Last 30 days</option>
               <option value="last7">Last 7 days</option>
-              <option value="last1y">Past 1 Year</option>
-              <option value="today">Today</option>
+              {dynamicMonths.length > 0 && (
+                <optgroup label="Calendar Months">
+                  {dynamicMonths.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
             <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
@@ -283,14 +323,17 @@ export function OpenRouterFilters({
         {/* Date Range Chip */}
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
           <span>
-            Date: <strong className="text-white font-medium">Last 30 days</strong>
+            Date: <strong className="text-white font-medium">{activeDateLabel}</strong>
           </span>
-          <button
-            onClick={() => setDateRange('last30')}
-            className="text-slate-500 hover:text-white transition-colors cursor-pointer"
-          >
-            <X className="h-3 w-3" />
-          </button>
+          {dateRange !== 'all' && (
+            <button
+              onClick={() => setDateRange('all')}
+              title="Reset date filter to All Months"
+              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
       </div>
     </div>

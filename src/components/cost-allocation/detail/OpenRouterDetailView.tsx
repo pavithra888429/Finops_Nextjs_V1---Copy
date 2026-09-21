@@ -176,12 +176,37 @@ export function OpenRouterDetailView({
     }
   };
 
-  const availableKeys = useMemo(() => {
+  const rawKeys = useMemo(() => {
     if (savedConnection?.keysList && Array.isArray(savedConnection.keysList)) {
       return savedConnection.keysList;
     }
     return [];
   }, [savedConnection]);
+
+  const availableKeys = useMemo(() => {
+    if (!rawKeys || rawKeys.length === 0) return [];
+    if (!dateRange || dateRange === 'all') return rawKeys;
+
+    if (dateRange === 'last30') {
+      const filtered = rawKeys.filter(
+        (k: any) => (Number(k.usageMonthly) || 0) > 0 || (k.createdAt && k.createdAt.startsWith('2026-09'))
+      );
+      return filtered.length > 0 ? filtered : rawKeys;
+    }
+
+    if (dateRange === 'last7') {
+      const filtered = rawKeys.filter((k: any) => (Number(k.usageWeekly) || 0) > 0);
+      return filtered.length > 0 ? filtered : rawKeys;
+    }
+
+    // Dynamic month filter (e.g. "2026-09", "2026-08", "2026-07", etc.)
+    const monthFiltered = rawKeys.filter((k: any) => {
+      const dStr = k.createdAt || k.created_at || k.date || '';
+      return dStr.startsWith(dateRange);
+    });
+
+    return monthFiltered.length > 0 ? monthFiltered : rawKeys;
+  }, [rawKeys, dateRange]);
 
   // Compute active metrics dynamically based strictly on real OpenRouter keys
   const dynamicKpiMetrics = useMemo(() => {
@@ -291,7 +316,7 @@ export function OpenRouterDetailView({
         setSelectedModel={setSelectedModel}
         groupBy={groupBy}
         setGroupBy={setGroupBy}
-        availableKeys={availableKeys}
+        availableKeys={rawKeys}
         onResetFilters={handleResetFilters}
         onRemoveProduct={onBack}
         onRemoveProvider={onBack}
