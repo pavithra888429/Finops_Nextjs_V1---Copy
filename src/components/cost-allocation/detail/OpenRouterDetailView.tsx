@@ -31,9 +31,9 @@ export function OpenRouterDetailView({
   providerName = 'OpenRouter',
   onBack,
 }: OpenRouterDetailViewProps) {
-  // Filters state
-  const [dateRange, setDateRange] = useState('last30');
-  const [comparePeriod, setComparePeriod] = useState('prev30');
+  // Filters state (purely month-wise)
+  const [dateRange, setDateRange] = useState('all');
+  const [comparePeriod, setComparePeriod] = useState('prevMonth');
   const [environment, setEnvironment] = useState('production');
   const [selectedKey, setSelectedKey] = useState('all');
   const [selectedModel, setSelectedModel] = useState('all');
@@ -187,18 +187,6 @@ export function OpenRouterDetailView({
     if (!rawKeys || rawKeys.length === 0) return [];
     if (!dateRange || dateRange === 'all') return rawKeys;
 
-    if (dateRange === 'last30') {
-      const filtered = rawKeys.filter(
-        (k: any) => (Number(k.usageMonthly) || 0) > 0 || (k.createdAt && k.createdAt.startsWith('2026-09'))
-      );
-      return filtered.length > 0 ? filtered : rawKeys;
-    }
-
-    if (dateRange === 'last7') {
-      const filtered = rawKeys.filter((k: any) => (Number(k.usageWeekly) || 0) > 0);
-      return filtered.length > 0 ? filtered : rawKeys;
-    }
-
     // Dynamic month filter (e.g. "2026-09", "2026-08", "2026-07", etc.)
     const monthFiltered = rawKeys.filter((k: any) => {
       const dStr = k.createdAt || k.created_at || k.date || '';
@@ -281,8 +269,8 @@ export function OpenRouterDetailView({
   }, [savedConnection]);
 
   const handleResetFilters = () => {
-    setDateRange('last30');
-    setComparePeriod('prev30');
+    setDateRange('all');
+    setComparePeriod('prevMonth');
     setEnvironment('production');
     setSelectedKey('all');
     setSelectedModel('all');

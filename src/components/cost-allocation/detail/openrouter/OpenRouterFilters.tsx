@@ -71,9 +71,6 @@ export function OpenRouterFilters({
 
   const activeDateLabel = useMemo(() => {
     if (dateRange === 'all') return 'All Months (Lifetime)';
-    if (dateRange === 'last30') return 'Last 30 days';
-    if (dateRange === 'last7') return 'Last 7 days';
-    if (dateRange === 'today') return 'Today';
     const found = dynamicMonths.find((m) => m.value === dateRange);
     return found ? found.label : dateRange;
   }, [dateRange, dynamicMonths]);
@@ -93,9 +90,9 @@ export function OpenRouterFilters({
     <div className="space-y-2.5 w-full">
       {/* Row 1: Dropdown Selects */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        {/* Date Range */}
+        {/* Month Selector */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Date range</span>
+          <span className="text-[10.5px] font-medium text-slate-400">Billing Month</span>
           <div className="relative">
             <select
               value={dateRange}
@@ -103,17 +100,11 @@ export function OpenRouterFilters({
               className="h-8 appearance-none pl-8 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
             >
               <option value="all">All Months (Lifetime)</option>
-              <option value="last30">Last 30 days</option>
-              <option value="last7">Last 7 days</option>
-              {dynamicMonths.length > 0 && (
-                <optgroup label="Calendar Months">
-                  {dynamicMonths.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
+              {dynamicMonths.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
             </select>
             <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
@@ -129,8 +120,8 @@ export function OpenRouterFilters({
               onChange={(e) => setComparePeriod(e.target.value)}
               className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
             >
-              <option value="prev30">Previous 30 days</option>
-              <option value="prevYear">Previous year</option>
+              <option value="prevMonth">Previous month</option>
+              <option value="prevYear">Same month last year</option>
               <option value="none">No comparison</option>
             </select>
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
@@ -320,15 +311,15 @@ export function OpenRouterFilters({
           </button>
         </div>
 
-        {/* Date Range Chip */}
+        {/* Month Chip */}
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
           <span>
-            Date: <strong className="text-white font-medium">{activeDateLabel}</strong>
+            Month: <strong className="text-white font-medium">{activeDateLabel}</strong>
           </span>
           {dateRange !== 'all' && (
             <button
               onClick={() => setDateRange('all')}
-              title="Reset date filter to All Months"
+              title="Reset month filter to All Months"
               className="text-slate-500 hover:text-white transition-colors cursor-pointer"
             >
               <X className="h-3 w-3" />
