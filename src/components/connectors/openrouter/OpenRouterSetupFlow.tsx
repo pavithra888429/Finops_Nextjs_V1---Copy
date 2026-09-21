@@ -33,12 +33,21 @@ export function OpenRouterSetupFlow() {
       const saved = localStorage.getItem('finops_openrouter_connection');
       if (saved) {
         const parsed: OpenRouterSavedConnection = JSON.parse(saved);
-        setActiveConnection(parsed);
-        setFormData({
+        const safeConnection: OpenRouterSavedConnection = {
+          ...parsed,
           connectionName: parsed.connectionName || 'Production OpenRouter',
-          apiKey: parsed.apiKey || '',
           productTag: parsed.productTag || 'dragon',
-          lowBalanceThreshold: parsed.lowBalanceThreshold || 15.0,
+          lowBalanceThreshold: typeof parsed.lowBalanceThreshold === 'number' && !isNaN(parsed.lowBalanceThreshold)
+            ? parsed.lowBalanceThreshold
+            : 15.0,
+          totalUsage: Number(parsed.totalUsage) || 0,
+        };
+        setActiveConnection(safeConnection);
+        setFormData({
+          connectionName: safeConnection.connectionName,
+          apiKey: parsed.apiKey || '',
+          productTag: safeConnection.productTag,
+          lowBalanceThreshold: safeConnection.lowBalanceThreshold ?? 15.0,
         });
 
         // If user navigated to details mode or default without new flag, stay in details

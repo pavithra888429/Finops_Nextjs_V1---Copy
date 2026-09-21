@@ -34,10 +34,10 @@ export interface OpenRouterSavedConnection {
   connectionName: string;
   apiKey: string;
   productTag: string;
-  lowBalanceThreshold: number;
-  totalUsage: number;
-  creditLimit: number | null;
-  remainingBalance: number | null;
+  lowBalanceThreshold?: number;
+  totalUsage?: number;
+  creditLimit?: number | null;
+  remainingBalance?: number | null;
   keyLabel?: string;
   verifiedAt: string;
   recordsIngested?: number;
@@ -178,7 +178,11 @@ export function OpenRouterConnectedState({
             </div>
             <div className="flex justify-between items-center border-t border-dark-border/40 pt-2">
               <span className="text-slate-400 font-sans">Low Balance Alert:</span>
-              <span className="text-amber-400 font-semibold">${connection.lowBalanceThreshold.toFixed(2)}</span>
+              <span className="text-amber-400 font-semibold">
+                ${(typeof connection?.lowBalanceThreshold === 'number' && !isNaN(connection.lowBalanceThreshold)
+                  ? connection.lowBalanceThreshold
+                  : (Number(connection?.lowBalanceThreshold) || 15.0)).toFixed(2)}
+              </span>
             </div>
             <div className="flex justify-between items-center border-t border-dark-border/40 pt-2">
               <span className="text-slate-400 font-sans">Provider Portal:</span>
@@ -252,7 +256,9 @@ export function OpenRouterConnectedState({
               <span>Total Workspace Spend</span>
             </div>
             <div className="text-xl font-bold font-mono text-white">
-              ${connection.totalUsage !== undefined ? connection.totalUsage.toFixed(2) : '0.00'}
+              ${connection?.totalUsage !== undefined && connection?.totalUsage !== null && !isNaN(Number(connection.totalUsage))
+                ? Number(connection.totalUsage).toFixed(2)
+                : '0.00'}
             </div>
             <div className="text-[10px] text-slate-400">Lifetime spend across all keys</div>
           </div>
@@ -263,8 +269,8 @@ export function OpenRouterConnectedState({
               <span>Remaining Credit Pool</span>
             </div>
             <div className="text-xl font-bold font-mono text-emerald-400">
-              {connection.remainingBalance !== null && connection.remainingBalance !== undefined
-                ? `$${connection.remainingBalance.toFixed(2)}`
+              {connection?.remainingBalance !== null && connection?.remainingBalance !== undefined && !isNaN(Number(connection.remainingBalance))
+                ? `$${Number(connection.remainingBalance).toFixed(2)}`
                 : 'Active / Unlimited'}
             </div>
             <div className="text-[10px] text-slate-400">Available workspace credits</div>
@@ -300,9 +306,9 @@ export function OpenRouterConnectedState({
                         <span className="truncate max-w-[200px]" title={k.name}>{k.name}</span>
                       </td>
                       <td className="py-2 px-3 text-slate-400">{k.label}</td>
-                      <td className="py-2 px-3 text-right font-semibold text-amber-400">${k.usage.toFixed(2)}</td>
-                      <td className="py-2 px-3 text-right text-slate-300">{k.limit !== null ? `$${k.limit.toFixed(2)}` : 'Unlimited'}</td>
-                      <td className="py-2 px-3 text-right text-emerald-400">{k.remaining !== null ? `$${k.remaining.toFixed(2)}` : 'N/A'}</td>
+                      <td className="py-2 px-3 text-right font-semibold text-amber-400">${(Number(k?.usage) || 0).toFixed(2)}</td>
+                      <td className="py-2 px-3 text-right text-slate-300">{k?.limit !== null && k?.limit !== undefined && !isNaN(Number(k.limit)) ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited'}</td>
+                      <td className="py-2 px-3 text-right text-emerald-400">{k?.remaining !== null && k?.remaining !== undefined && !isNaN(Number(k.remaining)) ? `$${Number(k.remaining).toFixed(2)}` : 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>

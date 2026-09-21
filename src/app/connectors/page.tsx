@@ -70,10 +70,10 @@ export default function ConnectorsPage() {
         setProviders((prev) =>
           prev.map((p) => {
             if (p.id === "openrouter") {
-              const rem = parsed.remainingBalance !== null && parsed.remainingBalance !== undefined
-                ? `$${parsed.remainingBalance.toFixed(2)}`
-                : parsed.creditLimit
-                ? `$${parsed.creditLimit.toFixed(2)}`
+              const rem = parsed.remainingBalance !== null && parsed.remainingBalance !== undefined && !isNaN(Number(parsed.remainingBalance))
+                ? `$${Number(parsed.remainingBalance).toFixed(2)}`
+                : parsed.creditLimit !== null && parsed.creditLimit !== undefined && !isNaN(Number(parsed.creditLimit))
+                ? `$${Number(parsed.creditLimit).toFixed(2)}`
                 : "Active";
               return {
                 ...p,
@@ -218,11 +218,11 @@ export default function ConnectorsPage() {
       console.warn("Failed to persist OpenRouter details:", e);
     }
 
-    const spent = details.totalUsage !== undefined ? details.totalUsage.toFixed(2) : "0.00";
-    const rem = details.remainingBalance !== null && details.remainingBalance !== undefined
-      ? `$${details.remainingBalance.toFixed(2)}`
-      : details.creditLimit
-      ? `$${details.creditLimit.toFixed(2)}`
+    const spent = details.totalUsage !== undefined && details.totalUsage !== null && !isNaN(Number(details.totalUsage)) ? Number(details.totalUsage).toFixed(2) : "0.00";
+    const rem = details.remainingBalance !== null && details.remainingBalance !== undefined && !isNaN(Number(details.remainingBalance))
+      ? `$${Number(details.remainingBalance).toFixed(2)}`
+      : details.creditLimit !== null && details.creditLimit !== undefined && !isNaN(Number(details.creditLimit))
+      ? `$${Number(details.creditLimit).toFixed(2)}`
       : "Active";
 
     setProviders((prev) =>

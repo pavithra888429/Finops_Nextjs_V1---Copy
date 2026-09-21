@@ -268,7 +268,7 @@ export function OpenRouterDataVerification({
                   <span>Total Workspace Spend</span>
                 </div>
                 <div className="text-lg font-bold font-mono text-white">
-                  ${ingestionResult.totalUsage.toFixed(2)}
+                  ${(Number(ingestionResult.totalUsage) || 0).toFixed(2)}
                 </div>
                 <div className="text-[10px] text-slate-400">Lifetime spend across all keys</div>
               </div>
@@ -279,8 +279,8 @@ export function OpenRouterDataVerification({
                   <span>Remaining Credit Pool</span>
                 </div>
                 <div className="text-lg font-bold font-mono text-emerald-400">
-                  {ingestionResult.remainingBalance !== null
-                    ? `$${ingestionResult.remainingBalance.toFixed(2)}`
+                  {ingestionResult.remainingBalance !== null && ingestionResult.remainingBalance !== undefined && !isNaN(Number(ingestionResult.remainingBalance))
+                    ? `$${Number(ingestionResult.remainingBalance).toFixed(2)}`
                     : 'Unlimited'}
                 </div>
                 <div className="text-[10px] text-slate-400">Available workspace balance</div>
@@ -316,9 +316,9 @@ export function OpenRouterDataVerification({
                             <span className="truncate max-w-[160px]" title={k.name}>{k.name}</span>
                           </td>
                           <td className="py-2 px-2 text-slate-400">{k.label}</td>
-                          <td className="py-2 px-2 text-right font-semibold text-amber-400">${k.usage.toFixed(2)}</td>
-                          <td className="py-2 px-2 text-right text-slate-300">{k.limit !== null ? `$${k.limit.toFixed(2)}` : 'Unlimited'}</td>
-                          <td className="py-2 px-2 text-right text-emerald-400">{k.remaining !== null ? `$${k.remaining.toFixed(2)}` : 'N/A'}</td>
+                          <td className="py-2 px-2 text-right font-semibold text-amber-400">${(Number(k.usage) || 0).toFixed(2)}</td>
+                          <td className="py-2 px-2 text-right text-slate-300">{k.limit !== null && k.limit !== undefined && !isNaN(Number(k.limit)) ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited'}</td>
+                          <td className="py-2 px-2 text-right text-emerald-400">{k.remaining !== null && k.remaining !== undefined && !isNaN(Number(k.remaining)) ? `$${Number(k.remaining).toFixed(2)}` : 'N/A'}</td>
                         </tr>
                       ))}
                     </tbody>
