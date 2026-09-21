@@ -1,111 +1,207 @@
 {
   "_platform": "agentbuilder",
   "_version": 1,
-  "_exportedAt": "2026-09-20T17:10:00.000Z",
+  "_exportedAt": "2026-09-21T03:52:30.561Z",
   "_fingerprint": "finops_openrouter_focus_real_pipeline",
+  "name": "FinOps OpenRouter Live FOCUS & MongoDB Ingestion Pipeline",
   "nodes": [
     {
-      "id": "webhook-trigger",
-      "type": "webhook",
-      "position": {
-        "x": 160,
-        "y": 200
-      },
+      "id": "webhook-1789900756552001",
       "data": {
         "label": "Webhook Trigger",
-        "toolId": "webhook",
-        "isTrigger": true,
-        "isPrimaryTrigger": true,
         "inputs": {
-          "method": "POST",
-          "responseMode": "respondWithNode",
-          "authentication": "none",
           "path": "708dc830-0fa9-4ca8-8420-a52497ffbe40",
+          "method": "POST",
           "options": {
             "allowedOrigins": "*"
-          }
-        }
+          },
+          "allowedRoles": "admin, staff",
+          "jwtAlgorithm": "HS256",
+          "responseMode": "respondWithNode",
+          "roleClaimKey": "role",
+          "sessionClaim": "sub",
+          "sessionSource": "none",
+          "authentication": "none",
+          "requireRoleCheck": false
+        },
+        "toolId": "webhook",
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      },
+      "type": "webhook",
+      "width": 220,
+      "height": 100,
+      "position": {
+        "x": 241,
+        "y": -39
       }
     },
     {
-      "id": "http-fetch-keys",
-      "type": "action",
-      "position": {
-        "x": 440,
-        "y": 200
-      },
+      "id": "httpRequest-1789900918180002",
       "data": {
         "label": "Http Request",
-        "toolId": "httpRequest",
         "inputs": {
-          "method": "GET",
           "url": "https://openrouter.ai/api/v1/keys",
+          "method": "GET",
           "headers": {
-            "Authorization": "={{ 'Bearer ' + ($('Webhook Trigger').first().json.body?.apiKey || $json.body?.apiKey || $json.apiKey) }}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": "={{ 'Bearer ' + ($json.body.apiKey || $json.apiKey || $('Webhook Trigger').first().json.body?.apiKey) }}"
           },
-          "ignoreResponseCode": true,
-          "lowercaseHeaders": true,
-          "timeout": 30000,
-          "outputPropertyName": "data",
+          "timeout": 300000,
           "bodyType": "json",
           "contentType": "json",
-          "responseFormat": "auto"
-        }
+          "includeHeaders": false,
+          "responseFormat": "auto",
+          "lowercaseHeaders": true,
+          "allowUnauthorized": false,
+          "ignoreResponseCode": false,
+          "outputPropertyName": "data"
+        },
+        "toolId": "httpRequest",
+        "isTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 506,
+        "y": -36
       }
     },
     {
-      "id": "code-process-real-telemetry",
-      "type": "action",
-      "position": {
-        "x": 740,
-        "y": 200
-      },
+      "id": "code.execute-1789901042358003",
       "data": {
-        "label": "Process Real Telemetry & FOCUS 1.0",
-        "toolId": "code.execute",
+        "label": "Code",
         "inputs": {
-          "language": "javascript",
+          "code": "// Node 3: Clean & Ingest Real Keys from Http Request\nlet triggerInput = {};\ntry {\n  triggerInput = $('Webhook Trigger').first().json.body || {};\n} catch (e) {\n  triggerInput = {};\n}\n\nconst userId = triggerInput.userId || 'default_user';\nconst connectionId = triggerInput.connectionId || 'Production OpenRouter';\nconst connectionName = triggerInput.connectionName || 'Production OpenRouter';\nconst productTag = (triggerInput.productTag || 'SHARED_GATEWAY').toUpperCase();\nconst environment = (triggerInput.environment || 'production').toLowerCase();\n\n// Extract 11 real keys from Http Request ($json)\nlet rawKeys = [];\nif ($json.body && Array.isArray($json.body.data)) {\n  rawKeys = $json.body.data;\n} else if (Array.isArray($json.data)) {\n  rawKeys = $json.data;\n} else if (Array.isArray($json)) {\n  rawKeys = $json;\n} else {\n  try {\n    const httpNode = $('Http Request').first().json;\n    rawKeys = httpNode.body?.data || httpNode.data || [];\n  } catch (e) {\n    rawKeys = [];\n  }\n}\n\nif (!rawKeys || rawKeys.length === 0) {\n  return {\n    success: false,\n    error: 'No keys found in OpenRouter API response.'\n  };\n}\n\nlet totalLifetimeSpend = 0;\nlet totalLimit = 0;\nlet hasLimit = false;\nlet totalRemaining = 0;\n\n// Parse every real key without any mock data\nconst cleanedKeys = rawKeys.map((k, idx) => {\n  const usage = typeof k.usage === 'number' ? Number(k.usage.toFixed(4)) : 0;\n  const limit = typeof k.limit === 'number' ? Number(k.limit.toFixed(2)) : null;\n  const remaining = typeof k.limit_remaining === 'number'\n    ? Number(k.limit_remaining.toFixed(4))\n    : (limit !== null ? Math.max(0, Number((limit - usage).toFixed(4))) : null);\n\n  totalLifetimeSpend += usage;\n  if (limit !== null) {\n    totalLimit += limit;\n    hasLimit = true;\n  }\n  if (remaining !== null) {\n    totalRemaining += remaining;\n  }\n\n  return {\n    keyId: k.hash || k.id || `key_${idx + 1}`,\n    name: (k.name || k.label || `Key ${idx + 1}`).trim(),\n    label: (k.label || '').trim(),\n    createdAt: k.created_at || new Date().toISOString(),\n    usage: usage,\n    usageDaily: typeof k.usage_daily === 'number' ? Number(k.usage_daily.toFixed(4)) : 0,\n    usageWeekly: typeof k.usage_weekly === 'number' ? Number(k.usage_weekly.toFixed(4)) : 0,\n    usageMonthly: typeof k.usage_monthly === 'number' ? Number(k.usage_monthly.toFixed(4)) : 0,\n    limit: limit,\n    remaining: remaining,\n    disabled: Boolean(k.disabled),\n    workspaceId: k.workspace_id || null,\n    environment: environment,\n    productTag: productTag\n  };\n});\n\nreturn {\n  success: true,\n  userId,\n  connectionId,\n  connectionName,\n  productTag,\n  environment,\n  totalUsage: Number(totalLifetimeSpend.toFixed(4)),\n  creditLimit: hasLimit ? Number(totalLimit.toFixed(2)) : null,\n  remainingBalance: hasLimit ? Number(totalRemaining.toFixed(2)) : null,\n  cleanedKeys\n};\n",
           "mode": "all",
-          "code": "// 1. Extract Webhook Trigger Body (Multi-User)\nlet triggerInput = {};\ntry {\n  triggerInput = $('Webhook Trigger').first().json.body || {};\n} catch (e) {\n  triggerInput = $json.body || {};\n}\n\nconst userId = triggerInput.userId || 'usr_default';\nconst connectionId = triggerInput.connectionId || 'Production OpenRouter';\nconst connectionName = triggerInput.connectionName || 'Production OpenRouter';\nconst productTag = (triggerInput.productTag || 'SHARED_GATEWAY').toUpperCase();\nconst environment = (triggerInput.environment || 'production').toLowerCase();\n\n// 2. Extract OpenRouter API Response from Http Request node\nconst httpOutput = $json;\nconst statusCode = httpOutput.statusCode || 200;\n\n// Handle errors from OpenRouter API\nif (statusCode === 401 || statusCode === 403 || httpOutput.error || httpOutput.body?.error) {\n  const errMsg = httpOutput.body?.error?.message || httpOutput.error || `OpenRouter API Error (HTTP ${statusCode}). Verify that you are using an OpenRouter Management Key.`;\n  return {\n    success: false,\n    error: errMsg,\n    statusCode: statusCode\n  };\n}\n\n// 3. Extract Real Keys Array\nlet rawData = httpOutput.body?.data || httpOutput.data || httpOutput.body || [];\nlet rawKeys = Array.isArray(rawData) ? rawData : (rawData?.data && Array.isArray(rawData.data) ? rawData.data : [rawData]);\n\n// Clean and format real keys\nconst cleanedKeys = rawKeys.filter(k => k && typeof k === 'object').map((k, idx) => {\n  const usage = typeof k.usage === 'number' && !isNaN(k.usage) ? Number(k.usage.toFixed(4)) : 0;\n  const limit = typeof k.limit === 'number' && !isNaN(k.limit) ? Number(k.limit.toFixed(2)) : null;\n  const remaining = typeof k.limit_remaining === 'number' && !isNaN(k.limit_remaining)\n    ? Number(k.limit_remaining.toFixed(4))\n    : (limit !== null ? Math.max(0, Number((limit - usage).toFixed(4))) : null);\n\n  return {\n    keyId: k.id || `key_${idx + 1}`,\n    name: (k.name || k.label || `API Key ${idx + 1}`).trim(),\n    label: (k.label || k.name || '').trim(),\n    createdAt: k.created_at || new Date().toISOString(),\n    usage: usage,\n    limit: limit,\n    remaining: remaining,\n    disabled: Boolean(k.disabled),\n    userId: userId,\n    connectionId: connectionId,\n    productTag: productTag,\n    environment: environment\n  };\n});\n\nif (cleanedKeys.length === 0) {\n  return {\n    success: false,\n    error: 'No active keys found in this OpenRouter workspace.'\n  };\n}\n\n// 4. Build Real Date-wise Telemetry & FOCUS 1.0 records per key\nconst dateWiseTelemetry = [];\nconst focusRecords = [];\nconst modelSpendMap = {};\n\ncleanedKeys.forEach(key => {\n  const keySpend = key.usage || 0;\n  const createdDate = new Date(key.createdAt);\n  const now = new Date();\n  const diffDays = Math.max(1, Math.min(30, Math.ceil((now - createdDate) / (1000 * 60 * 60 * 24))));\n  const dailySpend = keySpend > 0 ? keySpend / diffDays : 0;\n\n  // Distribution across models\n  const modelDistribution = [\n    { model: 'anthropic/claude-3.5-sonnet', provider: 'Anthropic', ratio: 0.55 },\n    { model: 'google/gemini-2.0-flash', provider: 'Google', ratio: 0.30 },\n    { model: 'openai/gpt-4o', provider: 'OpenAI', ratio: 0.15 }\n  ];\n\n  for (let d = diffDays - 1; d >= 0; d--) {\n    const rowDate = new Date();\n    rowDate.setDate(rowDate.getDate() - d);\n    const dateStr = rowDate.toISOString().split('T')[0];\n\n    modelDistribution.forEach(m => {\n      const cost = Number((dailySpend * m.ratio).toFixed(4));\n      if (cost <= 0 && keySpend > 0) return;\n      const tokens = Math.round(cost * 350000);\n      const promptTokens = Math.round(tokens * 0.7);\n      const completionTokens = tokens - promptTokens;\n      const requests = Math.max(1, Math.round(tokens / 800));\n\n      dateWiseTelemetry.push({\n        id: `${key.keyId}_${m.model}_${dateStr}`,\n        date: dateStr,\n        keyName: key.name,\n        keyLabel: key.label,\n        keyCreatedAt: key.createdAt,\n        app: productTag,\n        model: m.model,\n        promptTokens: promptTokens,\n        completionTokens: completionTokens,\n        cachedTokens: 0,\n        requests: requests,\n        cost: cost,\n        environment: environment\n      });\n\n      if (!modelSpendMap[m.model]) {\n        modelSpendMap[m.model] = {\n          name: m.model,\n          provider: m.provider,\n          cost: 0,\n          totalTokens: 0\n        };\n      }\n      modelSpendMap[m.model].cost += cost;\n      modelSpendMap[m.model].totalTokens += tokens;\n\n      focusRecords.push({\n        ChargePeriodStart: `${dateStr}T00:00:00Z`,\n        ChargePeriodEnd: `${dateStr}T23:59:59Z`,\n        ProviderName: 'OpenRouter',\n        PublisherName: m.provider,\n        ServiceName: 'OpenRouter AI Gateway',\n        SubServiceName: m.model,\n        ResourceId: key.keyId,\n        ResourceName: key.name,\n        BilledCost: cost,\n        EffectiveCost: cost,\n        BillingCurrency: 'USD',\n        ConsumedQuantity: tokens,\n        ConsumedUnit: 'Tokens',\n        Tags: {\n          Project: productTag,\n          Environment: environment,\n          KeyCreated: key.createdAt\n        },\n        x_UserId: userId,\n        x_DedupKey: `${userId}_${key.keyId}_${m.model}_${dateStr}`\n      });\n    });\n  }\n});\n\n// 5. Rank Top Models by Spend\nconst totalSpend = cleanedKeys.reduce((sum, k) => sum + k.usage, 0);\nconst topModelsBySpend = Object.values(modelSpendMap)\n  .map(m => ({\n    name: m.name,\n    provider: m.provider,\n    cost: Number(m.cost.toFixed(2)),\n    share: totalSpend > 0 ? Number(((m.cost / totalSpend) * 100).toFixed(1)) : 0,\n    totalTokens: m.totalTokens\n  }))\n  .sort((a, b) => b.cost - a.cost);\n\nreturn {\n  success: true,\n  userId: userId,\n  connectionId: connectionId,\n  connectionName: connectionName,\n  productTag: productTag,\n  totalUsage: Number(totalSpend.toFixed(2)),\n  creditLimit: cleanedKeys.some(k => k.limit !== null)\n    ? Number(cleanedKeys.reduce((a, b) => a + (b.limit || 0), 0).toFixed(2))\n    : null,\n  remainingBalance: cleanedKeys.some(k => k.remaining !== null)\n    ? Number(cleanedKeys.reduce((a, b) => a + (b.remaining || 0), 0).toFixed(2))\n    : null,\n  recordsIngested: cleanedKeys.length,\n  keysList: cleanedKeys,\n  topModelsBySpend: topModelsBySpend,\n  dateWiseTelemetry: dateWiseTelemetry,\n  focusRecords: focusRecords,\n  lastSyncedAt: new Date().toISOString()\n};\n"
-        }
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "isTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 763,
+        "y": -37
       }
     },
     {
-      "id": "respond-webhook",
-      "type": "action",
-      "position": {
-        "x": 1040,
-        "y": 200
+      "id": "code.execute-1789901208214004",
+      "data": {
+        "label": "Code",
+        "inputs": {
+          "code": "// Node 4: FOCUS 1.0 & Exact AWS MongoDB 'finops_3' Schema\nconst input = $json;\nif (!input.success) return input;\n\nconst { userId, connectionId, connectionName, productTag, environment, totalUsage, creditLimit, remainingBalance, cleanedKeys } = input;\n\n// 1. Top Models by Real Spend\nconst topModelsBySpend = cleanedKeys\n  .map(k => ({\n    name: k.name,\n    provider: 'OpenRouter',\n    label: k.label,\n    cost: k.usage,\n    share: totalUsage > 0 ? Number(((k.usage / totalUsage) * 100).toFixed(1)) : 0,\n    dailyCost: k.usageDaily,\n    weeklyCost: k.usageWeekly,\n    monthlyCost: k.usageMonthly,\n    limit: k.limit,\n    remaining: k.remaining,\n    createdAt: k.createdAt\n  }))\n  .sort((a, b) => b.cost - a.cost);\n\n// 2. Date-wise Telemetry Table\nconst dateWiseTelemetry = cleanedKeys.map(k => ({\n  id: `telemetry_${k.keyId}`,\n  date: k.createdAt.split('T')[0],\n  keyName: k.name,\n  keyLabel: k.label,\n  keyCreatedAt: k.createdAt,\n  app: productTag,\n  model: k.name,\n  cost: k.usage,\n  dailyCost: k.usageDaily,\n  weeklyCost: k.usageWeekly,\n  monthlyCost: k.usageMonthly,\n  environment: environment\n}));\n\n// 3. Exact MongoDB 'finops_3' Document Format (Matching AWS Schema)\nconst focusRecords = cleanedKeys.map(k => {\n  const dateStr = k.createdAt.split('T')[0];\n  const billingPeriod = dateStr.substring(0, 7);\n  return {\n    date: dateStr,\n    service: `OpenRouter - ${k.name}`,\n    userId: userId,\n    connectionId: connectionId,\n    operation: 'OpenRouterGatewaySync',\n    accountId: k.workspaceId || 'openrouter-workspace',\n    accountName: connectionName,\n    amortizedCost: k.usage,\n    billingPeriod: billingPeriod,\n    blendedCost: k.usage,\n    chargeDescription: `OpenRouter Key Inference - ${k.name}`,\n    chargeType: 'Usage',\n    netAmortizedCost: k.usage,\n    netCost: k.usage,\n    unblendedCost: k.usage,\n    originalId: null,\n    pricingCurrency: 'USD',\n    pricingUnit: 'Tokens',\n    region: 'global',\n    resourceId: k.keyId,\n    tags: {\n      Project: productTag,\n      Environment: environment,\n      KeyLabel: k.label,\n      Provider: 'OpenRouter'\n    },\n    createdAt: new Date().toISOString(),\n    updatedAt: new Date().toISOString(),\n    ChargePeriodStart: k.createdAt,\n    ChargePeriodEnd: new Date().toISOString(),\n    ProviderName: 'OpenRouter',\n    ServiceName: 'OpenRouter AI Gateway',\n    SubServiceName: k.name,\n    BilledCost: k.usage,\n    EffectiveCost: k.usage\n  };\n});\n\nreturn {\n  success: true,\n  userId,\n  connectionId,\n  connectionName,\n  productTag,\n  environment,\n  totalUsage,\n  creditLimit,\n  remainingBalance,\n  recordsIngested: cleanedKeys.length,\n  keysList: cleanedKeys,\n  topModelsBySpend,\n  dateWiseTelemetry,\n  focusRecords\n};\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "isTrigger": false
       },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1021,
+        "y": -34
+      }
+    },
+    {
+      "id": "code.execute-1789901276991005",
+      "data": {
+        "label": "Code",
+        "inputs": {
+          "code": "// Node 5: Deduplication & Prepare MongoDB Documents\nconst input = $json;\nif (!input.success) return input;\n\nconst { focusRecords, ...meta } = input;\n\n// Deduplicate\nconst seenKeys = new Set();\nconst deduplicatedDocs = [];\nlet duplicatesPrevented = 0;\n\nfor (const doc of (focusRecords || [])) {\n  const dedupKey = `${meta.userId}_${doc.resourceId}`;\n  if (!seenKeys.has(dedupKey)) {\n    seenKeys.add(dedupKey);\n    deduplicatedDocs.push(doc);\n  } else {\n    duplicatesPrevented++;\n  }\n}\n\n// Return items formatted for MongoDB Insert\nreturn deduplicatedDocs.map(doc => ({\n  ...doc,\n  ...meta,\n  recordsIngested: deduplicatedDocs.length,\n  duplicatesPrevented: duplicatesPrevented,\n  lastSyncedAt: new Date().toISOString()\n}));\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "isTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1279,
+        "y": -30
+      }
+    },
+    {
+      "id": "mongodb.update_document-1789909342626008",
+      "data": {
+        "label": "Update Document",
+        "inputs": {
+          "mode": "updateOne",
+          "query": "{ \"userId\": \"{{ $json.userId }}\", \"resourceId\": \"{{ $json.resourceId }}\" }\n",
+          "update": "{   \"$set\": {     \"date\": \"{{ $json.date }}\",     \"service\": \"{{ $json.service }}\",     \"userId\": \"{{ $json.userId }}\",     \"connectionId\": \"{{ $json.connectionId }}\",     \"operation\": \"{{ $json.operation }}\",     \"accountId\": \"{{ $json.accountId }}\",     \"accountName\": \"{{ $json.accountName }}\",     \"amortizedCost\": {{ $json.amortizedCost }},     \"billingPeriod\": \"{{ $json.billingPeriod }}\",     \"blendedCost\": {{ $json.blendedCost }},     \"chargeDescription\": \"{{ $json.chargeDescription }}\",     \"chargeType\": \"{{ $json.chargeType }}\",     \"netAmortizedCost\": {{ $json.netAmortizedCost }},     \"netCost\": {{ $json.netCost }},     \"unblendedCost\": {{ $json.unblendedCost }},     \"pricingCurrency\": \"{{ $json.pricingCurrency }}\",     \"pricingUnit\": \"{{ $json.pricingUnit }}\",     \"region\": \"{{ $json.region }}\",     \"resourceId\": \"{{ $json.resourceId }}\",     \"tags\": {       \"Project\": \"{{ $json.tags.Project }}\",       \"Environment\": \"{{ $json.tags.Environment }}\",       \"KeyLabel\": \"{{ $json.tags.KeyLabel }}\",       \"Provider\": \"{{ $json.tags.Provider }}\"     },     \"updatedAt\": \"{{ $json.updatedAt }}\",     \"ChargePeriodStart\": \"{{ $json.ChargePeriodStart }}\",     \"ChargePeriodEnd\": \"{{ $json.ChargePeriodEnd }}\",     \"ProviderName\": \"{{ $json.ProviderName }}\",     \"ServiceName\": \"{{ $json.ServiceName }}\",     \"SubServiceName\": \"{{ $json.SubServiceName }}\",     \"BilledCost\": {{ $json.BilledCost }},     \"EffectiveCost\": {{ $json.EffectiveCost }}   },   \"$setOnInsert\": {     \"createdAt\": \"{{ $json.createdAt }}\"   } }   ",
+          "upsert": true,
+          "database": "finops_3",
+          "collection": "finops_3",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.update_document",
+        "isTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1543,
+        "y": -26
+      }
+    },
+    {
+      "id": "respondToWebhook-1789901300435006",
       "data": {
         "label": "Webhook Response",
-        "toolId": "respondToWebhook",
         "inputs": {
-          "respondWith": "First Incoming Item",
-          "responseCode": 200
-        }
+          "respondWith": "All Incoming Items",
+          "inputFieldName": "data"
+        },
+        "toolId": "respondToWebhook",
+        "isTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1798,
+        "y": -22
       }
     }
   ],
   "edges": [
     {
-      "id": "e1",
-      "type": "custom",
-      "source": "webhook-trigger",
-      "target": "http-fetch-keys"
+      "id": "edge-1",
+      "source": "webhook-1789900756552001",
+      "target": "httpRequest-1789900918180002"
     },
     {
-      "id": "e2",
-      "type": "custom",
-      "source": "http-fetch-keys",
-      "target": "code-process-real-telemetry"
+      "id": "edge-2",
+      "source": "httpRequest-1789900918180002",
+      "target": "code.execute-1789901042358003"
     },
     {
-      "id": "e3",
-      "type": "custom",
-      "source": "code-process-real-telemetry",
-      "target": "respond-webhook"
+      "id": "edge-3",
+      "source": "code.execute-1789901042358003",
+      "target": "code.execute-1789901208214004"
+    },
+    {
+      "id": "edge-4",
+      "source": "code.execute-1789901208214004",
+      "target": "code.execute-1789901276991005"
+    },
+    {
+      "id": "edge-5",
+      "source": "code.execute-1789901276991005",
+      "target": "mongodb.update_document-1789909342626008"
+    },
+    {
+      "id": "edge-6",
+      "source": "mongodb.update_document-1789909342626008",
+      "target": "respondToWebhook-1789901300435006"
     }
   ]
 }

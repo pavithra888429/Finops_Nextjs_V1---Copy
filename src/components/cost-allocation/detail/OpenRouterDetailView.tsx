@@ -46,6 +46,29 @@ export function OpenRouterDetailView({
 
   const loadDataFromMongo = async () => {
     try {
+      // 1. Try querying the dedicated Cost Allocation Workflow in AgentBuilder
+      const wfData = await finopsApi.queryCostAllocationWorkflow({
+        productId,
+        productTag: productId,
+        environment,
+      });
+      if (wfData && wfData.success && Array.isArray(wfData.keysList) && wfData.keysList.length > 0) {
+        setSavedConnection((prev: any) => {
+          const merged = { ...(prev || {}), ...wfData };
+          try {
+            localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
+        setLastSyncText('AgentBuilder Workflow (Live)');
+        return true;
+      }
+    } catch (err) {
+      console.warn('Error querying cost allocation workflow:', err);
+    }
+
+    // 2. Direct fallback to MongoDB Atlas API
+    try {
       const res = await fetch('/api/finops/openrouter');
       const data = await res.json();
       if (data && data.success && Array.isArray(data.keysList) && data.keysList.length > 0) {
@@ -56,7 +79,7 @@ export function OpenRouterDetailView({
           } catch (e) {}
           return merged;
         });
-        setLastSyncText('MongoDB Atlas (Live)');
+        setLastSyncText('MongoDB Atlas (Direct)');
         return true;
       }
     } catch (err) {

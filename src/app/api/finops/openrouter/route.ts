@@ -67,8 +67,13 @@ export async function GET() {
       ? Number(firstWithMeta.totalUsage)
       : Number(docs.reduce((acc: number, d: any) => acc + (Number(d.amortizedCost) || 0), 0).toFixed(4));
 
-    const creditLimit = firstWithMeta?.creditLimit ?? 88;
-    const remainingBalance = firstWithMeta?.remainingBalance ?? Number((creditLimit - totalUsage).toFixed(2));
+    const creditLimit = typeof firstWithMeta?.creditLimit === 'number'
+      ? firstWithMeta.creditLimit
+      : Number(keysList.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0).toFixed(2));
+
+    const remainingBalance = typeof firstWithMeta?.remainingBalance === 'number'
+      ? firstWithMeta.remainingBalance
+      : Number(keysList.reduce((acc: number, k: any) => acc + (Number(k.remaining) || 0), 0).toFixed(2));
 
     const topModelsBySpend = firstWithMeta?.topModelsBySpend || keysList
       .map((k: any) => ({

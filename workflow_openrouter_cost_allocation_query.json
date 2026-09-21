@@ -1,0 +1,116 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-09-21T04:20:00.000Z",
+  "_fingerprint": "finops_openrouter_cost_allocation_query_pipeline",
+  "name": "FinOps OpenRouter Cost Allocation Query & Aggregation Pipeline",
+  "nodes": [
+    {
+      "id": "webhook-cost-allocation-trigger",
+      "type": "webhook",
+      "width": 240,
+      "height": 100,
+      "position": {
+        "x": 160,
+        "y": 200
+      },
+      "data": {
+        "label": "Webhook Trigger",
+        "toolId": "webhook",
+        "isTrigger": true,
+        "isPrimaryTrigger": true,
+        "inputs": {
+          "path": "e74a6990-d060-4d60-9754-29bb287232ad",
+          "method": "POST",
+          "responseMode": "respondWithNode",
+          "authentication": "none",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        }
+      }
+    },
+    {
+      "id": "mongodb-fetch-focus-records",
+      "type": "action",
+      "width": 240,
+      "height": 94,
+      "position": {
+        "x": 480,
+        "y": 200
+      },
+      "data": {
+        "label": "Query MongoDB Documents",
+        "toolId": "mongodb.find",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "finops_3",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96",
+          "query": "={\n  \"$or\": [\n    { \"operation\": \"OpenRouterGatewaySync\" },\n    { \"ProviderName\": \"OpenRouter\" },\n    { \"tags.Provider\": \"OpenRouter\" }\n  ]\n}",
+          "options": {
+            "sort": {
+              "amortizedCost": -1
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "code-cost-allocation-mapper",
+      "type": "action",
+      "width": 260,
+      "height": 110,
+      "position": {
+        "x": 800,
+        "y": 200
+      },
+      "data": {
+        "label": "Cost Allocation Aggregator",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "// Extract incoming filters from Webhook Trigger\nlet triggerInput = {};\ntry {\n  triggerInput = $('Webhook Trigger').first().json.body || {};\n} catch (e) {\n  triggerInput = {};\n}\n\nconst requestedProduct = (triggerInput.productTag || triggerInput.productId || 'all').toLowerCase();\nconst requestedEnv = (triggerInput.environment || 'production').toLowerCase();\n\n// Extract raw MongoDB FOCUS documents from MongoDB Node\nlet docs = [];\nif (Array.isArray($json)) {\n  docs = $json;\n} else if ($json.documents && Array.isArray($json.documents)) {\n  docs = $json.documents;\n} else if ($json.data && Array.isArray($json.data)) {\n  docs = $json.data;\n} else {\n  try {\n    const mongoNode = $('Query MongoDB Documents').first().json;\n    docs = mongoNode.documents || mongoNode.data || (Array.isArray(mongoNode) ? mongoNode : []);\n  } catch (e) {\n    docs = [];\n  }\n}\n\n// 1. Process Keys directly from MongoDB documents\nconst firstWithMeta = docs.find(d => d.keysList && Array.isArray(d.keysList) && d.keysList.length > 0);\n\nconst rawKeysList = firstWithMeta?.keysList || docs.map((d, idx) => ({\n  keyId: d.resourceId || `key_${idx + 1}`,\n  name: d.SubServiceName || (d.service ? d.service.replace('OpenRouter - ', '') : `Key ${idx + 1}`),\n  label: d.tags?.KeyLabel || '',\n  usage: Number(d.amortizedCost || d.unblendedCost || 0),\n  limit: typeof d.limit === 'number' ? d.limit : (typeof d.creditLimit === 'number' ? d.creditLimit : null),\n  remaining: typeof d.remaining === 'number' ? d.remaining : (typeof d.remainingBalance === 'number' ? d.remainingBalance : null),\n  createdAt: d.ChargePeriodStart || d.date || d.createdAt,\n  usageDaily: Number(d.usageDaily || 0),\n  usageWeekly: Number(d.usageWeekly || 0),\n  usageMonthly: Number(d.usageMonthly || 0),\n  environment: (d.tags?.Environment || d.environment || 'production').toLowerCase(),\n  productTag: d.tags?.Project || d.productTag || 'SHARED_GATEWAY'\n}));\n\n// 2. Filter Keys if a specific product or environment is requested\nconst filteredKeys = rawKeysList.filter(k => {\n  if (requestedProduct !== 'all' && requestedProduct !== 'shared_gateway') {\n    if (k.productTag && k.productTag.toLowerCase() !== requestedProduct) return false;\n  }\n  if (requestedEnv !== 'all') {\n    if (k.environment && k.environment.toLowerCase() !== requestedEnv) return false;\n  }\n  return true;\n});\n\nconst activeKeys = filteredKeys.length > 0 ? filteredKeys : rawKeysList;\n\n// 3. Compute Unit Economics directly from exact MongoDB records\nconst totalSpend = Number(activeKeys.reduce((acc, k) => acc + (Number(k.usage) || 0), 0).toFixed(4));\nconst totalMonthly = Number(activeKeys.reduce((acc, k) => acc + (Number(k.usageMonthly) || 0), 0).toFixed(4));\nconst totalWeekly = Number(activeKeys.reduce((acc, k) => acc + (Number(k.usageWeekly) || 0), 0).toFixed(4));\nconst totalDaily = Number(activeKeys.reduce((acc, k) => acc + (Number(k.usageDaily) || 0), 0).toFixed(4));\n\nconst creditLimit = typeof firstWithMeta?.creditLimit === 'number'\n  ? firstWithMeta.creditLimit\n  : Number(activeKeys.reduce((acc, k) => acc + (Number(k.limit) || 0), 0).toFixed(2));\n\nconst remainingBalance = typeof firstWithMeta?.remainingBalance === 'number'\n  ? firstWithMeta.remainingBalance\n  : Number(activeKeys.reduce((acc, k) => acc + (Number(k.remaining) || 0), 0).toFixed(2));\n\nconst sortedKeys = [...activeKeys].sort((a, b) => (Number(b.usage) || 0) - (Number(a.usage) || 0));\nconst topKeyItem = sortedKeys[0] || null;\n\n// 4. Product Allocation Mapping - Computed dynamically from real key productTags\nconst productAllocation = {};\nfor (const k of activeKeys) {\n  let pTag = (k.productTag || 'shared').toLowerCase();\n  // Detect product category from tag or key name\n  if (pTag.includes('dragon') || k.name.toUpperCase().startsWith('DS') || k.name.toLowerCase().includes('chatbot')) {\n    pTag = 'dragon';\n  } else if (pTag.includes('okrian') || k.name.toLowerCase().includes('dev')) {\n    pTag = 'okrian';\n  } else if (pTag.includes('workbench') || k.name.toLowerCase().includes('coe') || k.name.toLowerCase().includes('migration')) {\n    pTag = 'workbench';\n  } else {\n    pTag = 'shared';\n  }\n  productAllocation[pTag] = Number(((productAllocation[pTag] || 0) + (Number(k.usage) || 0)).toFixed(4));\n}\nproductAllocation.total = totalSpend;\n\n// 5. Model / Key Breakdown with Exact Percentage Share\nconst topModelsBySpend = sortedKeys.map(k => ({\n  name: k.name,\n  provider: 'OpenRouter',\n  label: k.label,\n  cost: Number(k.usage || 0),\n  share: totalSpend > 0 ? Number(((Number(k.usage || 0) / totalSpend) * 100).toFixed(1)) : 0,\n  dailyCost: Number(k.usageDaily || 0),\n  weeklyCost: Number(k.usageWeekly || 0),\n  monthlyCost: Number(k.usageMonthly || 0),\n  limit: k.limit,\n  remaining: k.remaining,\n  createdAt: k.createdAt\n}));\n\n// 6. Date-wise Telemetry Table from exact documents\nconst dateWiseTelemetry = activeKeys.map((k, idx) => ({\n  id: `telemetry_${k.keyId || idx + 1}`,\n  date: (k.createdAt || '').split('T')[0] || new Date().toISOString().split('T')[0],\n  keyName: k.name,\n  keyLabel: k.label,\n  keyCreatedAt: k.createdAt,\n  app: k.productTag || 'SHARED_GATEWAY',\n  model: k.name,\n  cost: Number(k.usage || 0),\n  dailyCost: Number(k.usageDaily || 0),\n  weeklyCost: Number(k.usageWeekly || 0),\n  monthlyCost: Number(k.usageMonthly || 0),\n  environment: k.environment || 'production'\n}));\n\nreturn {\n  success: true,\n  connectionId: docs[0]?.connectionId || 'Production OpenRouter',\n  connectionName: docs[0]?.accountName || 'Production OpenRouter',\n  productTag: requestedProduct,\n  environment: requestedEnv,\n  totalUsage: totalSpend,\n  monthlySpend: totalMonthly,\n  weeklySpend: totalWeekly,\n  dailySpend: totalDaily,\n  creditLimit: creditLimit,\n  remainingBalance: remainingBalance,\n  topSpendingKey: {\n    name: topKeyItem?.name || 'Active Key',\n    cost: topKeyItem ? Number(topKeyItem.usage || 0) : 0,\n    share: totalSpend > 0 && topKeyItem ? Number(((Number(topKeyItem.usage || 0) / totalSpend) * 100).toFixed(1)) : 0\n  },\n  recordsIngested: activeKeys.length,\n  keysList: activeKeys,\n  topModelsBySpend: topModelsBySpend,\n  dateWiseTelemetry: dateWiseTelemetry,\n  productAllocation: productAllocation,\n  lastSyncedAt: docs[0]?.updatedAt || new Date().toISOString()\n};"
+        }
+      }
+    },
+    {
+      "id": "respond-cost-allocation-webhook",
+      "type": "action",
+      "width": 240,
+      "height": 94,
+      "position": {
+        "x": 1120,
+        "y": 200
+      },
+      "data": {
+        "label": "Webhook Response",
+        "toolId": "webhook.respond",
+        "inputs": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-query-1",
+      "source": "webhook-cost-allocation-trigger",
+      "target": "mongodb-fetch-focus-records"
+    },
+    {
+      "id": "edge-query-2",
+      "source": "mongodb-fetch-focus-records",
+      "target": "code-cost-allocation-mapper"
+    },
+    {
+      "id": "edge-query-3",
+      "source": "code-cost-allocation-mapper",
+      "target": "respond-cost-allocation-webhook"
+    }
+  ]
+}

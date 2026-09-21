@@ -311,4 +311,32 @@ export const finopsApi = {
       throw new Error(err.message || 'Failed to fetch OpenRouter full telemetry.');
     }
   },
+
+  queryCostAllocationWorkflow: async (params: {
+    productId?: string;
+    productTag?: string;
+    provider?: string;
+    environment?: string;
+    dateRange?: string;
+  }) => {
+    const webhookUrl =
+      process.env.NEXT_PUBLIC_COST_ALLOCATION_QUERY_WEBHOOK_URL ||
+      'https://api.agents.snsihub.ai/webhook/e74a6990-d060-4d60-9754-29bb287232ad';
+
+    try {
+      const response = await axios.post(webhookUrl, params, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 20000,
+      });
+      const data = extractWorkflowData(response.data);
+      if (data && (data.keysList || data.totalUsage !== undefined)) {
+        return data;
+      }
+      throw new Error('No keys returned by workflow');
+    } catch (err: any) {
+      // Fallback to local MongoDB API route if workflow is offline
+      const local = await axios.get('/api/finops/openrouter');
+      return local.data;
+    }
+  },
 };
