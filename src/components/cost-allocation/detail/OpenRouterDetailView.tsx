@@ -37,7 +37,7 @@ export function OpenRouterDetailView({
   const [environment, setEnvironment] = useState('production');
   const [selectedKey, setSelectedKey] = useState('all');
   const [selectedModel, setSelectedModel] = useState('all');
-  const [groupBy, setGroupBy] = useState('model');
+  const [groupBy, setGroupBy] = useState('key');
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncText, setLastSyncText] = useState('Today, 09:58 AM');
 
@@ -251,7 +251,14 @@ export function OpenRouterDetailView({
   // Format strictly live date-wise telemetry directly from OpenRouter sync response
   const telemetryRows = useMemo(() => {
     if (savedConnection?.dateWiseTelemetry && Array.isArray(savedConnection.dateWiseTelemetry) && savedConnection.dateWiseTelemetry.length > 0) {
-      return savedConnection.dateWiseTelemetry.map((row: any, idx: number) => ({
+      let filtered = savedConnection.dateWiseTelemetry;
+      if (selectedKey !== 'all') {
+        filtered = filtered.filter((row: any) => (row.keyName || row.name || row.key) === selectedKey);
+      }
+      if (selectedModel !== 'all') {
+        filtered = filtered.filter((row: any) => (row.model || '').toLowerCase().includes(selectedModel.toLowerCase()));
+      }
+      return filtered.map((row: any, idx: number) => ({
         id: row.id || `live-${row.date || 'item'}-${idx}`,
         date: row.date || '',
         keyName: row.keyName || row.key || row.name || (row.keyLabel ? `Key (${row.keyLabel})` : ''),
@@ -266,7 +273,7 @@ export function OpenRouterDetailView({
       }));
     }
     return [];
-  }, [savedConnection]);
+  }, [savedConnection, selectedKey, selectedModel]);
 
   const handleResetFilters = () => {
     setDateRange('all');
@@ -274,7 +281,7 @@ export function OpenRouterDetailView({
     setEnvironment('production');
     setSelectedKey('all');
     setSelectedModel('all');
-    setGroupBy('model');
+    setGroupBy('key');
   };
 
   return (

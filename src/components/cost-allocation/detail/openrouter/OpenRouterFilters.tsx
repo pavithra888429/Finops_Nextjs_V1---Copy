@@ -146,16 +146,16 @@ export function OpenRouterFilters({
           </div>
         </div>
 
-        {/* OpenRouter Account / Key */}
+        {/* OpenRouter API Key */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">OpenRouter account</span>
+          <span className="text-[10.5px] font-medium text-slate-400">API Key</span>
           <div className="relative">
             <select
               value={selectedKey}
               onChange={(e) => setSelectedKey(e.target.value)}
               className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer max-w-[200px] truncate"
             >
-              <option value="all">All accounts</option>
+              <option value="all">All API Keys</option>
               {keysToUse.map((k) => (
                 <option key={k.name} value={k.name}>
                   {k.name}
@@ -166,20 +166,25 @@ export function OpenRouterFilters({
           </div>
         </div>
 
-        {/* Service / Model */}
+        {/* AI Model */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Service</span>
+          <span className="text-[10.5px] font-medium text-slate-400">AI Model</span>
           <div className="relative">
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
+              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer max-w-[190px] truncate"
             >
-              <option value="all">All services</option>
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-              <option value="gemini-3-flash">Gemini 3 Flash Preview</option>
-              <option value="gemini-embedding">Gemini Embedding 001</option>
+              <option value="all">All AI Models</option>
+              <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+              <option value="openai/gpt-4o">GPT-4o</option>
+              <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+              <option value="google/gemini-2.0-flash">Gemini 2.0 Flash</option>
+              <option value="google/gemini-1.5-flash">Gemini 1.5 Flash</option>
+              <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B</option>
+              <option value="deepseek/deepseek-r1">DeepSeek R1</option>
+              <option value="deepseek/deepseek-chat">DeepSeek V3</option>
+              <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
             </select>
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
           </div>
@@ -194,10 +199,11 @@ export function OpenRouterFilters({
               onChange={(e) => setGroupBy(e.target.value)}
               className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
             >
-              <option value="service">Service</option>
-              <option value="account">Account</option>
-              <option value="app">Application</option>
-              <option value="usageType">Usage type</option>
+              <option value="key">API Key</option>
+              <option value="model">AI Model</option>
+              <option value="status">Key Status (Active/Standby)</option>
+              <option value="environment">Environment</option>
+              <option value="month">Billing Month</option>
             </select>
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
           </div>
@@ -270,11 +276,11 @@ export function OpenRouterFilters({
         {selectedKey !== 'all' && (
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
             <span>
-              Account: <strong className="text-white font-medium">{selectedKey}</strong>
+              API Key: <strong className="text-white font-medium">{selectedKey}</strong>
             </span>
             <button
               onClick={() => setSelectedKey('all')}
-              title="Clear account filter"
+              title="Clear API key filter"
               className="text-slate-500 hover:text-white transition-colors cursor-pointer"
             >
               <X className="h-3 w-3" />
@@ -282,15 +288,15 @@ export function OpenRouterFilters({
           </div>
         )}
 
-        {/* Service / Model Chip if filtered */}
+        {/* Model Chip if filtered */}
         {selectedModel !== 'all' && (
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
             <span>
-              Service: <strong className="text-white font-medium">{selectedModel}</strong>
+              Model: <strong className="text-white font-medium">{selectedModel}</strong>
             </span>
             <button
               onClick={() => setSelectedModel('all')}
-              title="Clear service filter"
+              title="Clear model filter"
               className="text-slate-500 hover:text-white transition-colors cursor-pointer"
             >
               <X className="h-3 w-3" />
