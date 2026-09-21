@@ -275,29 +275,7 @@ export function OpenRouterDetailView({
         onBack={onBack}
       />
 
-      {/* Quick Action & Sync Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-dark-border bg-dark-card/60 backdrop-blur-sm">
-        <div className="flex items-center gap-2.5 text-xs text-slate-300">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400">
-            <Database className="h-3.5 w-3.5" />
-          </div>
-          <div>
-            <span className="font-semibold text-white">FinOps Pipeline:</span>{' '}
-            <span className="text-slate-400 font-mono">OpenRouter Keys API &gt; Telemetry Normalization &gt; MongoDB finops_3</span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleLiveSync}
-          disabled={isSyncing}
-          className="h-7 inline-flex items-center gap-1.5 px-3 rounded-lg border border-blue-500/30 bg-blue-600/15 text-blue-400 hover:bg-blue-600/25 hover:text-blue-300 text-xs font-medium transition-all shadow-sm disabled:opacity-50 cursor-pointer"
-        >
-          <RotateCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
-          <span>{isSyncing ? 'Fetching from OpenRouter...' : 'Sync Latest Telemetry'}</span>
-        </button>
-      </div>
-
-      {/* 2. Filter Toolbar (2 rows of dropdowns & active filter chips) */}
+      {/* 2. Filter Toolbar (Dropdowns, active filter chips, and sync action) */}
       <OpenRouterFilters
         productName={productName}
         providerName={providerName}
@@ -317,6 +295,8 @@ export function OpenRouterDetailView({
         onResetFilters={handleResetFilters}
         onRemoveProduct={onBack}
         onRemoveProvider={onBack}
+        onSync={handleLiveSync}
+        isSyncing={isSyncing}
       />
 
       {/* 3. 6 Primary FinOps KPI Cards (100% Real OpenRouter Metrics) */}

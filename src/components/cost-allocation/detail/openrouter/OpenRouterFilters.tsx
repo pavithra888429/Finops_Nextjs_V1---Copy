@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, ChevronDown, SlidersHorizontal, RotateCcw, X, Key, Cpu } from 'lucide-react';
+import { Calendar, ChevronDown, SlidersHorizontal, RotateCcw, RotateCw, X, Key, Cpu } from 'lucide-react';
 
 interface OpenRouterFiltersProps {
   productName: string;
@@ -20,6 +20,8 @@ interface OpenRouterFiltersProps {
   onResetFilters: () => void;
   onRemoveProduct?: () => void;
   onRemoveProvider?: () => void;
+  onSync?: () => void;
+  isSyncing?: boolean;
 }
 
 export function OpenRouterFilters({
@@ -41,6 +43,8 @@ export function OpenRouterFilters({
   onResetFilters,
   onRemoveProduct,
   onRemoveProvider,
+  onSync,
+  isSyncing = false,
 }: OpenRouterFiltersProps) {
   const defaultKeys = [
     { name: 'Prod API KEy chatbot', label: 'sk-or-v1-07f...d0e' },
@@ -170,6 +174,18 @@ export function OpenRouterFilters({
 
         {/* Action Buttons matching AWS DetailFilters */}
         <div className="flex items-center gap-2 self-end mb-0.5 ml-auto">
+          {onSync && (
+            <button
+              onClick={onSync}
+              disabled={isSyncing}
+              className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-blue-500/30 bg-blue-600/10 text-xs text-blue-400 hover:bg-blue-600/20 hover:text-blue-300 transition-colors cursor-pointer disabled:opacity-50"
+              title="Sync Latest OpenRouter Telemetry"
+            >
+              <RotateCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+            </button>
+          )}
+
           <button className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-dark-border bg-dark-card/90 text-xs text-slate-300 hover:border-dark-borderHover transition-colors cursor-pointer">
             <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
             <span>More filters</span>
