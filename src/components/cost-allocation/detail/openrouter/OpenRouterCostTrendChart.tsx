@@ -13,13 +13,18 @@ interface OpenRouterTrendPoint {
 }
 
 const TREND_POINTS: OpenRouterTrendPoint[] = [
-  { date: '2026-03-06', label: 'Mar 06', costCurrent: 3.25, costPrevious: 0, resourceCurrent: 1, resourcePrevious: 0, service: 'Prod API KEy chatbot', project: 'Dragon Suite', provider: 'OpenRouter' },
-  { date: '2026-04-10', label: 'Apr 10', costCurrent: 2.29, costPrevious: 1.5, resourceCurrent: 2, resourcePrevious: 1, service: 'Dev Key 1', project: 'Okrian Dev', provider: 'OpenRouter' },
-  { date: '2026-05-26', label: 'May 26', costCurrent: 6.21, costPrevious: 4.0, resourceCurrent: 3, resourcePrevious: 2, service: 'Code-Migration', project: 'Workbench', provider: 'OpenRouter' },
-  { date: '2026-07-24', label: 'Jul 24', costCurrent: 3.60, costPrevious: 2.8, resourceCurrent: 4, resourcePrevious: 3, service: 'COE', project: 'Workbench COE', provider: 'OpenRouter' },
-  { date: '2026-08-11', label: 'Aug 11', costCurrent: 4.60, costPrevious: 3.2, resourceCurrent: 8, resourcePrevious: 4, service: 'PF 1 Suite', project: 'Shared Gateway', provider: 'OpenRouter' },
-  { date: '2026-08-31', label: 'Aug 31', costCurrent: 6.45, costPrevious: 4.8, resourceCurrent: 10, resourcePrevious: 8, service: 'PF7-DT-01', project: 'Platform Core', provider: 'OpenRouter' },
-  { date: '2026-09-10', label: 'Sep 10', costCurrent: 0.08, costPrevious: 0.05, resourceCurrent: 11, resourcePrevious: 10, service: 'DS | 10/9/26', project: 'Dragon Suite', provider: 'OpenRouter' },
+  { date: '2026-01-15', label: 'Jan', costCurrent: 0.85, costPrevious: 0.00, resourceCurrent: 1, resourcePrevious: 0, service: 'Initial Gateway', project: 'Dragon Suite', provider: 'OpenRouter' },
+  { date: '2026-02-15', label: 'Feb', costCurrent: 1.40, costPrevious: 0.60, resourceCurrent: 1, resourcePrevious: 1, service: 'Dev Evaluation', project: 'Okrian Dev', provider: 'OpenRouter' },
+  { date: '2026-03-15', label: 'Mar', costCurrent: 3.25, costPrevious: 1.20, resourceCurrent: 2, resourcePrevious: 1, service: 'Prod API KEy chatbot', project: 'Dragon Suite', provider: 'OpenRouter' },
+  { date: '2026-04-15', label: 'Apr', costCurrent: 2.29, costPrevious: 1.50, resourceCurrent: 3, resourcePrevious: 2, service: 'Dev Key 1', project: 'Okrian Dev', provider: 'OpenRouter' },
+  { date: '2026-05-15', label: 'May', costCurrent: 6.21, costPrevious: 3.80, resourceCurrent: 4, resourcePrevious: 3, service: 'Code-Migration', project: 'Workbench', provider: 'OpenRouter' },
+  { date: '2026-06-15', label: 'Jun', costCurrent: 4.10, costPrevious: 3.10, resourceCurrent: 5, resourcePrevious: 4, service: 'COE Gateway', project: 'Workbench COE', provider: 'OpenRouter' },
+  { date: '2026-07-15', label: 'Jul', costCurrent: 3.60, costPrevious: 2.80, resourceCurrent: 6, resourcePrevious: 4, service: 'COE Evaluator', project: 'Workbench COE', provider: 'OpenRouter' },
+  { date: '2026-08-15', label: 'Aug', costCurrent: 6.45, costPrevious: 4.50, resourceCurrent: 10, resourcePrevious: 7, service: 'PF 1 Suite', project: 'Platform Core', provider: 'OpenRouter' },
+  { date: '2026-09-15', label: 'Sep', costCurrent: 8.58, costPrevious: 5.20, resourceCurrent: 11, resourcePrevious: 9, service: 'PF7-DT-01', project: 'Platform Core', provider: 'OpenRouter' },
+  { date: '2026-10-15', label: 'Oct', costCurrent: 7.80, costPrevious: 5.90, resourceCurrent: 11, resourcePrevious: 10, service: 'Agent Run-rate', project: 'Dragon Suite', provider: 'OpenRouter' },
+  { date: '2026-11-15', label: 'Nov', costCurrent: 6.95, costPrevious: 6.10, resourceCurrent: 11, resourcePrevious: 10, service: 'Pipeline Agent', project: 'Platform Core', provider: 'OpenRouter' },
+  { date: '2026-12-15', label: 'Dec', costCurrent: 8.40, costPrevious: 6.50, resourceCurrent: 11, resourcePrevious: 11, service: 'Year-End Batch', project: 'Enterprise Gateway', provider: 'OpenRouter' },
 ];
 
 export function OpenRouterCostTrendChart({
@@ -30,12 +35,12 @@ export function OpenRouterCostTrendChart({
   providerName?: string;
 }) {
   const [activeTab, setActiveTab] = useState<'cost' | 'resource'>('cost');
-  const [hoverIndex, setHoverIndex] = useState<number>(5); // Aug 31 default
+  const [hoverIndex, setHoverIndex] = useState<number>(8); // Sep (current month) default
 
   const metricConfig = {
     cost: {
-      maxVal: 8.0,
-      ticks: [8.0, 6.0, 4.0, 2.0, 0],
+      maxVal: 10.0,
+      ticks: [10.0, 8.0, 6.0, 4.0, 2.0, 0],
       axisLabel: 'Cost (USD)',
       titleSuffix: 'Cost Trend',
       currentKey: 'costCurrent' as const,
@@ -60,9 +65,9 @@ export function OpenRouterCostTrendChart({
   const currentCfg = metricConfig[activeTab];
 
   // SVG dimensions
-  const svgWidth = 520;
+  const svgWidth = 560;
   const svgHeight = 220;
-  const margin = { top: 25, right: 20, bottom: 35, left: 48 };
+  const margin = { top: 25, right: 20, bottom: 35, left: 45 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -267,7 +272,7 @@ export function OpenRouterCostTrendChart({
           }}
         >
           <div className="font-semibold text-white border-b border-dark-border/60 pb-1.5 mb-1.5 flex justify-between items-center text-[11px]">
-            <span>{hoveredPoint.label}, 2026</span>
+            <span>{hoveredPoint.label} 2026</span>
             <span className="text-[10px] text-blue-400 font-mono">OpenRouter</span>
           </div>
           <div className="space-y-1 text-[11px]">
