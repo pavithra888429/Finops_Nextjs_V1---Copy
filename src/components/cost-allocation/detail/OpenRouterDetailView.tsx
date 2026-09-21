@@ -44,6 +44,27 @@ export function OpenRouterDetailView({
   // Stored connection from localStorage
   const [savedConnection, setSavedConnection] = useState<any>(null);
 
+  const loadDataFromMongo = async () => {
+    try {
+      const res = await fetch('/api/finops/openrouter');
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.keysList) && data.keysList.length > 0) {
+        setSavedConnection((prev: any) => {
+          const merged = { ...(prev || {}), ...data };
+          try {
+            localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
+        setLastSyncText('MongoDB Atlas (Live)');
+        return true;
+      }
+    } catch (err) {
+      console.warn('Error loading from MongoDB API:', err);
+    }
+    return false;
+  };
+
   useEffect(() => {
     let storedParsed: any = null;
     try {
@@ -56,74 +77,77 @@ export function OpenRouterDetailView({
       console.warn('Error reading saved OpenRouter connection', e);
     }
 
-    // 2. Fetch live data from Workbench Webhook directly
-    const apiKey = storedParsed?.apiKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '';
-    finopsApi
-      .fetchOpenRouterTelemetry({
-        apiKey,
-        connectionId: storedParsed?.connectionId || 'Production OpenRouter',
-        connectionName: storedParsed?.connectionName || 'Production OpenRouter',
-        userId: storedParsed?.userId || 'default_user',
-        productTag: productId || 'SHARED_GATEWAY',
-        environment: environment || 'production',
-      })
-      .then((syncRes: any) => {
-        if (syncRes && (syncRes.keysList || syncRes.totalUsage !== undefined)) {
-          setSavedConnection((prev: any) => {
-            const merged = { ...(prev || {}), ...syncRes };
-            try {
-              localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
-            } catch (err) {}
-            return merged;
-          });
-          setLastSyncText('Workbench Webhook Live Sync');
-        }
-      })
-      .catch(() => {
-        // Fallback to local API if webhook offline
-        fetch('/api/finops/openrouter')
-          .then((r) => r.json())
-          .then((d) => {
-            if (d && d.success && d.keysList?.length > 0) {
-              setSavedConnection((p: any) => ({ ...(p || {}), ...d }));
+    // 1. Immediately fetch from MongoDB Atlas collection finops_3
+    loadDataFromMongo().then((hasMongoData) => {
+      // 2. Query webhook if apiKey is present or if MongoDB had no records
+      const apiKey = storedParsed?.apiKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '';
+      if (apiKey) {
+        finopsApi
+          .fetchOpenRouterTelemetry({
+            apiKey,
+            connectionId: storedParsed?.connectionId || 'Production OpenRouter',
+            connectionName: storedParsed?.connectionName || 'Production OpenRouter',
+            userId: storedParsed?.userId || 'default_user',
+            productTag: productId || 'SHARED_GATEWAY',
+            environment: environment || 'production',
+          })
+          .then((syncRes: any) => {
+            if (syncRes && Array.isArray(syncRes.keysList) && syncRes.keysList.length > 0) {
+              setSavedConnection((prev: any) => {
+                const merged = { ...(prev || {}), ...syncRes };
+                try {
+                  localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
+                } catch (err) {}
+                return merged;
+              });
+              setLastSyncText('Workbench Webhook Live');
+            } else if (!hasMongoData) {
+              loadDataFromMongo();
             }
           })
-          .catch(() => {});
-      });
+          .catch(() => {
+            if (!hasMongoData) loadDataFromMongo();
+          });
+      }
+    });
   }, []);
 
   const handleLiveSync = async () => {
     setIsSyncing(true);
     try {
       const apiKey = savedConnection?.apiKey || '';
-      const syncRes = await finopsApi.fetchOpenRouterTelemetry({
-        apiKey,
-        connectionId: savedConnection?.connectionId || 'Enterprise OpenRouter Gateway',
-        connectionName: savedConnection?.connectionName || 'Production OpenRouter',
-        userId: savedConnection?.userId || 'usr_default',
-        productTag: productId || 'DRAGON',
-        environment: environment || 'production',
-        lastSyncedAt: savedConnection?.verifiedAt,
-      });
+      if (apiKey) {
+        const syncRes = await finopsApi.fetchOpenRouterTelemetry({
+          apiKey,
+          connectionId: savedConnection?.connectionId || 'Enterprise OpenRouter Gateway',
+          connectionName: savedConnection?.connectionName || 'Production OpenRouter',
+          userId: savedConnection?.userId || 'usr_default',
+          productTag: productId || 'DRAGON',
+          environment: environment || 'production',
+          lastSyncedAt: savedConnection?.verifiedAt,
+        });
 
-      if (syncRes) {
-        const updated = {
-          ...savedConnection,
-          totalUsage: syncRes.totalUsage !== undefined ? Number(syncRes.totalUsage) : savedConnection?.totalUsage,
-          keysList: Array.isArray(syncRes.keysList) ? syncRes.keysList : savedConnection?.keysList,
-          topModelsBySpend: Array.isArray(syncRes.topModelsBySpend) ? syncRes.topModelsBySpend : savedConnection?.topModelsBySpend,
-          dateWiseTelemetry: Array.isArray(syncRes.dateWiseTelemetry) ? syncRes.dateWiseTelemetry : savedConnection?.dateWiseTelemetry,
-          focusRecords: Array.isArray(syncRes.focusRecords) ? syncRes.focusRecords : savedConnection?.focusRecords,
-          verifiedAt: new Date().toISOString(),
-        };
-        setSavedConnection(updated);
-        try {
-          localStorage.setItem('finops_openrouter_connection', JSON.stringify(updated));
-        } catch (err) {}
-        setLastSyncText('Just now');
+        if (syncRes && Array.isArray(syncRes.keysList) && syncRes.keysList.length > 0) {
+          const updated = {
+            ...savedConnection,
+            ...syncRes,
+            verifiedAt: new Date().toISOString(),
+          };
+          setSavedConnection(updated);
+          try {
+            localStorage.setItem('finops_openrouter_connection', JSON.stringify(updated));
+          } catch (err) {}
+          setLastSyncText('Just now (Webhook)');
+          return;
+        }
       }
+
+      // Refresh directly from MongoDB Atlas collection finops_3
+      await loadDataFromMongo();
+      setLastSyncText('Just now (MongoDB Atlas)');
     } catch (e) {
       console.warn('Live sync error:', e);
+      await loadDataFromMongo();
     } finally {
       setIsSyncing(false);
     }
