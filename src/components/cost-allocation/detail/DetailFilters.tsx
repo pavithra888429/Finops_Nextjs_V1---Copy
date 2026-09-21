@@ -42,6 +42,8 @@ export function DetailFilters({
   setGroupBy,
   onResetFilters,
   onRemoveProduct,
+  onRemoveProvider,
+}: DetailFiltersProps) {
   // Dynamically generate all 12 calendar months (Jan to Dec) without hardcoding
   const dynamicMonths = React.useMemo(() => {
     const targetYear = new Date().getFullYear();
