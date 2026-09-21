@@ -5,8 +5,6 @@ interface OpenRouterTrendPoint {
   label: string;
   costCurrent: number;
   costPrevious: number;
-  usageCurrent: number; // in thousands (k)
-  usagePrevious: number;
   resourceCurrent: number;
   resourcePrevious: number;
   service: string;
@@ -15,13 +13,13 @@ interface OpenRouterTrendPoint {
 }
 
 const TREND_POINTS: OpenRouterTrendPoint[] = [
-  { date: '2026-03-06', label: 'Mar 06', costCurrent: 3.25, costPrevious: 0, usageCurrent: 325, usagePrevious: 0, resourceCurrent: 1, resourcePrevious: 0, service: 'Prod API KEy chatbot', project: 'Dragon Suite', provider: 'OpenRouter' },
-  { date: '2026-04-10', label: 'Apr 10', costCurrent: 2.29, costPrevious: 1.5, usageCurrent: 229, usagePrevious: 150, resourceCurrent: 2, resourcePrevious: 1, service: 'Dev Key 1', project: 'Okrian Dev', provider: 'OpenRouter' },
-  { date: '2026-05-26', label: 'May 26', costCurrent: 6.21, costPrevious: 4.0, usageCurrent: 621, usagePrevious: 400, resourceCurrent: 3, resourcePrevious: 2, service: 'Code-Migration', project: 'Workbench', provider: 'OpenRouter' },
-  { date: '2026-07-24', label: 'Jul 24', costCurrent: 3.60, costPrevious: 2.8, usageCurrent: 360, usagePrevious: 280, resourceCurrent: 4, resourcePrevious: 3, service: 'COE', project: 'Workbench COE', provider: 'OpenRouter' },
-  { date: '2026-08-11', label: 'Aug 11', costCurrent: 4.60, costPrevious: 3.2, usageCurrent: 460, usagePrevious: 320, resourceCurrent: 8, resourcePrevious: 4, service: 'PF 1 Suite', project: 'Shared Gateway', provider: 'OpenRouter' },
-  { date: '2026-08-31', label: 'Aug 31', costCurrent: 6.45, costPrevious: 4.8, usageCurrent: 645, usagePrevious: 480, resourceCurrent: 10, resourcePrevious: 8, service: 'PF7-DT-01', project: 'Platform Core', provider: 'OpenRouter' },
-  { date: '2026-09-10', label: 'Sep 10', costCurrent: 0.08, costPrevious: 0.05, usageCurrent: 8, usagePrevious: 5, resourceCurrent: 11, resourcePrevious: 10, service: 'DS | 10/9/26', project: 'Dragon Suite', provider: 'OpenRouter' },
+  { date: '2026-03-06', label: 'Mar 06', costCurrent: 3.25, costPrevious: 0, resourceCurrent: 1, resourcePrevious: 0, service: 'Prod API KEy chatbot', project: 'Dragon Suite', provider: 'OpenRouter' },
+  { date: '2026-04-10', label: 'Apr 10', costCurrent: 2.29, costPrevious: 1.5, resourceCurrent: 2, resourcePrevious: 1, service: 'Dev Key 1', project: 'Okrian Dev', provider: 'OpenRouter' },
+  { date: '2026-05-26', label: 'May 26', costCurrent: 6.21, costPrevious: 4.0, resourceCurrent: 3, resourcePrevious: 2, service: 'Code-Migration', project: 'Workbench', provider: 'OpenRouter' },
+  { date: '2026-07-24', label: 'Jul 24', costCurrent: 3.60, costPrevious: 2.8, resourceCurrent: 4, resourcePrevious: 3, service: 'COE', project: 'Workbench COE', provider: 'OpenRouter' },
+  { date: '2026-08-11', label: 'Aug 11', costCurrent: 4.60, costPrevious: 3.2, resourceCurrent: 8, resourcePrevious: 4, service: 'PF 1 Suite', project: 'Shared Gateway', provider: 'OpenRouter' },
+  { date: '2026-08-31', label: 'Aug 31', costCurrent: 6.45, costPrevious: 4.8, resourceCurrent: 10, resourcePrevious: 8, service: 'PF7-DT-01', project: 'Platform Core', provider: 'OpenRouter' },
+  { date: '2026-09-10', label: 'Sep 10', costCurrent: 0.08, costPrevious: 0.05, resourceCurrent: 11, resourcePrevious: 10, service: 'DS | 10/9/26', project: 'Dragon Suite', provider: 'OpenRouter' },
 ];
 
 export function OpenRouterCostTrendChart({
@@ -31,7 +29,7 @@ export function OpenRouterCostTrendChart({
   productName?: string;
   providerName?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<'cost' | 'usage' | 'resource'>('cost');
+  const [activeTab, setActiveTab] = useState<'cost' | 'resource'>('cost');
   const [hoverIndex, setHoverIndex] = useState<number>(5); // Aug 31 default
 
   const metricConfig = {
@@ -45,17 +43,6 @@ export function OpenRouterCostTrendChart({
       formatValue: (v: number) => `$${v.toFixed(2)}`,
       currentLabel: 'Spend (current)',
       previousLabel: 'Spend (previous)',
-    },
-    usage: {
-      maxVal: 800,
-      ticks: [800, 600, 400, 200, 0],
-      axisLabel: 'Tokens (kTok)',
-      titleSuffix: 'Inference Tokens Trend',
-      currentKey: 'usageCurrent' as const,
-      previousKey: 'usagePrevious' as const,
-      formatValue: (v: number) => `${v.toLocaleString()}k tokens`,
-      currentLabel: 'Tokens (current)',
-      previousLabel: 'Tokens (previous)',
     },
     resource: {
       maxVal: 12,
@@ -123,7 +110,7 @@ export function OpenRouterCostTrendChart({
           </h3>
         </div>
 
-        {/* 3 Tab Switcher matching AWS DetailCostTrendChart */}
+        {/* 2 Tab Switcher: 100% Real Verified OpenRouter Metrics */}
         <div className="flex items-center rounded-lg bg-dark-surface/80 p-0.5 border border-dark-border/60 text-xs">
           <button
             onClick={() => setActiveTab('cost')}
@@ -133,17 +120,7 @@ export function OpenRouterCostTrendChart({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Cost
-          </button>
-          <button
-            onClick={() => setActiveTab('usage')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-              activeTab === 'usage'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Usage quantity
+            Cost ($)
           </button>
           <button
             onClick={() => setActiveTab('resource')}
@@ -153,7 +130,7 @@ export function OpenRouterCostTrendChart({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Resource count
+            Active Keys
           </button>
         </div>
       </div>
