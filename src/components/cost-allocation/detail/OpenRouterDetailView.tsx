@@ -11,6 +11,7 @@ import { TokenCachingBreakdownCard } from './openrouter/TokenCachingBreakdownCar
 import { OpenRouterCostAttributionCard } from './openrouter/OpenRouterCostAttributionCard';
 import { TopAiCostDriversTable } from './openrouter/TopAiCostDriversTable';
 import { DetailedOpenRouterUsageTable } from './openrouter/DetailedOpenRouterUsageTable';
+import { UnusedKeysGovernanceBanner } from './openrouter/UnusedKeysGovernanceBanner';
 import { DetailStatusBar } from './DetailStatusBar';
 import { CheckCircle2, ShieldCheck, Database, Key, RotateCw, Sparkles } from 'lucide-react';
 import { finopsApi } from '@/api/finops.api';
@@ -300,6 +301,12 @@ export function OpenRouterDetailView({
 
       {/* 3. 6 Primary FinOps KPI Cards (100% Real OpenRouter Metrics) */}
       <OpenRouterDetailKpis {...dynamicKpiMetrics} />
+
+      {/* Standby API Keys & Quota Governance Banner */}
+      <UnusedKeysGovernanceBanner
+        keysList={availableKeys}
+        onSelectKey={setSelectedKey}
+      />
 
       {/* 4. Middle Section 1: Cost Trend (7 cols) + Cost by Key (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
