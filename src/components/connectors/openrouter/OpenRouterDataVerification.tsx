@@ -119,6 +119,24 @@ export function OpenRouterDataVerification({
         console.warn('Sync workflow notice:', syncErr);
       }
 
+      if (!resData.keysList || !Array.isArray(resData.keysList) || resData.keysList.length === 0 || resData.totalUsage === undefined) {
+        try {
+          const dbRes = await fetch('/api/finops/openrouter').then((r) => r.json());
+          if (dbRes && (dbRes.keysList?.length > 0 || dbRes.totalUsage !== undefined)) {
+            resData = {
+              ...resData,
+              ...dbRes,
+              keysList: dbRes.keysList || resData.keysList || [],
+              totalUsage: dbRes.totalUsage ?? resData.totalUsage ?? 0,
+              remainingBalance: dbRes.remainingBalance ?? resData.remainingBalance ?? null,
+              creditLimit: dbRes.creditLimit ?? resData.creditLimit ?? null,
+            };
+          }
+        } catch (dbErr) {
+          console.warn('DB verification fallback notice:', dbErr);
+        }
+      }
+
       const rawKeys: OpenRouterWorkspaceKey[] = Array.isArray(resData.keysList)
         ? resData.keysList
         : [];

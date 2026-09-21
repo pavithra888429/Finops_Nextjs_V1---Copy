@@ -246,7 +246,28 @@ export const finopsApi = {
         },
         timeout: 25000,
       });
-      return extractWorkflowData(response.data);
+      let data = extractWorkflowData(response.data);
+
+      if (!data?.keysList || !Array.isArray(data.keysList) || data.keysList.length === 0 || data.totalUsage === undefined) {
+        try {
+          const dbRes = await axios.get('/api/finops/openrouter');
+          if (dbRes.data && (dbRes.data.keysList?.length > 0 || dbRes.data.totalUsage !== undefined)) {
+            data = {
+              ...dbRes.data,
+              ...data,
+              keysList: dbRes.data.keysList || data?.keysList || [],
+              totalUsage: dbRes.data.totalUsage ?? data?.totalUsage ?? 0,
+              remainingBalance: dbRes.data.remainingBalance ?? data?.remainingBalance ?? null,
+              creditLimit: dbRes.data.creditLimit ?? data?.creditLimit ?? null,
+              success: true,
+            };
+          }
+        } catch (dbErr) {
+          console.warn('DB sync fetch notice:', dbErr);
+        }
+      }
+
+      return data;
     } catch (err: any) {
       if (err.response?.data?.error) {
         throw new Error(err.response.data.error);
@@ -273,7 +294,26 @@ export const finopsApi = {
         },
         timeout: 25000,
       });
-      return extractWorkflowData(response.data);
+      let data = extractWorkflowData(response.data);
+
+      if (!data?.keysList || !Array.isArray(data.keysList) || data.keysList.length === 0 || data.totalUsage === undefined) {
+        try {
+          const dbRes = await axios.get('/api/finops/openrouter');
+          if (dbRes.data && (dbRes.data.keysList?.length > 0 || dbRes.data.totalUsage !== undefined)) {
+            data = {
+              ...dbRes.data,
+              ...data,
+              keysList: dbRes.data.keysList || data?.keysList || [],
+              totalUsage: dbRes.data.totalUsage ?? data?.totalUsage ?? 0,
+              remainingBalance: dbRes.data.remainingBalance ?? data?.remainingBalance ?? null,
+              creditLimit: dbRes.data.creditLimit ?? data?.creditLimit ?? null,
+              success: true,
+            };
+          }
+        } catch (dbErr) {}
+      }
+
+      return data;
     } catch (err: any) {
       if (err.response?.data?.error) {
         throw new Error(err.response.data.error);
@@ -303,7 +343,28 @@ export const finopsApi = {
         },
         timeout: 30000,
       });
-      return extractWorkflowData(response.data);
+      let data = extractWorkflowData(response.data);
+
+      if (!data?.keysList || !Array.isArray(data.keysList) || data.keysList.length === 0 || data.totalUsage === undefined) {
+        try {
+          const dbRes = await axios.get('/api/finops/openrouter');
+          if (dbRes.data && (dbRes.data.keysList?.length > 0 || dbRes.data.totalUsage !== undefined)) {
+            data = {
+              ...dbRes.data,
+              ...data,
+              keysList: dbRes.data.keysList || data?.keysList || [],
+              totalUsage: dbRes.data.totalUsage ?? data?.totalUsage ?? 0,
+              remainingBalance: dbRes.data.remainingBalance ?? data?.remainingBalance ?? null,
+              creditLimit: dbRes.data.creditLimit ?? data?.creditLimit ?? null,
+              success: true,
+            };
+          }
+        } catch (dbErr) {
+          console.warn('DB telemetry fetch notice:', dbErr);
+        }
+      }
+
+      return data;
     } catch (err: any) {
       if (err.response?.data?.error) {
         throw new Error(err.response.data.error);
