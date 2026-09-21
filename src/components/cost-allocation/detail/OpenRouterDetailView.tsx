@@ -6,7 +6,6 @@ import { OpenRouterFilters } from './openrouter/OpenRouterFilters';
 import { OpenRouterDetailKpis } from './openrouter/OpenRouterDetailKpis';
 import { OpenRouterCostTrendChart } from './openrouter/OpenRouterCostTrendChart';
 import { CostByModelCard } from './openrouter/CostByModelCard';
-import { CostByAppCard } from './openrouter/CostByAppCard';
 import { CostByKeyEnvCard } from './openrouter/CostByKeyEnvCard';
 import { TokenCachingBreakdownCard } from './openrouter/TokenCachingBreakdownCard';
 import { OpenRouterCostAttributionCard } from './openrouter/OpenRouterCostAttributionCard';
@@ -302,16 +301,13 @@ export function OpenRouterDetailView({
       {/* 3. 6 Primary FinOps KPI Cards (100% Real OpenRouter Metrics) */}
       <OpenRouterDetailKpis {...dynamicKpiMetrics} />
 
-      {/* 4. Middle Section 1: Cost Trend (5 cols) + Cost by Key (4 cols) + Gateway Infrastructure (3 cols) */}
+      {/* 4. Middle Section 1: Cost Trend (7 cols) + Cost by Key (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-7">
           <OpenRouterCostTrendChart productName={productName} providerName={providerName} />
         </div>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-5">
           <CostByModelCard keysList={availableKeys} />
-        </div>
-        <div className="lg:col-span-3">
-          <CostByAppCard keysList={availableKeys} />
         </div>
       </div>
 
