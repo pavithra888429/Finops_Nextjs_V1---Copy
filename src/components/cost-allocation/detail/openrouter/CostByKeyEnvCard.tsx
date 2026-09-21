@@ -26,7 +26,7 @@ export function CostByKeyEnvCard({
         return {
           name: k.name || 'Unnamed Key',
           label: k.label || '',
-          env: k.environment || 'Production',
+          status: cost > 0 ? 'Active' : 'Standby',
           cost: cost,
           limit: k.limit !== null && k.limit !== undefined ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited',
           remaining: k.remaining !== null && k.remaining !== undefined ? `$${Number(k.remaining).toFixed(2)}` : 'N/A',

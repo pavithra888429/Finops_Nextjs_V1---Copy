@@ -31,10 +31,10 @@ export function OpenRouterDetailView({
   providerName = 'OpenRouter',
   onBack,
 }: OpenRouterDetailViewProps) {
-  // Filters state (purely month-wise)
+  // Filters state (purely month-wise & native OpenRouter status)
   const [dateRange, setDateRange] = useState('all');
   const [comparePeriod, setComparePeriod] = useState('prevMonth');
-  const [environment, setEnvironment] = useState('production');
+  const [keyStatus, setKeyStatus] = useState('all');
   const [selectedKey, setSelectedKey] = useState('all');
   const [selectedModel, setSelectedModel] = useState('all');
   const [groupBy, setGroupBy] = useState('key');
@@ -50,7 +50,7 @@ export function OpenRouterDetailView({
       const wfData = await finopsApi.queryCostAllocationWorkflow({
         productId,
         productTag: productId,
-        environment,
+        environment: 'production',
       });
       if (wfData && wfData.success && Array.isArray(wfData.keysList) && wfData.keysList.length > 0) {
         setSavedConnection((prev: any) => {
@@ -112,7 +112,7 @@ export function OpenRouterDetailView({
             connectionName: storedParsed?.connectionName || 'Production OpenRouter',
             userId: storedParsed?.userId || 'default_user',
             productTag: productId || 'SHARED_GATEWAY',
-            environment: environment || 'production',
+            environment: 'production',
           })
           .then((syncRes: any) => {
             if (syncRes && Array.isArray(syncRes.keysList) && syncRes.keysList.length > 0) {
@@ -146,7 +146,7 @@ export function OpenRouterDetailView({
           connectionName: savedConnection?.connectionName || 'Production OpenRouter',
           userId: savedConnection?.userId || 'usr_default',
           productTag: productId || 'DRAGON',
-          environment: environment || 'production',
+          environment: 'production',
           lastSyncedAt: savedConnection?.verifiedAt,
         });
 
@@ -185,16 +185,26 @@ export function OpenRouterDetailView({
 
   const availableKeys = useMemo(() => {
     if (!rawKeys || rawKeys.length === 0) return [];
-    if (!dateRange || dateRange === 'all') return rawKeys;
+    let list = rawKeys;
 
-    // Dynamic month filter (e.g. "2026-09", "2026-08", "2026-07", etc.)
-    const monthFiltered = rawKeys.filter((k: any) => {
-      const dStr = k.createdAt || k.created_at || k.date || '';
-      return dStr.startsWith(dateRange);
-    });
+    // 1. Filter by Key Status (Active / Standby)
+    if (keyStatus === 'active') {
+      list = list.filter((k: any) => (Number(k.usage) || 0) > 0);
+    } else if (keyStatus === 'standby') {
+      list = list.filter((k: any) => (Number(k.usage) || 0) === 0);
+    }
 
-    return monthFiltered.length > 0 ? monthFiltered : rawKeys;
-  }, [rawKeys, dateRange]);
+    // 2. Dynamic month filter (e.g. "2026-09", "2026-08", etc.)
+    if (dateRange && dateRange !== 'all') {
+      const monthFiltered = list.filter((k: any) => {
+        const dStr = k.createdAt || k.created_at || k.date || '';
+        return dStr.startsWith(dateRange);
+      });
+      return monthFiltered.length > 0 ? monthFiltered : list;
+    }
+
+    return list;
+  }, [rawKeys, dateRange, keyStatus]);
 
   // Compute active metrics dynamically based strictly on real OpenRouter keys
   const dynamicKpiMetrics = useMemo(() => {
@@ -278,7 +288,7 @@ export function OpenRouterDetailView({
   const handleResetFilters = () => {
     setDateRange('all');
     setComparePeriod('prevMonth');
-    setEnvironment('production');
+    setKeyStatus('all');
     setSelectedKey('all');
     setSelectedModel('all');
     setGroupBy('key');
@@ -303,8 +313,8 @@ export function OpenRouterDetailView({
         setDateRange={setDateRange}
         comparePeriod={comparePeriod}
         setComparePeriod={setComparePeriod}
-        environment={environment}
-        setEnvironment={setEnvironment}
+        keyStatus={keyStatus}
+        setKeyStatus={setKeyStatus}
         selectedKey={selectedKey}
         setSelectedKey={setSelectedKey}
         selectedModel={selectedModel}

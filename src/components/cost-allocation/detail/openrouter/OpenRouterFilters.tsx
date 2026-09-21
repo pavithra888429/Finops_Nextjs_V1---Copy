@@ -8,8 +8,10 @@ interface OpenRouterFiltersProps {
   setDateRange: (v: string) => void;
   comparePeriod: string;
   setComparePeriod: (v: string) => void;
-  environment: string;
-  setEnvironment: (v: string) => void;
+  keyStatus?: string;
+  setKeyStatus?: (v: string) => void;
+  environment?: string;
+  setEnvironment?: (v: string) => void;
   selectedKey: string;
   setSelectedKey: (v: string) => void;
   selectedModel: string;
@@ -31,7 +33,9 @@ export function OpenRouterFilters({
   setDateRange,
   comparePeriod,
   setComparePeriod,
-  environment,
+  keyStatus = 'all',
+  setKeyStatus,
+  environment = 'production',
   setEnvironment,
   selectedKey,
   setSelectedKey,
@@ -74,6 +78,14 @@ export function OpenRouterFilters({
     const found = dynamicMonths.find((m) => m.value === dateRange);
     return found ? found.label : dateRange;
   }, [dateRange, dynamicMonths]);
+
+  const keyCounts = useMemo(() => {
+    const list = availableKeys || [];
+    const total = list.length;
+    const active = list.filter((k: any) => (Number(k.usage) || 0) > 0).length;
+    const standby = total - active;
+    return { total, active, standby };
+  }, [availableKeys]);
 
   const defaultKeys = [
     { name: 'Prod API KEy chatbot', label: 'sk-or-v1-07f...d0e' },
@@ -128,19 +140,18 @@ export function OpenRouterFilters({
           </div>
         </div>
 
-        {/* Environment */}
+        {/* Key Status (Active / Standby) */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Environment</span>
+          <span className="text-[10.5px] font-medium text-slate-400">Key Status</span>
           <div className="relative">
             <select
-              value={environment}
-              onChange={(e) => setEnvironment(e.target.value)}
+              value={keyStatus}
+              onChange={(e) => setKeyStatus && setKeyStatus(e.target.value)}
               className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
             >
-              <option value="production">Production</option>
-              <option value="staging">Staging</option>
-              <option value="development">Development</option>
-              <option value="all">All environments</option>
+              <option value="all">All Keys {keyCounts.total > 0 ? `(${keyCounts.total})` : ''}</option>
+              <option value="active">Active Keys {keyCounts.total > 0 ? `(${keyCounts.active})` : ''}</option>
+              <option value="standby">Standby Keys {keyCounts.total > 0 ? `(${keyCounts.standby})` : ''}</option>
             </select>
             <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
           </div>
@@ -304,18 +315,21 @@ export function OpenRouterFilters({
           </div>
         )}
 
-        {/* Environment Chip */}
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
-          <span>
-            Environment: <strong className="text-white font-medium capitalize">{environment}</strong>
-          </span>
-          <button
-            onClick={() => setEnvironment('all')}
-            className="text-slate-500 hover:text-white transition-colors cursor-pointer"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
+        {/* Key Status Chip */}
+        {keyStatus !== 'all' && (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
+            <span>
+              Status: <strong className="text-white font-medium capitalize">{keyStatus === 'active' ? 'Active Keys' : 'Standby Keys'}</strong>
+            </span>
+            <button
+              onClick={() => setKeyStatus && setKeyStatus('all')}
+              title="Reset key status filter to All Keys"
+              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
 
         {/* Month Chip */}
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
