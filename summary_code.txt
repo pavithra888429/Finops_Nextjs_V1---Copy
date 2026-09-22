@@ -1,0 +1,158 @@
+﻿// Summary Workflow: Read MongoDB FOCUS docs and build dashboard response
+
+// 1. Get trigger filters
+let triggerInput = {};
+try {
+  triggerInput = $('Webhook Trigger').first().json.body || {};
+} catch (e) {
+  triggerInput = {};
+}
+
+const requestedProduct = (triggerInput.productTag || triggerInput.productId || 'all').toLowerCase();
+const requestedEnv = (triggerInput.environment || 'production').toLowerCase();
+
+// 2. Get MongoDB docs (one doc per model×key combination)
+let docs = [];
+if (Array.isArray($json)) {
+  docs = $json;
+} else if ($json.documents && Array.isArray($json.documents)) {
+  docs = $json.documents;
+} else if ($json.data && Array.isArray($json.data)) {
+  docs = $json.data;
+} else {
+  try {
+    const mongoNode = $('Query MongoDB Documents').first().json;
+    docs = mongoNode.documents || mongoNode.data || (Array.isArray(mongoNode) ? mongoNode : []);
+  } catch (e) {
+    docs = [];
+  }
+}
+
+// 3. Filter docs by product/environment if requested
+const filteredDocs = docs.filter(d => {
+  const docProduct = (d.tags?.Project || d.productTag || 'shared_gateway').toLowerCase();
+  const docEnv = (d.tags?.Environment || d.environment || 'production').toLowerCase();
+  if (requestedProduct !== 'all' && requestedProduct !== 'shared_gateway') {
+    if (docProduct !== requestedProduct) return false;
+  }
+  if (requestedEnv !== 'all') {
+    if (docEnv !== requestedEnv) return false;
+  }
+  return true;
+});
+
+const activeDocs = filteredDocs.length > 0 ? filteredDocs : docs;
+
+// 4. Build keysList by GROUPING model docs by their parent API key (tags.KeyName)
+// FIX: Each MongoDB doc = one model row, NOT one key
+// Group by KeyName to get actual API key list
+const keyGroupMap = {};
+for (const d of activeDocs) {
+  const keyName = d.tags?.KeyName || d.keyName || d.SubServiceName || 'Unknown Key';
+  const keyLabel = d.tags?.KeyLabel || d.keyLabel || '';
+  const keyId = d.tags?.KeyId || '';
+  const cost = Number(d.amortizedCost || 0);
+
+  if (!keyGroupMap[keyName]) {
+    keyGroupMap[keyName] = {
+      keyId: keyId || keyName,
+      name: keyName,
+      label: keyLabel,
+      usage: 0,
+      limit: typeof d.limit === 'number' ? d.limit : null,
+      remaining: typeof d.remaining === 'number' ? d.remaining : null,
+      createdAt: d.ChargePeriodStart || d.date || d.createdAt,
+      usageDaily: 0,
+      usageWeekly: 0,
+      usageMonthly: 0,
+      environment: (d.tags?.Environment || 'production').toLowerCase(),
+      productTag: d.tags?.Project || 'SHARED_GATEWAY',
+      models: []
+    };
+  }
+  keyGroupMap[keyName].usage = Number((keyGroupMap[keyName].usage + cost).toFixed(4));
+  const modelName = d.tags?.Model || d.SubServiceName || '';
+  if (modelName && !keyGroupMap[keyName].models.includes(modelName)) {
+    keyGroupMap[keyName].models.push(modelName);
+  }
+}
+
+const keysList = Object.values(keyGroupMap).sort((a, b) => b.usage - a.usage);
+
+// 5. Compute KPI totals from actual key data
+const totalSpend = Number(keysList.reduce((acc, k) => acc + k.usage, 0).toFixed(4));
+const sortedKeys = [...keysList].sort((a, b) => b.usage - a.usage);
+const topKeyItem = sortedKeys[0] || null;
+
+// Credit limit / remaining from first doc that has it
+const firstWithLimit = activeDocs.find(d => typeof d.creditLimit === 'number');
+const creditLimit = firstWithLimit?.creditLimit ?? null;
+const remainingBalance = firstWithLimit?.remainingBalance ?? null;
+
+// 6. topModelsBySpend — one entry per model doc (correct grain)
+const topModelsBySpend = activeDocs.map(d => ({
+  model: d.tags?.Model || d.SubServiceName || '',
+  name: d.tags?.Model || d.SubServiceName || '',
+  provider: d.tags?.Provider || 'OpenRouter',
+  apiKeyId: d.tags?.KeyId || '',
+  keyName: d.tags?.KeyName || d.keyName || '',
+  keyLabel: d.tags?.KeyLabel || d.keyLabel || '',
+  cost: Number(d.amortizedCost || 0),
+  share: totalSpend > 0 ? Number(((Number(d.amortizedCost || 0) / totalSpend) * 100).toFixed(1)) : 0,
+  requests: Number(d.requests || 0),
+  promptTokens: Number(d.promptTokens || 0),
+  completionTokens: Number(d.completionTokens || 0),
+  cachedTokens: Number(d.cachedTokens || 0),
+  totalTokens: Number(d.totalTokens || 0)
+})).sort((a, b) => b.cost - a.cost);
+
+// 7. dateWiseTelemetry — one row per model doc with all token fields
+const dateWiseTelemetry = activeDocs.map((d, idx) => ({
+  id: `telemetry_${d.resourceId || d._id || idx}`,
+  date: d.date || d.ChargePeriodStart || '',
+  keyName: d.tags?.KeyName || d.keyName || d.SubServiceName || 'API Key',
+  keyLabel: d.tags?.KeyLabel || d.keyLabel || '',
+  app: d.tags?.Project || 'SHARED_GATEWAY',
+  model: d.tags?.Model || d.SubServiceName || '',
+  promptTokens: Number(d.promptTokens || 0),
+  completionTokens: Number(d.completionTokens || 0),
+  cachedTokens: Number(d.cachedTokens || 0),
+  totalTokens: Number(d.totalTokens || 0),
+  requests: Number(d.requests || 0),
+  cost: Number(d.amortizedCost || 0),
+  environment: d.tags?.Environment || 'production'
+}));
+
+// 8. Product allocation by key grouping
+const productAllocation = {};
+for (const k of keysList) {
+  let pTag = (k.productTag || 'shared').toLowerCase();
+  if (pTag.includes('dragon')) pTag = 'dragon';
+  else if (pTag.includes('okrian')) pTag = 'okrian';
+  else if (pTag.includes('workbench')) pTag = 'workbench';
+  else pTag = 'shared';
+  productAllocation[pTag] = Number(((productAllocation[pTag] || 0) + k.usage).toFixed(4));
+}
+productAllocation.total = totalSpend;
+
+return {
+  success: true,
+  connectionId: activeDocs[0]?.connectionId || 'Production OpenRouter',
+  connectionName: activeDocs[0]?.accountName || 'Production OpenRouter',
+  productTag: requestedProduct,
+  environment: requestedEnv,
+  totalUsage: totalSpend,
+  creditLimit: creditLimit,
+  remainingBalance: remainingBalance,
+  topSpendingKey: {
+    name: topKeyItem?.name || 'Active Key',
+    cost: topKeyItem ? Number(topKeyItem.usage || 0) : 0,
+    share: totalSpend > 0 && topKeyItem ? Number(((topKeyItem.usage / totalSpend) * 100).toFixed(1)) : 0
+  },
+  recordsIngested: activeDocs.length,
+  keysList: keysList,
+  topModelsBySpend: topModelsBySpend,
+  dateWiseTelemetry: dateWiseTelemetry,
+  productAllocation: productAllocation,
+  lastSyncedAt: activeDocs[0]?.updatedAt || activeDocs[0]?.lastSyncedAt || new Date().toISOString()
+};

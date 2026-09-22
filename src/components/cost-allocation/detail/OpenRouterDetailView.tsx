@@ -52,7 +52,11 @@ export function OpenRouterDetailView({
         productTag: productId,
         environment: 'production',
       });
-      if (wfData && wfData.success && Array.isArray(wfData.keysList) && wfData.keysList.length > 0) {
+      if (wfData && wfData.success && (
+        (Array.isArray(wfData.keysList) && wfData.keysList.length > 0) ||
+        (Array.isArray(wfData.topModelsBySpend) && wfData.topModelsBySpend.length > 0) ||
+        (Number(wfData.totalUsage) > 0)
+      )) {
         setSavedConnection((prev: any) => {
           const merged = { ...(prev || {}), ...wfData };
           try {
@@ -71,7 +75,11 @@ export function OpenRouterDetailView({
     try {
       const res = await fetch('/api/finops/openrouter');
       const data = await res.json();
-      if (data && data.success && Array.isArray(data.keysList) && data.keysList.length > 0) {
+      if (data && data.success && (
+        (Array.isArray(data.keysList) && data.keysList.length > 0) ||
+        (Array.isArray(data.topModelsBySpend) && data.topModelsBySpend.length > 0) ||
+        (Number(data.totalUsage) > 0)
+      )) {
         setSavedConnection((prev: any) => {
           const merged = { ...(prev || {}), ...data };
           try {
@@ -89,49 +97,61 @@ export function OpenRouterDetailView({
   };
 
   useEffect(() => {
-    let storedParsed: any = null;
+    // Clear stale localStorage so old empty data doesn't persist
     try {
       const stored = localStorage.getItem('finops_openrouter_connection');
       if (stored) {
-        storedParsed = JSON.parse(stored);
-        setSavedConnection(storedParsed);
+        const parsed = JSON.parse(stored);
+        // If stored data has no keysList AND no topModelsBySpend, it's stale — clear it
+        const hasKeys = Array.isArray(parsed?.keysList) && parsed.keysList.length > 0;
+        const hasModels = Array.isArray(parsed?.topModelsBySpend) && parsed.topModelsBySpend.length > 0;
+        const hasCost = Number(parsed?.totalUsage) > 0;
+        if (!hasKeys && !hasModels && !hasCost) {
+          localStorage.removeItem('finops_openrouter_connection');
+        }
       }
-    } catch (e) {
-      console.warn('Error reading saved OpenRouter connection', e);
-    }
+    } catch (e) {}
 
-    // 1. Immediately fetch from MongoDB Atlas collection finops_3
+    // Always fetch fresh from MongoDB Atlas on mount
     loadDataFromMongo().then((hasMongoData) => {
-      // 2. Query webhook if apiKey is present or if MongoDB had no records
-      const apiKey = storedParsed?.apiKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '';
-      if (apiKey) {
-        finopsApi
-          .fetchOpenRouterTelemetry({
-            apiKey,
-            connectionId: storedParsed?.connectionId || 'Production OpenRouter',
-            connectionName: storedParsed?.connectionName || 'Production OpenRouter',
-            userId: storedParsed?.userId || 'default_user',
-            productTag: productId || 'SHARED_GATEWAY',
-            environment: 'production',
-          })
-          .then((syncRes: any) => {
-            if (syncRes && Array.isArray(syncRes.keysList) && syncRes.keysList.length > 0) {
-              setSavedConnection((prev: any) => {
-                const merged = { ...(prev || {}), ...syncRes };
-                try {
-                  localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
-                } catch (err) {}
-                return merged;
-              });
-              setLastSyncText('Workbench Webhook Live');
-            } else if (!hasMongoData) {
-              loadDataFromMongo();
-            }
-          })
-          .catch(() => {
-            if (!hasMongoData) loadDataFromMongo();
-          });
-      }
+      // Also try webhook if apiKey is available
+      try {
+        const stored = localStorage.getItem('finops_openrouter_connection');
+        const storedParsed = stored ? JSON.parse(stored) : null;
+        const apiKey = storedParsed?.apiKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '';
+        if (apiKey) {
+          finopsApi
+            .fetchOpenRouterTelemetry({
+              apiKey,
+              connectionId: storedParsed?.connectionId || 'Production OpenRouter',
+              connectionName: storedParsed?.connectionName || 'Production OpenRouter',
+              userId: storedParsed?.userId || 'default_user',
+              productTag: productId || 'SHARED_GATEWAY',
+              environment: 'production',
+            })
+            .then((syncRes: any) => {
+              if (syncRes && (
+                (Array.isArray(syncRes.keysList) && syncRes.keysList.length > 0) ||
+                (Array.isArray(syncRes.topModelsBySpend) && syncRes.topModelsBySpend.length > 0) ||
+                (Number(syncRes.totalUsage) > 0)
+              )) {
+                setSavedConnection((prev: any) => {
+                  const merged = { ...(prev || {}), ...syncRes };
+                  try {
+                    localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
+                  } catch (err) {}
+                  return merged;
+                });
+                setLastSyncText('Workbench Webhook Live');
+              } else if (!hasMongoData) {
+                loadDataFromMongo();
+              }
+            })
+            .catch(() => {
+              if (!hasMongoData) loadDataFromMongo();
+            });
+        }
+      } catch (e) {}
     });
   }, []);
 
@@ -150,7 +170,11 @@ export function OpenRouterDetailView({
           lastSyncedAt: savedConnection?.verifiedAt,
         });
 
-        if (syncRes && Array.isArray(syncRes.keysList) && syncRes.keysList.length > 0) {
+        if (syncRes && (
+          (Array.isArray(syncRes.keysList) && syncRes.keysList.length > 0) ||
+          (Array.isArray(syncRes.topModelsBySpend) && syncRes.topModelsBySpend.length > 0) ||
+          (Number(syncRes.totalUsage) > 0)
+        )) {
           const updated = {
             ...savedConnection,
             ...syncRes,
@@ -178,7 +202,8 @@ export function OpenRouterDetailView({
 
   const rawKeys = useMemo(() => {
     if (savedConnection?.keysList && Array.isArray(savedConnection.keysList)) {
-      return savedConnection.keysList;
+      // Exclude deleted/inactive keys completely from the dashboard
+      return savedConnection.keysList.filter((k: any) => k.isActive !== false);
     }
     return [];
   }, [savedConnection]);
@@ -197,13 +222,13 @@ export function OpenRouterDetailView({
     // 2. Dynamic month filter (e.g. "2026-09", "2026-08", etc.)
     if (dateRange && dateRange !== 'all') {
       return list.filter((k: any) => {
-        const dStr = k.createdAt || k.created_at || k.date || '';
+        const dStr = k.createdAt || k.created_at || k.date || (savedConnection?.lastSyncedAt ? String(savedConnection.lastSyncedAt) : '');
         return dStr.startsWith(dateRange);
       });
     }
 
     return list;
-  }, [rawKeys, dateRange, keyStatus]);
+  }, [rawKeys, dateRange, keyStatus, savedConnection]);
 
   // Compute active metrics dynamically based strictly on real OpenRouter keys
   const dynamicKpiMetrics = useMemo(() => {
@@ -257,30 +282,86 @@ export function OpenRouterDetailView({
     };
   }, [selectedKey, availableKeys, savedConnection]);
 
-  // Format strictly live date-wise telemetry directly from OpenRouter sync response
+  // Format strictly live date-wise telemetry directly from OpenRouter sync response.
+  // Token data (promptTokens, completionTokens, requests) lives in topModelsBySpend,
+  // so we cross-reference that when dateWiseTelemetry rows are missing token fields.
   const telemetryRows = useMemo(() => {
+    // Build a lookup map from topModelsBySpend keyed by model name for cross-referencing tokens
+    const modelTokenMap: Record<string, any> = {};
+    if (savedConnection?.topModelsBySpend && Array.isArray(savedConnection.topModelsBySpend)) {
+      for (const m of savedConnection.topModelsBySpend) {
+        const key = m.model || m.name || '';
+        if (key) modelTokenMap[key] = m;
+      }
+    }
+
     if (savedConnection?.dateWiseTelemetry && Array.isArray(savedConnection.dateWiseTelemetry) && savedConnection.dateWiseTelemetry.length > 0) {
-      let filtered = savedConnection.dateWiseTelemetry;
+      // Build lookup sets for strictly active keys (exclude deleted keys)
+      const activeKeysList = (availableKeys || []).filter(
+        (k: any) => k.isActive !== false && !k.label?.toLowerCase().includes('deleted')
+      );
+      const activeNames = new Set(activeKeysList.map((k: any) => (k.name || '').trim().toLowerCase()));
+      const activeLabels = new Set(activeKeysList.map((k: any) => (k.label || '').trim().toLowerCase()).filter(Boolean));
+      const activeIds = new Set(activeKeysList.map((k: any) => (k.keyId || '').trim().toLowerCase()).filter(Boolean));
+
+      let filtered = savedConnection.dateWiseTelemetry.filter((row: any) => {
+        if (activeKeysList.length === 0) return true;
+        const kn = (row.keyName || row.name || row.key || '').trim().toLowerCase();
+        const kl = (row.keyLabel || row.label || '').trim().toLowerCase();
+        const kid = (row.apiKeyId || row.keyId || '').trim().toLowerCase();
+        return activeNames.has(kn) || activeLabels.has(kl) || activeIds.has(kid) || activeLabels.has(kn) || activeNames.has(kl);
+      });
+
       if (selectedKey !== 'all') {
         filtered = filtered.filter((row: any) => (row.keyName || row.name || row.key) === selectedKey);
       }
       if (selectedModel !== 'all') {
         filtered = filtered.filter((row: any) => (row.model || '').toLowerCase().includes(selectedModel.toLowerCase()));
       }
-      return filtered.map((row: any, idx: number) => ({
-        id: row.id || `live-${row.date || 'item'}-${idx}`,
-        date: row.date || '',
-        keyName: row.keyName || row.key || row.name || (row.keyLabel ? `Key (${row.keyLabel})` : ''),
-        keyLabel: row.keyLabel || row.label || '',
-        app: row.app || row.appName || '',
-        model: row.model || '',
-        promptTokens: Number(row.promptTokens ?? row.prompt_tokens ?? 0),
-        completionTokens: Number(row.completionTokens ?? row.completion_tokens ?? 0),
-        cachedTokens: Number(row.cachedTokens ?? row.cached_tokens ?? 0),
-        requests: Number(row.requests ?? row.request_count ?? 0),
-        cost: Number(row.cost ?? 0),
+      return filtered.map((row: any, idx: number) => {
+        // Cross-reference with topModelsBySpend to get token data if not present
+        const modelRef = modelTokenMap[row.model || ''] || {};
+        return {
+          id: row.id || `live-${row.date || 'item'}-${idx}`,
+          date: row.date || '',
+          keyName: row.keyName || row.key || row.name || (row.keyLabel ? `Key (${row.keyLabel})` : ''),
+          keyLabel: row.keyLabel || row.label || '',
+          app: row.app || row.appName || '',
+          model: row.model || '',
+          promptTokens: Number(row.promptTokens ?? row.prompt_tokens ?? modelRef.promptTokens ?? 0),
+          completionTokens: Number(row.completionTokens ?? row.completion_tokens ?? modelRef.completionTokens ?? 0),
+          cachedTokens: Number(row.cachedTokens ?? row.cached_tokens ?? modelRef.cachedTokens ?? 0),
+          requests: Number(row.requests ?? row.request_count ?? modelRef.requests ?? 0),
+          cost: Number(row.cost ?? 0),
+        };
+      });
+    }
+
+    // Fallback: build rows directly from topModelsBySpend if no dateWiseTelemetry exists
+    if (savedConnection?.topModelsBySpend && Array.isArray(savedConnection.topModelsBySpend) && savedConnection.topModelsBySpend.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      let models = savedConnection.topModelsBySpend;
+      if (selectedModel !== 'all') {
+        models = models.filter((m: any) => (m.model || m.name || '').toLowerCase().includes(selectedModel.toLowerCase()));
+      }
+      if (selectedKey !== 'all') {
+        models = models.filter((m: any) => (m.keyName || '') === selectedKey);
+      }
+      return models.map((m: any, idx: number) => ({
+        id: `tms-${m.model || idx}`,
+        date: today,
+        keyName: m.keyName || m.name || 'Default Key',
+        keyLabel: m.keyLabel || '',
+        app: m.productTag || savedConnection?.productTag || 'SHARED_GATEWAY',
+        model: m.model || m.name || '',
+        promptTokens: Number(m.promptTokens ?? m.tokens_prompt ?? 0),
+        completionTokens: Number(m.completionTokens ?? m.tokens_completion ?? 0),
+        cachedTokens: Number(m.cachedTokens ?? 0),
+        requests: Number(m.requests ?? m.request_count ?? 0),
+        cost: Number(m.cost ?? 0),
       }));
     }
+
     return [];
   }, [savedConnection, selectedKey, selectedModel]);
 

@@ -1,0 +1,944 @@
+﻿{
+    "_platform":  "agentbuilder",
+    "_version":  1,
+    "_exportedAt":  "2026-09-21T10:09:06.250Z",
+    "_fingerprint":  "YWN0aW9uOmNvZGUuZXhlY3V0ZXxhY3Rpb246bW9uZ29kYi5maW5kX2RvY3VtZW50",
+    "nodes":  [
+                  {
+                      "id":  "webhook-1789964186017001",
+                      "data":  {
+                                   "label":  "Webhook Trigger",
+                                   "inputs":  {
+                                                  "path":  "e74a6990-d060-4d60-9754-29bb287232ad",
+                                                  "method":  "POST",
+                                                  "options":  {
+
+                                                              },
+                                                  "allowedRoles":  "admin, staff",
+                                                  "jwtAlgorithm":  "HS256",
+                                                  "responseMode":  "respondWithNode",
+                                                  "roleClaimKey":  "role",
+                                                  "sessionClaim":  "sub",
+                                                  "sessionSource":  "none",
+                                                  "authentication":  "none",
+                                                  "requireRoleCheck":  false
+                                              },
+                                   "toolId":  "webhook",
+                                   "toolData":  {
+                                                    "id":  "webhook",
+                                                    "displayName":  "Webhook Trigger",
+                                                    "category":  "Input /  Output",
+                                                    "icon":  "webhook",
+                                                    "description":  "Trigger workflow via webhook",
+                                                    "inputSchemaJSON":  {
+                                                                            "type":  "object",
+                                                                            "properties":  {
+                                                                                               "path":  {
+                                                                                                            "type":  "string",
+                                                                                                            "description":  "The path to listen on (e.g. \"my-hook\")"
+                                                                                                        },
+                                                                                               "method":  {
+                                                                                                              "type":  "string",
+                                                                                                              "enum":  [
+                                                                                                                           "GET",
+                                                                                                                           "POST",
+                                                                                                                           "PUT",
+                                                                                                                           "DELETE",
+                                                                                                                           "PATCH",
+                                                                                                                           "HEAD"
+                                                                                                                       ],
+                                                                                                              "default":  "POST",
+                                                                                                              "description":  "HTTP Method"
+                                                                                                          },
+                                                                                               "responseMode":  {
+                                                                                                                    "type":  "string",
+                                                                                                                    "enum":  [
+                                                                                                                                 "onReceived",
+                                                                                                                                 "lastNode",
+                                                                                                                                 "respondWithNode",
+                                                                                                                                 "streaming"
+                                                                                                                             ],
+                                                                                                                    "default":  "lastNode",
+                                                                                                                    "description":  "When to respond"
+                                                                                                                },
+                                                                                               "authentication":  {
+                                                                                                                      "type":  "string",
+                                                                                                                      "enum":  [
+                                                                                                                                   "none",
+                                                                                                                                   "basicAuth",
+                                                                                                                                   "headerAuth",
+                                                                                                                                   "jwtAuth"
+                                                                                                                               ],
+                                                                                                                      "default":  "none",
+                                                                                                                      "description":  "Authentication"
+                                                                                                                  },
+                                                                                               "basicAuthUser":  {
+                                                                                                                     "type":  "string",
+                                                                                                                     "description":  "Username"
+                                                                                                                 },
+                                                                                               "basicAuthPassword":  {
+                                                                                                                         "type":  "string",
+                                                                                                                         "description":  "Password"
+                                                                                                                     },
+                                                                                               "headerAuthName":  {
+                                                                                                                      "type":  "string",
+                                                                                                                      "description":  "Name"
+                                                                                                                  },
+                                                                                               "headerAuthValue":  {
+                                                                                                                       "type":  "string",
+                                                                                                                       "description":  "Value"
+                                                                                                                   },
+                                                                                               "jwtSecret":  {
+                                                                                                                 "type":  "string",
+                                                                                                                 "description":  "Secret"
+                                                                                                             },
+                                                                                               "jwtAlgorithm":  {
+                                                                                                                    "type":  "string",
+                                                                                                                    "enum":  [
+                                                                                                                                 "HS256",
+                                                                                                                                 "HS384",
+                                                                                                                                 "HS512"
+                                                                                                                             ],
+                                                                                                                    "default":  "HS256",
+                                                                                                                    "description":  "Algorithm"
+                                                                                                                },
+                                                                                               "sessionClaim":  {
+                                                                                                                    "type":  "string",
+                                                                                                                    "default":  "sub",
+                                                                                                                    "description":  "JWT claim used to identify the session"
+                                                                                                                },
+                                                                                               "requireRoleCheck":  {
+                                                                                                                        "type":  "boolean",
+                                                                                                                        "default":  false,
+                                                                                                                        "description":  "Require Role Check (RBAC)"
+                                                                                                                    },
+                                                                                               "roleClaimKey":  {
+                                                                                                                    "type":  "string",
+                                                                                                                    "default":  "role",
+                                                                                                                    "description":  "Role Claim Key"
+                                                                                                                },
+                                                                                               "allowedRoles":  {
+                                                                                                                    "type":  "string",
+                                                                                                                    "default":  "admin, staff",
+                                                                                                                    "description":  "Allowed Roles (comma separated)"
+                                                                                                                },
+                                                                                               "sessionSource":  {
+                                                                                                                     "type":  "string",
+                                                                                                                     "enum":  [
+                                                                                                                                  "none",
+                                                                                                                                  "auto",
+                                                                                                                                  "header",
+                                                                                                                                  "cookie",
+                                                                                                                                  "body"
+                                                                                                                              ],
+                                                                                                                     "default":  "none",
+                                                                                                                     "description":  "Session Source"
+                                                                                                                 },
+                                                                                               "sessionSourceName":  {
+                                                                                                                         "type":  "string",
+                                                                                                                         "description":  "Session Source Name (header / cookie / body field)"
+                                                                                                                     },
+                                                                                               "options":  {
+                                                                                                               "type":  "object",
+                                                                                                               "properties":  {
+                                                                                                                                  "allowedOrigins":  {
+                                                                                                                                                         "type":  "string",
+                                                                                                                                                         "description":  "Allowed Origins (CORS)"
+                                                                                                                                                     },
+                                                                                                                                  "binaryDataFieldName":  {
+                                                                                                                                                              "type":  "string",
+                                                                                                                                                              "description":  "Field Name for Binary Data"
+                                                                                                                                                          },
+                                                                                                                                  "ignoreBots":  {
+                                                                                                                                                     "type":  "boolean",
+                                                                                                                                                     "description":  "Ignore Bots"
+                                                                                                                                                 },
+                                                                                                                                  "ipAllowlist":  {
+                                                                                                                                                      "type":  "string",
+                                                                                                                                                      "description":  "IP(s) Allowlist"
+                                                                                                                                                  },
+                                                                                                                                  "noResponseBody":  {
+                                                                                                                                                         "type":  "boolean",
+                                                                                                                                                         "description":  "No Response Body"
+                                                                                                                                                     },
+                                                                                                                                  "rawBody":  {
+                                                                                                                                                  "type":  "boolean",
+                                                                                                                                                  "description":  "Raw Body"
+                                                                                                                                              },
+                                                                                                                                  "responseCode":  {
+                                                                                                                                                       "type":  "number",
+                                                                                                                                                       "description":  "Response Code"
+                                                                                                                                                   },
+                                                                                                                                  "responseData":  {
+                                                                                                                                                       "type":  "string",
+                                                                                                                                                       "description":  "Response Data"
+                                                                                                                                                   }
+                                                                                                                              },
+                                                                                                               "additionalProperties":  false,
+                                                                                                               "default":  {
+
+                                                                                                                           },
+                                                                                                               "description":  "Options"
+                                                                                                           }
+                                                                                           },
+                                                                            "required":  [
+                                                                                             "path"
+                                                                                         ],
+                                                                            "additionalProperties":  false,
+                                                                            "$schema":  "http://json-schema.org/draft-07/schema#"
+                                                                        },
+                                                    "fields":  [
+                                                                   {
+                                                                       "name":  "path",
+                                                                       "displayName":  "Path",
+                                                                       "type":  "string",
+                                                                       "default":  "",
+                                                                       "required":  true,
+                                                                       "description":  "The path to listen on (e.g. \"my-hook\")"
+                                                                   },
+                                                                   {
+                                                                       "name":  "method",
+                                                                       "displayName":  "HTTP Method",
+                                                                       "type":  "options",
+                                                                       "default":  "POST",
+                                                                       "required":  true,
+                                                                       "options":  [
+                                                                                       {
+                                                                                           "name":  "GET",
+                                                                                           "value":  "GET"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "POST",
+                                                                                           "value":  "POST"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "PUT",
+                                                                                           "value":  "PUT"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "DELETE",
+                                                                                           "value":  "DELETE"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "PATCH",
+                                                                                           "value":  "PATCH"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "HEAD",
+                                                                                           "value":  "HEAD"
+                                                                                       }
+                                                                                   ],
+                                                                       "description":  "HTTP Method to listen for"
+                                                                   },
+                                                                   {
+                                                                       "name":  "responseMode",
+                                                                       "displayName":  "Respond",
+                                                                       "type":  "options",
+                                                                       "default":  "lastNode",
+                                                                       "required":  true,
+                                                                       "options":  [
+                                                                                       {
+                                                                                           "name":  "Immediately",
+                                                                                           "value":  "onReceived"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "When Last Node Finishes",
+                                                                                           "value":  "lastNode"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "Using \u0027Respond to Webhook\u0027 Node",
+                                                                                           "value":  "respondWithNode"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "Streaming",
+                                                                                           "value":  "streaming"
+                                                                                       }
+                                                                                   ],
+                                                                       "description":  "When to respond to the webhook request"
+                                                                   },
+                                                                   {
+                                                                       "name":  "authentication",
+                                                                       "displayName":  "Authentication",
+                                                                       "type":  "options",
+                                                                       "default":  "none",
+                                                                       "options":  [
+                                                                                       {
+                                                                                           "name":  "Basic Auth",
+                                                                                           "value":  "basicAuth"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "Header Auth",
+                                                                                           "value":  "headerAuth"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "JWT Auth",
+                                                                                           "value":  "jwtAuth"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "None",
+                                                                                           "value":  "none"
+                                                                                       }
+                                                                                   ],
+                                                                       "description":  "The type of authentication to use for incoming webhook requests"
+                                                                   },
+                                                                   {
+                                                                       "name":  "sessionSource",
+                                                                       "displayName":  "Session Source",
+                                                                       "type":  "options",
+                                                                       "default":  "none",
+                                                                       "options":  [
+                                                                                       {
+                                                                                           "name":  "None (legacy, no session)",
+                                                                                           "value":  "none"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "Auto (platform issues a session id)",
+                                                                                           "value":  "auto"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "From Header",
+                                                                                           "value":  "header"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "From Cookie",
+                                                                                           "value":  "cookie"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "From Body Field",
+                                                                                           "value":  "body"
+                                                                                       }
+                                                                                   ],
+                                                                       "description":  "How the platform identifies the caller for per-user session continuity. Required when memory or loops should partition by caller."
+                                                                   },
+                                                                   {
+                                                                       "name":  "sessionSourceName",
+                                                                       "displayName":  "Session Source Name",
+                                                                       "type":  "string",
+                                                                       "default":  "",
+                                                                       "placeholder":  "e.g. X-Caller-Id (header), userId (body field), session_id (cookie)",
+                                                                       "description":  "Header name, body field path, or cookie name used as the caller id.",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "sessionSource":  [
+                                                                                                                                 "header",
+                                                                                                                                 "cookie",
+                                                                                                                                 "body"
+                                                                                                                             ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "basicAuthUser",
+                                                                       "displayName":  "User",
+                                                                       "type":  "string",
+                                                                       "default":  "",
+                                                                       "required":  true,
+                                                                       "description":  "The username for Basic Authentication",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "basicAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "basicAuthPassword",
+                                                                       "displayName":  "Password",
+                                                                       "type":  "string",
+                                                                       "default":  "",
+                                                                       "required":  true,
+                                                                       "typeOptions":  {
+                                                                                           "password":  true
+                                                                                       },
+                                                                       "description":  "The password for Basic Authentication",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "basicAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "headerAuthName",
+                                                                       "displayName":  "Name",
+                                                                       "type":  "string",
+                                                                       "default":  "",
+                                                                       "required":  true,
+                                                                       "description":  "The header name to check for authentication",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "headerAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "headerAuthValue",
+                                                                       "displayName":  "Value",
+                                                                       "type":  "string",
+                                                                       "default":  "",
+                                                                       "required":  true,
+                                                                       "typeOptions":  {
+                                                                                           "password":  true
+                                                                                       },
+                                                                       "description":  "The expected header value for authentication",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "headerAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "jwtSecret",
+                                                                       "displayName":  "Secret",
+                                                                       "type":  "string",
+                                                                       "default":  "",
+                                                                       "required":  true,
+                                                                       "typeOptions":  {
+                                                                                           "password":  true
+                                                                                       },
+                                                                       "description":  "The secret key used to verify the JWT token",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "jwtAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "jwtAlgorithm",
+                                                                       "displayName":  "Algorithm",
+                                                                       "type":  "options",
+                                                                       "default":  "HS256",
+                                                                       "options":  [
+                                                                                       {
+                                                                                           "name":  "HS256",
+                                                                                           "value":  "HS256"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "HS384",
+                                                                                           "value":  "HS384"
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "HS512",
+                                                                                           "value":  "HS512"
+                                                                                       }
+                                                                                   ],
+                                                                       "description":  "The algorithm used to sign the JWT token",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "jwtAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "sessionClaim",
+                                                                       "displayName":  "Session Claim",
+                                                                       "type":  "string",
+                                                                       "default":  "sub",
+                                                                       "description":  "The claim in the JWT payload that identifies the user (e.g. sub, email, userId). Leave blank to skip session tracking.",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "jwtAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "requireRoleCheck",
+                                                                       "displayName":  "Require Role Check (RBAC)",
+                                                                       "type":  "boolean",
+                                                                       "default":  false,
+                                                                       "description":  "If enabled, the incoming JWT must contain an authorized role claim to execute the workflow.",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "jwtAuth"
+                                                                                                                              ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "roleClaimKey",
+                                                                       "displayName":  "Role Claim Key",
+                                                                       "type":  "string",
+                                                                       "default":  "role",
+                                                                       "description":  "The field name inside the JWT payload that contains the user\u0027s role (e.g., \"role\", \"groups\").",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "jwtAuth"
+                                                                                                                              ],
+                                                                                                           "requireRoleCheck":  [
+                                                                                                                                    true
+                                                                                                                                ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "allowedRoles",
+                                                                       "displayName":  "Allowed Roles",
+                                                                       "type":  "string",
+                                                                       "default":  "admin, staff",
+                                                                       "description":  "A comma-separated list of roles that are allowed to trigger this workflow. If empty, all roles pass.",
+                                                                       "displayOptions":  {
+                                                                                              "show":  {
+                                                                                                           "authentication":  [
+                                                                                                                                  "jwtAuth"
+                                                                                                                              ],
+                                                                                                           "requireRoleCheck":  [
+                                                                                                                                    true
+                                                                                                                                ]
+                                                                                                       }
+                                                                                          }
+                                                                   },
+                                                                   {
+                                                                       "name":  "options",
+                                                                       "displayName":  "Options",
+                                                                       "type":  "collection",
+                                                                       "default":  {
+
+                                                                                   },
+                                                                       "placeholder":  "Add option",
+                                                                       "fields":  [
+                                                                                      {
+                                                                                          "name":  "allowedOrigins",
+                                                                                          "displayName":  "Allowed Origins (CORS)",
+                                                                                          "type":  "string",
+                                                                                          "default":  "*",
+                                                                                          "placeholder":  "*",
+                                                                                          "description":  "Comma-separated list of allowed origins for CORS. Use * to allow all origins."
+                                                                                      },
+                                                                                      {
+                                                                                          "name":  "binaryDataFieldName",
+                                                                                          "displayName":  "Field Name for Binary Data",
+                                                                                          "type":  "string",
+                                                                                          "default":  "data",
+                                                                                          "placeholder":  "data",
+                                                                                          "description":  "The name of the field in the request that contains binary data (for file uploads)."
+                                                                                      },
+                                                                                      {
+                                                                                          "name":  "ignoreBots",
+                                                                                          "displayName":  "Ignore Bots",
+                                                                                          "type":  "boolean",
+                                                                                          "default":  false,
+                                                                                          "description":  "If enabled, requests from known bots (crawlers, spiders) will be ignored."
+                                                                                      },
+                                                                                      {
+                                                                                          "name":  "ipAllowlist",
+                                                                                          "displayName":  "IP(s) Allowlist",
+                                                                                          "type":  "string",
+                                                                                          "default":  "",
+                                                                                          "placeholder":  "e.g. 127.0.0.1, 192.168.1.0/24",
+                                                                                          "description":  "Comma-separated list of IPs or CIDR ranges. Only these IPs can trigger the webhook."
+                                                                                      },
+                                                                                      {
+                                                                                          "name":  "noResponseBody",
+                                                                                          "displayName":  "No Response Body",
+                                                                                          "type":  "boolean",
+                                                                                          "default":  false,
+                                                                                          "description":  "If enabled, the webhook will respond with an empty body (only status code)."
+                                                                                      },
+                                                                                      {
+                                                                                          "name":  "rawBody",
+                                                                                          "displayName":  "Raw Body",
+                                                                                          "type":  "boolean",
+                                                                                          "default":  false,
+                                                                                          "description":  "If enabled, the raw request body will be passed as-is without parsing."
+                                                                                      },
+                                                                                      {
+                                                                                          "name":  "responseData",
+                                                                                          "displayName":  "Response Data",
+                                                                                          "type":  "string",
+                                                                                          "default":  "",
+                                                                                          "placeholder":  "Response body content",
+                                                                                          "description":  "Custom response data to return when the webhook is triggered (JSON or text)."
+                                                                                      }
+                                                                                  ]
+                                                                   }
+                                                               ]
+                                                },
+                                   "isTrigger":  true,
+                                   "isFormWait":  false,
+                                   "isTimerWait":  false,
+                                   "isWebhookWait":  false,
+                                   "connectedHandles":  [
+
+                                                        ],
+                                   "isPrimaryTrigger":  true
+                               },
+                      "type":  "webhook",
+                      "width":  220,
+                      "height":  100,
+                      "dragging":  false,
+                      "position":  {
+                                       "x":  -81.66157229922915,
+                                       "y":  202.9572723801304
+                                   },
+                      "selected":  false,
+                      "positionAbsolute":  {
+                                               "x":  -81.66157229922915,
+                                               "y":  202.9572723801304
+                                           }
+                  },
+                  {
+                      "id":  "mongodb.find_document-1789964212827002",
+                      "data":  {
+                                   "label":  "Find Document",
+                                   "inputs":  {
+                                                  "query":  "{\n  \"$or\": [\n    { \"operation\": \"OpenRouterGatewaySync\" },\n    { \"ProviderName\": \"OpenRouter\" },\n    { \"tags.Provider\": \"OpenRouter\" }\n  ]\n}\n",
+                                                  "database":  "finops_3",
+                                                  "collection":  "finops_3",
+                                                  "credentialId":  "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+                                              },
+                                   "toolId":  "mongodb.find_document",
+                                   "toolData":  {
+                                                    "id":  "mongodb.find_document",
+                                                    "displayName":  "Find Document",
+                                                    "category":  "Memory \u0026 State",
+                                                    "provider":  "mongodb",
+                                                    "operation":  "find_document",
+                                                    "icon":  "https://www.mongodb.com/assets/images/global/favicon.ico",
+                                                    "description":  "Retrieve documents from MongoDB collection",
+                                                    "inputSchemaJSON":  {
+                                                                            "type":  "object",
+                                                                            "properties":  {
+                                                                                               "connectionUri":  {
+                                                                                                                     "type":  "string",
+                                                                                                                     "description":  "MongoDB connection URI (overrides credentials)"
+                                                                                                                 },
+                                                                                               "credentials":  {
+                                                                                                                   "description":  "Optional credentials object for project auth flows"
+                                                                                                               },
+                                                                                               "database":  {
+                                                                                                                "type":  "string",
+                                                                                                                "minLength":  1,
+                                                                                                                "description":  "Database name"
+                                                                                                            },
+                                                                                               "collection":  {
+                                                                                                                  "type":  "string",
+                                                                                                                  "description":  "Collection name (optional). Leave empty to search across ALL collections in the database."
+                                                                                                              },
+                                                                                               "query":  {
+                                                                                                             "anyOf":  [
+                                                                                                                           {
+                                                                                                                               "type":  "object",
+                                                                                                                               "additionalProperties":  {
+
+                                                                                                                                                        }
+                                                                                                                           },
+                                                                                                                           {
+                                                                                                                               "type":  "string"
+                                                                                                                           }
+                                                                                                                       ],
+                                                                                                             "description":  "Query filter â€” must be a valid JSON object. Three modes:\n1. {} â€” return all documents in the collection.\n2. {\"field\": \"value\"} â€” standard MongoDB filter.\n3. {\"$search\": \"keyword\"} â€” search keyword across ALL string fields in every document.\nExample: {\"status\": \"pending\"}"
+                                                                                                         },
+                                                                                               "limit":  {
+                                                                                                             "type":  "number",
+                                                                                                             "description":  "Maximum number of documents to return (default 1000, max 5000)"
+                                                                                                         },
+                                                                                               "sort":  {
+                                                                                                            "anyOf":  [
+                                                                                                                          {
+                                                                                                                              "type":  "object",
+                                                                                                                              "additionalProperties":  {
+
+                                                                                                                                                       }
+                                                                                                                          },
+                                                                                                                          {
+                                                                                                                              "type":  "string"
+                                                                                                                          }
+                                                                                                                      ],
+                                                                                                            "description":  "Sort order (JSON). Example: {\"createdAt\": -1}"
+                                                                                                        },
+                                                                                               "skip":  {
+                                                                                                            "type":  "number",
+                                                                                                            "description":  "Number of documents to skip for pagination"
+                                                                                                        },
+                                                                                               "projection":  {
+                                                                                                                  "anyOf":  [
+                                                                                                                                {
+                                                                                                                                    "type":  "object",
+                                                                                                                                    "additionalProperties":  {
+
+                                                                                                                                                             }
+                                                                                                                                },
+                                                                                                                                {
+                                                                                                                                    "type":  "string"
+                                                                                                                                }
+                                                                                                                            ],
+                                                                                                                  "description":  "Fields to include/exclude (JSON). Example: {\"name\": 1, \"email\": 1}"
+                                                                                                              }
+                                                                                           },
+                                                                            "required":  [
+                                                                                             "database",
+                                                                                             "query"
+                                                                                         ],
+                                                                            "additionalProperties":  false,
+                                                                            "$schema":  "http://json-schema.org/draft-07/schema#"
+                                                                        },
+                                                    "executionMode":  "batch"
+                                                },
+                                   "isTrigger":  false,
+                                   "isFormWait":  false,
+                                   "isTimerWait":  false,
+                                   "isWebhookWait":  false,
+                                   "connectedHandles":  [
+
+                                                        ],
+                                   "isPrimaryTrigger":  false
+                               },
+                      "type":  "action",
+                      "width":  220,
+                      "height":  94,
+                      "dragging":  false,
+                      "position":  {
+                                       "x":  161.29287012566704,
+                                       "y":  208.8671480502669
+                                   },
+                      "selected":  false,
+                      "positionAbsolute":  {
+                                               "x":  161.29287012566704,
+                                               "y":  208.8671480502669
+                                           }
+                  },
+                  {
+                      "id":  "code.execute-1789964271277003",
+                      "data":  {
+                                   "label":  "Code",
+                                   "inputs":  {
+                                                  "code":  "// Summary Workflow: Read MongoDB FOCUS docs and build dashboard response\n\n// 1. Get trigger filters\nlet triggerInput = {};\ntry {\n  triggerInput = $(\u0027Webhook Trigger\u0027).first().json.body || {};\n} catch (e) {\n  triggerInput = {};\n}\n\nconst requestedProduct = (triggerInput.productTag || triggerInput.productId || \u0027all\u0027).toLowerCase();\nconst requestedEnv = (triggerInput.environment || \u0027production\u0027).toLowerCase();\n\n// 2. Get MongoDB docs (one doc per model×key combination)\nlet docs = [];\nif (Array.isArray($json)) {\n  docs = $json;\n} else if ($json.documents \u0026\u0026 Array.isArray($json.documents)) {\n  docs = $json.documents;\n} else if ($json.data \u0026\u0026 Array.isArray($json.data)) {\n  docs = $json.data;\n} else {\n  try {\n    const mongoNode = $(\u0027Query MongoDB Documents\u0027).first().json;\n    docs = mongoNode.documents || mongoNode.data || (Array.isArray(mongoNode) ? mongoNode : []);\n  } catch (e) {\n    docs = [];\n  }\n}\n\n// 3. Filter docs by product/environment if requested\nconst filteredDocs = docs.filter(d =\u003e {\n  const docProduct = (d.tags?.Project || d.productTag || \u0027shared_gateway\u0027).toLowerCase();\n  const docEnv = (d.tags?.Environment || d.environment || \u0027production\u0027).toLowerCase();\n  if (requestedProduct !== \u0027all\u0027 \u0026\u0026 requestedProduct !== \u0027shared_gateway\u0027) {\n    if (docProduct !== requestedProduct) return false;\n  }\n  if (requestedEnv !== \u0027all\u0027) {\n    if (docEnv !== requestedEnv) return false;\n  }\n  return true;\n});\n\nconst activeDocs = filteredDocs.length \u003e 0 ? filteredDocs : docs;\n\n// 4. Build keysList by GROUPING model docs by their parent API key (tags.KeyName)\n// FIX: Each MongoDB doc = one model row, NOT one key\n// Group by KeyName to get actual API key list\nconst keyGroupMap = {};\nfor (const d of activeDocs) {\n  const keyName = d.tags?.KeyName || d.keyName || d.SubServiceName || \u0027Unknown Key\u0027;\n  const keyLabel = d.tags?.KeyLabel || d.keyLabel || \u0027\u0027;\n  const keyId = d.tags?.KeyId || \u0027\u0027;\n  const cost = Number(d.amortizedCost || 0);\n\n  if (!keyGroupMap[keyName]) {\n    keyGroupMap[keyName] = {\n      keyId: keyId || keyName,\n      name: keyName,\n      label: keyLabel,\n      usage: 0,\n      limit: typeof d.limit === \u0027number\u0027 ? d.limit : null,\n      remaining: typeof d.remaining === \u0027number\u0027 ? d.remaining : null,\n      createdAt: d.ChargePeriodStart || d.date || d.createdAt,\n      usageDaily: 0,\n      usageWeekly: 0,\n      usageMonthly: 0,\n      environment: (d.tags?.Environment || \u0027production\u0027).toLowerCase(),\n      productTag: d.tags?.Project || \u0027SHARED_GATEWAY\u0027,\n      models: []\n    };\n  }\n  keyGroupMap[keyName].usage = Number((keyGroupMap[keyName].usage + cost).toFixed(4));\n  const modelName = d.tags?.Model || d.SubServiceName || \u0027\u0027;\n  if (modelName \u0026\u0026 !keyGroupMap[keyName].models.includes(modelName)) {\n    keyGroupMap[keyName].models.push(modelName);\n  }\n}\n\nconst keysList = Object.values(keyGroupMap).sort((a, b) =\u003e b.usage - a.usage);\n\n// 5. Compute KPI totals from actual key data\nconst totalSpend = Number(keysList.reduce((acc, k) =\u003e acc + k.usage, 0).toFixed(4));\nconst sortedKeys = [...keysList].sort((a, b) =\u003e b.usage - a.usage);\nconst topKeyItem = sortedKeys[0] || null;\n\n// Credit limit / remaining from first doc that has it\nconst firstWithLimit = activeDocs.find(d =\u003e typeof d.creditLimit === \u0027number\u0027);\nconst creditLimit = firstWithLimit?.creditLimit ?? null;\nconst remainingBalance = firstWithLimit?.remainingBalance ?? null;\n\n// 6. topModelsBySpend — one entry per model doc (correct grain)\nconst topModelsBySpend = activeDocs.map(d =\u003e ({\n  model: d.tags?.Model || d.SubServiceName || \u0027\u0027,\n  name: d.tags?.Model || d.SubServiceName || \u0027\u0027,\n  provider: d.tags?.Provider || \u0027OpenRouter\u0027,\n  apiKeyId: d.tags?.KeyId || \u0027\u0027,\n  keyName: d.tags?.KeyName || d.keyName || \u0027\u0027,\n  keyLabel: d.tags?.KeyLabel || d.keyLabel || \u0027\u0027,\n  cost: Number(d.amortizedCost || 0),\n  share: totalSpend \u003e 0 ? Number(((Number(d.amortizedCost || 0) / totalSpend) * 100).toFixed(1)) : 0,\n  requests: Number(d.requests || 0),\n  promptTokens: Number(d.promptTokens || 0),\n  completionTokens: Number(d.completionTokens || 0),\n  cachedTokens: Number(d.cachedTokens || 0),\n  totalTokens: Number(d.totalTokens || 0)\n})).sort((a, b) =\u003e b.cost - a.cost);\n\n// 7. dateWiseTelemetry — one row per model doc with all token fields\nconst dateWiseTelemetry = activeDocs.map((d, idx) =\u003e ({\n  id: `telemetry_${d.resourceId || d._id || idx}`,\n  date: d.date || d.ChargePeriodStart || \u0027\u0027,\n  keyName: d.tags?.KeyName || d.keyName || d.SubServiceName || \u0027API Key\u0027,\n  keyLabel: d.tags?.KeyLabel || d.keyLabel || \u0027\u0027,\n  app: d.tags?.Project || \u0027SHARED_GATEWAY\u0027,\n  model: d.tags?.Model || d.SubServiceName || \u0027\u0027,\n  promptTokens: Number(d.promptTokens || 0),\n  completionTokens: Number(d.completionTokens || 0),\n  cachedTokens: Number(d.cachedTokens || 0),\n  totalTokens: Number(d.totalTokens || 0),\n  requests: Number(d.requests || 0),\n  cost: Number(d.amortizedCost || 0),\n  environment: d.tags?.Environment || \u0027production\u0027\n}));\n\n// 8. Product allocation by key grouping\nconst productAllocation = {};\nfor (const k of keysList) {\n  let pTag = (k.productTag || \u0027shared\u0027).toLowerCase();\n  if (pTag.includes(\u0027dragon\u0027)) pTag = \u0027dragon\u0027;\n  else if (pTag.includes(\u0027okrian\u0027)) pTag = \u0027okrian\u0027;\n  else if (pTag.includes(\u0027workbench\u0027)) pTag = \u0027workbench\u0027;\n  else pTag = \u0027shared\u0027;\n  productAllocation[pTag] = Number(((productAllocation[pTag] || 0) + k.usage).toFixed(4));\n}\nproductAllocation.total = totalSpend;\n\nreturn {\n  success: true,\n  connectionId: activeDocs[0]?.connectionId || \u0027Production OpenRouter\u0027,\n  connectionName: activeDocs[0]?.accountName || \u0027Production OpenRouter\u0027,\n  productTag: requestedProduct,\n  environment: requestedEnv,\n  totalUsage: totalSpend,\n  creditLimit: creditLimit,\n  remainingBalance: remainingBalance,\n  topSpendingKey: {\n    name: topKeyItem?.name || \u0027Active Key\u0027,\n    cost: topKeyItem ? Number(topKeyItem.usage || 0) : 0,\n    share: totalSpend \u003e 0 \u0026\u0026 topKeyItem ? Number(((topKeyItem.usage / totalSpend) * 100).toFixed(1)) : 0\n  },\n  recordsIngested: activeDocs.length,\n  keysList: keysList,\n  topModelsBySpend: topModelsBySpend,\n  dateWiseTelemetry: dateWiseTelemetry,\n  productAllocation: productAllocation,\n  lastSyncedAt: activeDocs[0]?.updatedAt || activeDocs[0]?.lastSyncedAt || new Date().toISOString()\n};",
+                                                  "mode":  "all",
+                                                  "language":  "javascript"
+                                              },
+                                   "toolId":  "code.execute",
+                                   "toolData":  {
+                                                    "id":  "code.execute",
+                                                    "displayName":  "Code",
+                                                    "category":  "Data  Processing",
+                                                    "provider":  "code",
+                                                    "operation":  "execute",
+                                                    "icon":  "ðŸ’»",
+                                                    "description":  "Execute custom JavaScript or Python code",
+                                                    "inputSchemaJSON":  {
+                                                                            "type":  "object",
+                                                                            "properties":  {
+                                                                                               "language":  {
+                                                                                                                "type":  "string",
+                                                                                                                "enum":  [
+                                                                                                                             "javascript",
+                                                                                                                             "python"
+                                                                                                                         ],
+                                                                                                                "description":  "Programming language to execute"
+                                                                                                            },
+                                                                                               "mode":  {
+                                                                                                            "type":  "string",
+                                                                                                            "enum":  [
+                                                                                                                         "all",
+                                                                                                                         "each"
+                                                                                                                     ],
+                                                                                                            "default":  "all",
+                                                                                                            "description":  "Execution mode"
+                                                                                                        },
+                                                                                               "code":  {
+                                                                                                            "type":  "string",
+                                                                                                            "description":  "Code to execute"
+                                                                                                        },
+                                                                                               "input":  {
+                                                                                                             "description":  "Input data available as \"input\" variable"
+                                                                                                         },
+                                                                                               "context":  {
+                                                                                                               "description":  "Execution context including other node results"
+                                                                                                           }
+                                                                                           },
+                                                                            "required":  [
+                                                                                             "language",
+                                                                                             "code"
+                                                                                         ],
+                                                                            "additionalProperties":  false,
+                                                                            "$schema":  "http://json-schema.org/draft-07/schema#"
+                                                                        }
+                                                },
+                                   "isTrigger":  false,
+                                   "isFormWait":  false,
+                                   "isTimerWait":  false,
+                                   "isWebhookWait":  false,
+                                   "connectedHandles":  [
+
+                                                        ],
+                                   "isPrimaryTrigger":  false
+                               },
+                      "type":  "action",
+                      "width":  220,
+                      "height":  94,
+                      "dragging":  false,
+                      "position":  {
+                                       "x":  399.0734296100534,
+                                       "y":  210.01584640526383
+                                   },
+                      "selected":  true,
+                      "positionAbsolute":  {
+                                               "x":  399.0734296100534,
+                                               "y":  210.01584640526383
+                                           }
+                  },
+                  {
+                      "id":  "respondToWebhook-1789964443984004",
+                      "data":  {
+                                   "label":  "Webhook Response",
+                                   "inputs":  {
+                                                  "respondWith":  "All Incoming Items",
+                                                  "inputFieldName":  "data"
+                                              },
+                                   "toolId":  "respondToWebhook",
+                                   "toolData":  {
+                                                    "id":  "respondToWebhook",
+                                                    "displayName":  "Webhook Response",
+                                                    "category":  "Input /  Output",
+                                                    "icon":  "reply",
+                                                    "description":  "Send response to webhook",
+                                                    "inputSchemaJSON":  {
+                                                                            "type":  "object",
+                                                                            "properties":  {
+                                                                                               "respondWith":  {
+                                                                                                                   "type":  "string",
+                                                                                                                   "enum":  [
+                                                                                                                                "All Incoming Items",
+                                                                                                                                "First Incoming Item",
+                                                                                                                                "JSON",
+                                                                                                                                "Binary File",
+                                                                                                                                "JWT Token",
+                                                                                                                                "Text",
+                                                                                                                                "Redirect",
+                                                                                                                                "No Data"
+                                                                                                                            ],
+                                                                                                                   "default":  "All Incoming Items",
+                                                                                                                   "description":  "What to respond with."
+                                                                                                               },
+                                                                                               "responseBody":  {
+                                                                                                                    "type":  "string",
+                                                                                                                    "description":  "The body of the response (can be an expression)"
+                                                                                                                },
+                                                                                               "credentialId":  {
+                                                                                                                    "type":  "string",
+                                                                                                                    "description":  "JWT credential ID"
+                                                                                                                },
+                                                                                               "payload":  {
+                                                                                                               "type":  "string",
+                                                                                                               "description":  "JWT Token Payload (JSON string or expression)"
+                                                                                                           },
+                                                                                               "redirectUrl":  {
+                                                                                                                   "type":  "string",
+                                                                                                                   "description":  "Redirect URL"
+                                                                                                               },
+                                                                                               "inputFieldName":  {
+                                                                                                                      "type":  "string",
+                                                                                                                      "default":  "data",
+                                                                                                                      "description":  "Input Field Name containing the binary file"
+                                                                                                                  },
+                                                                                               "responseCode":  {
+                                                                                                                    "type":  "number",
+                                                                                                                    "description":  "HTTP Response Code"
+                                                                                                                },
+                                                                                               "putResponseInField":  {
+                                                                                                                          "type":  "string",
+                                                                                                                          "description":  "If set, put the response into this field instead of the default output"
+                                                                                                                      },
+                                                                                               "enableStreaming":  {
+                                                                                                                       "type":  "boolean",
+                                                                                                                       "description":  "Stream the response back to the caller when supported"
+                                                                                                                   },
+                                                                                               "options":  {
+                                                                                                               "type":  "object",
+                                                                                                               "properties":  {
+                                                                                                                                  "headers":  {
+                                                                                                                                                  "type":  "array",
+                                                                                                                                                  "items":  {
+                                                                                                                                                                "type":  "object",
+                                                                                                                                                                "properties":  {
+                                                                                                                                                                                   "name":  {
+                                                                                                                                                                                                "type":  "string"
+                                                                                                                                                                                            },
+                                                                                                                                                                                   "value":  {
+                                                                                                                                                                                                 "type":  "string"
+                                                                                                                                                                                             }
+                                                                                                                                                                               },
+                                                                                                                                                                "required":  [
+                                                                                                                                                                                 "name",
+                                                                                                                                                                                 "value"
+                                                                                                                                                                             ],
+                                                                                                                                                                "additionalProperties":  false
+                                                                                                                                                            }
+                                                                                                                                              }
+                                                                                                                              },
+                                                                                                               "additionalProperties":  false
+                                                                                                           }
+                                                                                           },
+                                                                            "additionalProperties":  false,
+                                                                            "$schema":  "http://json-schema.org/draft-07/schema#"
+                                                                        }
+                                                },
+                                   "isTrigger":  false,
+                                   "isFormWait":  false,
+                                   "executionId":  "6ab0cfaadc837fd45f42711e",
+                                   "isTimerWait":  false,
+                                   "isWebhookWait":  false,
+                                   "connectedHandles":  [
+
+                                                        ],
+                                   "isPrimaryTrigger":  false
+                               },
+                      "type":  "action",
+                      "width":  220,
+                      "height":  94,
+                      "dragging":  false,
+                      "position":  {
+                                       "x":  650.6383693544041,
+                                       "y":  208.86714805026676
+                                   },
+                      "selected":  false,
+                      "positionAbsolute":  {
+                                               "x":  650.6383693544041,
+                                               "y":  208.86714805026676
+                                           }
+                  }
+              ],
+    "edges":  [
+                  {
+                      "id":  "reactflow__edge-webhook-1789964186017001-mongodb.find_document-1789964212827002",
+                      "data":  {
+
+                               },
+                      "type":  "custom",
+                      "source":  "webhook-1789964186017001",
+                      "target":  "mongodb.find_document-1789964212827002"
+                  },
+                  {
+                      "id":  "reactflow__edge-mongodb.find_document-1789964212827002-code.execute-1789964271277003",
+                      "data":  {
+
+                               },
+                      "type":  "custom",
+                      "source":  "mongodb.find_document-1789964212827002",
+                      "target":  "code.execute-1789964271277003"
+                  },
+                  {
+                      "id":  "reactflow__edge-code.execute-1789964271277003-respondToWebhook-1789964443984004",
+                      "data":  {
+
+                               },
+                      "type":  "custom",
+                      "source":  "code.execute-1789964271277003",
+                      "target":  "respondToWebhook-1789964443984004"
+                  }
+              ]
+}

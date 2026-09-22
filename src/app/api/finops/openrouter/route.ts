@@ -31,7 +31,7 @@ export async function GET() {
           { 'tags.Provider': 'OpenRouter' },
         ],
       })
-      .sort({ amortizedCost: -1 })
+      .sort({ updatedAt: -1 })
       .toArray();
 
     if (!docs || docs.length === 0) {
@@ -48,78 +48,89 @@ export async function GET() {
       });
     }
 
-    // Extract the embedded summary metadata if present in documents[0] or compile directly
-    const firstWithMeta = docs.find((d: any) => d.keysList && d.keysList.length > 0);
+    // The workflow now stores ONE document per userId with all arrays embedded
+    const firstWithMeta = docs.find((d: any) => d.topModelsBySpend && Array.isArray(d.topModelsBySpend) && d.topModelsBySpend.length > 0)
+      || docs[0];
 
-    const keysList = firstWithMeta?.keysList || docs.map((d: any, idx: number) => ({
-      keyId: d.resourceId || `key_${idx + 1}`,
-      name: d.SubServiceName || (d.service ? d.service.replace('OpenRouter - ', '') : `Key ${idx + 1}`),
-      label: d.tags?.KeyLabel || '',
-      usage: Number(d.amortizedCost || d.unblendedCost || 0),
-      limit: null,
-      remaining: null,
-      createdAt: d.ChargePeriodStart || d.date || d.createdAt,
-      environment: d.tags?.Environment || 'production',
-      productTag: d.tags?.Project || 'SHARED_GATEWAY',
-    }));
+    // Read embedded arrays directly from the single document
+    const rawTopModels: any[] = firstWithMeta?.topModelsBySpend || [];
+    const totalUsage = Number(firstWithMeta?.totalUsage || 0);
+    const creditLimit = typeof firstWithMeta?.creditLimit === 'number' ? firstWithMeta.creditLimit : null;
+    const remainingBalance = typeof firstWithMeta?.remainingBalance === 'number' ? firstWithMeta.remainingBalance : null;
 
-    const totalUsage = firstWithMeta?.totalUsage !== undefined
-      ? Number(firstWithMeta.totalUsage)
-      : Number(docs.reduce((acc: number, d: any) => acc + (Number(d.amortizedCost) || 0), 0).toFixed(4));
+    // Build keysList by grouping topModelsBySpend by keyName
+    // (keysList stored in workflow is the raw API keys — may be empty if analytics path taken)
+    let keysList: any[] = [];
+    const storedKeysList = firstWithMeta?.keysList;
+    if (storedKeysList && Array.isArray(storedKeysList) && storedKeysList.length > 0) {
+      keysList = storedKeysList.filter((k: any) => {
+        const isInactive = k.isActive === false;
+        const isDeletedLabel = typeof k.label === 'string' && k.label.toLowerCase().includes('deleted');
+        return !isInactive && !isDeletedLabel;
+      });
+    } else if (rawTopModels.length > 0) {
+      // Reconstruct key list by grouping models by their parent API key
+      const keyMap: Record<string, any> = {};
+      for (const m of rawTopModels) {
+        const keyName = m.keyName || 'Unknown Key';
+        if (!keyMap[keyName]) {
+          keyMap[keyName] = {
+            keyId: m.apiKeyId || keyName,
+            name: keyName,
+            label: m.keyLabel || '',
+            usage: 0,
+            limit: null,
+            remaining: null,
+            createdAt: firstWithMeta?.lastSyncedAt || new Date().toISOString(),
+            environment: firstWithMeta?.environment || 'production',
+            productTag: firstWithMeta?.productTag || 'SHARED_GATEWAY',
+            models: [],
+          };
+        }
+        keyMap[keyName].usage = Number((keyMap[keyName].usage + (m.cost || 0)).toFixed(4));
+        if (m.model && !keyMap[keyName].models.includes(m.model)) {
+          keyMap[keyName].models.push(m.model);
+        }
+      }
+      keysList = Object.values(keyMap).sort((a: any, b: any) => b.usage - a.usage);
+    }
 
-    const creditLimit = typeof firstWithMeta?.creditLimit === 'number'
-      ? firstWithMeta.creditLimit
-      : Number(keysList.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0).toFixed(2));
+    const activeNames = new Set(keysList.map((k: any) => (k.name || '').trim().toLowerCase()));
+    const activeLabels = new Set(keysList.map((k: any) => (k.label || '').trim().toLowerCase()).filter(Boolean));
+    const activeIds = new Set(keysList.map((k: any) => (k.keyId || '').trim().toLowerCase()).filter(Boolean));
 
-    const remainingBalance = typeof firstWithMeta?.remainingBalance === 'number'
-      ? firstWithMeta.remainingBalance
-      : Number(keysList.reduce((acc: number, k: any) => acc + (Number(k.remaining) || 0), 0).toFixed(2));
+    const isFromActiveKey = (r: any) => {
+      if (keysList.length === 0) return true;
+      const kn = (r.keyName || r.name || r.key || '').trim().toLowerCase();
+      const kl = (r.keyLabel || r.label || '').trim().toLowerCase();
+      const kid = (r.apiKeyId || r.keyId || '').trim().toLowerCase();
+      return (
+        (kn && activeNames.has(kn)) ||
+        (kl && activeLabels.has(kl)) ||
+        (kid && activeIds.has(kid)) ||
+        (kn && activeLabels.has(kn)) ||
+        (kl && activeNames.has(kl))
+      );
+    };
 
-    const topModelsBySpend = firstWithMeta?.topModelsBySpend || keysList
-      .map((k: any) => ({
-        name: k.name,
-        provider: 'OpenRouter',
-        label: k.label,
-        cost: Number(k.usage || 0),
-        share: totalUsage > 0 ? Number(((Number(k.usage || 0) / totalUsage) * 100).toFixed(1)) : 0,
-        dailyCost: Number(k.usageDaily || 0),
-        weeklyCost: Number(k.usageWeekly || 0),
-        monthlyCost: Number(k.usageMonthly || 0),
-        limit: k.limit,
-        remaining: k.remaining,
-        createdAt: k.createdAt,
-      }))
-      .sort((a: any, b: any) => b.cost - a.cost);
-
-    const dateWiseTelemetry = firstWithMeta?.dateWiseTelemetry || docs.map((d: any) => ({
-      id: `telemetry_${d.resourceId || d._id}`,
-      date: d.date,
-      keyName: d.SubServiceName || (d.service ? d.service.replace('OpenRouter - ', '') : 'API Key'),
-      keyLabel: d.tags?.KeyLabel || '',
-      app: d.tags?.Project || 'SHARED_GATEWAY',
-      model: '',
-      cost: Number(d.amortizedCost || 0),
-      dailyCost: 0,
-      weeklyCost: 0,
-      monthlyCost: 0,
-      environment: d.tags?.Environment || 'production',
-    }));
+    const topModelsBySpend = rawTopModels.filter(isFromActiveKey);
+    const dateWiseTelemetry = (firstWithMeta?.dateWiseTelemetry || []).filter(isFromActiveKey);
 
     return NextResponse.json({
       success: true,
-      connectionId: docs[0]?.connectionId || 'Production OpenRouter',
-      connectionName: docs[0]?.accountName || 'Production OpenRouter',
-      productTag: docs[0]?.tags?.Project || 'SHARED_GATEWAY',
-      environment: docs[0]?.tags?.Environment || 'production',
+      connectionId: firstWithMeta?.connectionId || 'Production OpenRouter',
+      connectionName: firstWithMeta?.connectionName || 'Production OpenRouter',
+      productTag: firstWithMeta?.productTag || 'SHARED_GATEWAY',
+      environment: firstWithMeta?.environment || 'production',
       totalUsage,
       creditLimit,
       remainingBalance,
-      recordsIngested: keysList.length,
+      recordsIngested: firstWithMeta?.recordsIngested || topModelsBySpend.length,
       keysList,
       topModelsBySpend,
       dateWiseTelemetry,
-      focusRecords: docs,
-      lastSyncedAt: docs[0]?.updatedAt || new Date().toISOString(),
+      focusRecords: firstWithMeta?.focusRecords || [],
+      lastSyncedAt: firstWithMeta?.lastSyncedAt || new Date().toISOString(),
     });
   } catch (err: any) {
     console.error('API /api/finops/openrouter error:', err);

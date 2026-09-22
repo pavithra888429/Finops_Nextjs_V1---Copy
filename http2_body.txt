@@ -1,0 +1,17 @@
+﻿{
+  "metrics": [
+    "total_usage",
+    "request_count",
+    "tokens_prompt",
+    "tokens_completion"
+  ],
+  "dimensions": [
+    "model",
+    "api_key_id"
+  ],
+  "time_range": {
+    "start": "2025-01-01T00:00:00Z",
+    "end": "2027-12-31T23:59:59Z"
+  }
+}
+

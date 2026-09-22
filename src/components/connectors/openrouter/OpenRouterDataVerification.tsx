@@ -137,8 +137,13 @@ export function OpenRouterDataVerification({
         }
       }
 
+      // Filter out deleted/historical keys: keep ONLY real active workspace keys
       const rawKeys: OpenRouterWorkspaceKey[] = Array.isArray(resData.keysList)
-        ? resData.keysList
+        ? resData.keysList.filter((k: any) => {
+            const isInactive = k.isActive === false;
+            const isDeletedLabel = typeof k.label === 'string' && k.label.toLowerCase().includes('deleted');
+            return !isInactive && !isDeletedLabel;
+          })
         : [];
 
       const totalKeysCount = rawKeys.length;

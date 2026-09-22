@@ -1,0 +1,203 @@
+﻿// Node 4: Build FOCUS Records + Telemetry
+const input = $json;
+if (!input || !input.success) return input;
+
+const userId = input.userId || 'default_user';
+const connectionId = input.connectionId || 'Production OpenRouter';
+const connectionName = input.connectionName || 'Production OpenRouter';
+const productTag = (input.productTag || 'SHARED_GATEWAY').toUpperCase();
+const environment = (input.environment || 'production').toLowerCase();
+
+const cleanedKeys = Array.isArray(input.cleanedKeys) ? input.cleanedKeys : [];
+const incomingModels = Array.isArray(input.topModelsBySpend) ? input.topModelsBySpend : [];
+
+// Calculate total spend
+let totalUsage = typeof input.totalUsage === 'number' && input.totalUsage > 0
+  ? input.totalUsage
+  : incomingModels.reduce((acc, m) => acc + (m.cost || 0), 0);
+totalUsage = Number(totalUsage.toFixed(4));
+
+const creditLimit = input.creditLimit ?? null;
+const remainingBalance = input.remainingBalance ?? null;
+
+// 1. topModelsBySpend - full token data preserved
+const topModelsBySpend = incomingModels.map(m => ({
+  model: m.model,
+  name: m.name || m.model,
+  provider: m.provider || 'OpenRouter',
+  apiKeyId: m.apiKeyId || null,
+  keyName: m.keyName || 'Default Key',
+  keyLabel: m.keyLabel || '',
+  cost: m.cost || 0,
+  share: totalUsage > 0 ? Number(((m.cost / totalUsage) * 100).toFixed(1)) : 0,
+  requests: m.requests || 0,
+  promptTokens: m.promptTokens || 0,
+  completionTokens: m.completionTokens || 0,
+  cachedTokens: m.cachedTokens || 0,
+  totalTokens: m.totalTokens || 0
+})).sort((a, b) => b.cost - a.cost);
+
+// 2. Date-wise Telemetry - one row per model with all token fields
+const nowStr = new Date().toISOString();
+const todayDate = nowStr.split('T')[0];
+
+const dateWiseTelemetry = incomingModels.length > 0
+  ? incomingModels.map((m, idx) => ({
+      id: `telemetry_${(m.model || 'model').replace(/[^a-zA-Z0-9]/g, '_')}_${m.apiKeyId || idx}`,
+      date: todayDate,
+      keyName: m.keyName || 'Default Key',
+      keyLabel: m.keyLabel || '',
+      app: productTag,
+      model: m.model,
+      cost: m.cost || 0,
+      requests: m.requests || 0,
+      promptTokens: m.promptTokens || 0,
+      completionTokens: m.completionTokens || 0,
+      cachedTokens: m.cachedTokens || 0,
+      totalTokens: m.totalTokens || 0,
+      environment: environment
+    }))
+  : cleanedKeys.map(k => ({
+      id: `telemetry_${k.keyId}`,
+      date: (k.createdAt || nowStr).split('T')[0],
+      keyName: k.name,
+      keyLabel: k.label,
+      app: productTag,
+      model: '',
+      cost: k.usage || 0,
+      requests: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+      cachedTokens: 0,
+      totalTokens: 0,
+      environment: environment
+    }));
+
+// 3. FOCUS Records for MongoDB
+// FIX: resourceId = model_keyHash (UNIQUE per model+key combo) — prevents collision/growth
+const billingPeriod = todayDate.substring(0, 7);
+
+const focusRecords = incomingModels.length > 0
+  ? incomingModels.map((m, idx) => {
+      // CRITICAL FIX: composite resourceId so each model×key is a unique document
+      const safeModel = (m.model || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
+      const resourceId = `${safeModel}_${m.apiKeyId || idx}`;
+      return {
+        date: todayDate,
+        service: `OpenRouter - ${m.model}`,
+        userId: userId,
+        connectionId: connectionId,
+        operation: 'OpenRouterGatewaySync',
+        accountId: 'openrouter-workspace',
+        accountName: connectionName,
+        amortizedCost: m.cost || 0,
+        billingPeriod: billingPeriod,
+        blendedCost: m.cost || 0,
+        chargeDescription: `OpenRouter Inference - ${m.model} (${m.keyName || 'Unknown Key'})`,
+        chargeType: 'Usage',
+        netAmortizedCost: m.cost || 0,
+        netCost: m.cost || 0,
+        unblendedCost: m.cost || 0,
+        pricingCurrency: 'USD',
+        pricingUnit: 'Tokens',
+        region: 'global',
+        resourceId: resourceId,
+        // Token fields stored directly in the document
+        promptTokens: m.promptTokens || 0,
+        completionTokens: m.completionTokens || 0,
+        cachedTokens: m.cachedTokens || 0,
+        totalTokens: m.totalTokens || 0,
+        requests: m.requests || 0,
+        // Root-level key info for easy querying
+        keyName: m.keyName || '',
+        keyLabel: m.keyLabel || '',
+        // Tags with ALL fields needed by summary workflow
+        tags: {
+          Project: productTag,
+          Environment: environment,
+          Model: m.model,
+          Provider: m.provider || 'OpenRouter',
+          KeyName: m.keyName || '',
+          KeyLabel: m.keyLabel || '',
+          KeyId: m.apiKeyId || ''
+        },
+        createdAt: nowStr,
+        updatedAt: nowStr,
+        ChargePeriodStart: todayDate,
+        ChargePeriodEnd: nowStr,
+        ProviderName: 'OpenRouter',
+        ServiceName: 'OpenRouter AI Gateway',
+        SubServiceName: m.model,
+        BilledCost: m.cost || 0,
+        EffectiveCost: m.cost || 0
+      };
+    })
+  : cleanedKeys.map(k => {
+      const dateStr = (k.createdAt || nowStr).split('T')[0];
+      const safeKey = (k.name || 'key').replace(/[^a-zA-Z0-9]/g, '_');
+      return {
+        date: dateStr,
+        service: `OpenRouter - ${k.name}`,
+        userId: userId,
+        connectionId: connectionId,
+        operation: 'OpenRouterGatewaySync',
+        accountId: k.workspaceId || 'openrouter-workspace',
+        accountName: connectionName,
+        amortizedCost: k.usage || 0,
+        billingPeriod: dateStr.substring(0, 7),
+        blendedCost: k.usage || 0,
+        chargeDescription: `OpenRouter Key - ${k.name}`,
+        chargeType: 'Usage',
+        netAmortizedCost: k.usage || 0,
+        netCost: k.usage || 0,
+        unblendedCost: k.usage || 0,
+        pricingCurrency: 'USD',
+        pricingUnit: 'Tokens',
+        region: 'global',
+        resourceId: `key_${safeKey}_${k.keyId || 'unknown'}`,
+        promptTokens: 0,
+        completionTokens: 0,
+        cachedTokens: 0,
+        totalTokens: 0,
+        requests: 0,
+        keyName: k.name || '',
+        keyLabel: k.label || '',
+        tags: {
+          Project: productTag,
+          Environment: environment,
+          Model: '',
+          Provider: 'OpenRouter',
+          KeyName: k.name || '',
+          KeyLabel: k.label || '',
+          KeyId: k.keyId || ''
+        },
+        createdAt: nowStr,
+        updatedAt: nowStr,
+        ChargePeriodStart: k.createdAt || todayDate,
+        ChargePeriodEnd: nowStr,
+        ProviderName: 'OpenRouter',
+        ServiceName: 'OpenRouter AI Gateway',
+        SubServiceName: k.name,
+        BilledCost: k.usage || 0,
+        EffectiveCost: k.usage || 0
+      };
+    });
+
+return {
+  success: true,
+  userId,
+  connectionId,
+  connectionName,
+  productTag,
+  environment,
+  totalUsage,
+  creditLimit,
+  remainingBalance,
+  keysCount: cleanedKeys.length,
+  modelsCount: topModelsBySpend.length,
+  recordsIngested: focusRecords.length,
+  keysList: cleanedKeys,
+  topModelsBySpend,
+  dateWiseTelemetry,
+  focusRecords
+};

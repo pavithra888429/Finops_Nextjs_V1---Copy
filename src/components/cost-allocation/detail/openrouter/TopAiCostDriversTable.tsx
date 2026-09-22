@@ -56,34 +56,58 @@ export function TopAiCostDriversTable({ productName = 'Dragon Suite', keysList =
               </tr>
             ) : (
               sortedKeys.map((k: any) => {
-                const isStandby = (Number(k.usage) || 0) === 0;
+                const isDeletedOrInactive = k.isActive === false;
+                const isStandby = !isDeletedOrInactive && (Number(k.usage) || 0) === 0;
+
                 return (
                   <tr key={k.keyId || k.name} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-2.5 px-4 font-medium text-white truncate max-w-[180px]">
+                    <td className="py-2.5 px-4 font-medium text-white truncate max-w-[200px]">
                       <div className="flex items-center gap-2">
                         <span
                           className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                            isStandby ? 'bg-slate-500' : 'bg-emerald-400'
+                            isDeletedOrInactive
+                              ? 'bg-amber-400/80'
+                              : isStandby
+                              ? 'bg-slate-500'
+                              : 'bg-emerald-400'
                           }`}
                         />
                         <span className="truncate" title={k.name}>
                           {k.name}
                         </span>
-                        {isStandby && (
+                        {isDeletedOrInactive ? (
+                          <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                            inactive / deleted
+                          </span>
+                        ) : isStandby ? (
                           <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">
                             standby
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                     <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px] truncate">
-                      {k.label || '—'}
+                      {k.label && k.label !== 'Deleted Key' ? (
+                        k.label
+                      ) : (
+                        <span className="text-slate-500 italic font-sans text-[11px]">Historical Key</span>
+                      )}
                     </td>
                     <td className="py-2.5 px-3 text-slate-300 text-[11px]">
-                      {k.limit !== null && k.limit !== undefined ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited'}
+                      {isDeletedOrInactive
+                        ? <span className="text-slate-500">—</span>
+                        : k.limit !== null && k.limit !== undefined
+                        ? `$${Number(k.limit).toFixed(2)}`
+                        : 'Unlimited'}
                     </td>
-                    <td className="py-2.5 px-3 text-emerald-400 font-mono text-[11px]">
-                      {k.remaining !== null && k.remaining !== undefined ? `$${Number(k.remaining).toFixed(2)}` : 'N/A'}
+                    <td className="py-2.5 px-3 text-slate-300 font-mono text-[11px]">
+                      {isDeletedOrInactive ? (
+                        <span className="text-slate-500">—</span>
+                      ) : k.remaining !== null && k.remaining !== undefined ? (
+                        <span className="text-emerald-400 font-mono">${Number(k.remaining).toFixed(2)}</span>
+                      ) : (
+                        <span className="text-slate-500">—</span>
+                      )}
                     </td>
                     <td className="py-2.5 px-4 text-right font-medium text-amber-400 tabular-nums">
                       {format(Number(k.usage || 0))}

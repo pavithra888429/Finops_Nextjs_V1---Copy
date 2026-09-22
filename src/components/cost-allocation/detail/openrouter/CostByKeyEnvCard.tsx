@@ -18,18 +18,20 @@ export function CostByKeyEnvCard({
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(val);
 
   const totalKeysSpend = (keysList || []).reduce((sum, k) => sum + (Number(k.usage) || 0), 0);
+  const activeKeysOnlyCount = (keysList || []).filter((k) => k.isActive !== false).length;
 
   const displayItems = (keysList && keysList.length > 0)
     ? keysList.map((k) => {
         const cost = Number(k.usage || 0);
         const share = totalKeysSpend > 0 ? Number(((cost / totalKeysSpend) * 100).toFixed(1)) : 0;
+        const isInactive = k.isActive === false;
         return {
           name: k.name || 'Unnamed Key',
           label: k.label || '',
-          status: cost > 0 ? 'Active' : 'Standby',
+          status: isInactive ? 'Inactive' : cost > 0 ? 'Active' : 'Standby',
           cost: cost,
-          limit: k.limit !== null && k.limit !== undefined ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited',
-          remaining: k.remaining !== null && k.remaining !== undefined ? `$${Number(k.remaining).toFixed(2)}` : 'N/A',
+          limit: isInactive ? '—' : k.limit !== null && k.limit !== undefined ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited',
+          remaining: isInactive ? '—' : k.remaining !== null && k.remaining !== undefined ? `$${Number(k.remaining).toFixed(2)}` : '—',
           share: share,
           createdAt: k.createdAt ? new Date(k.createdAt).toLocaleDateString() : '',
         };
@@ -45,7 +47,7 @@ export function CostByKeyEnvCard({
           <p className="text-[11px] text-slate-400 mt-0.5">Discovered via OpenRouter Management Gateway</p>
         </div>
         <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono font-medium">
-          {displayItems.length} Keys Active
+          {activeKeysOnlyCount} Active Keys ({displayItems.length} Total)
         </span>
       </div>
 

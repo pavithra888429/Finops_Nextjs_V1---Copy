@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ArrowUpDown, SlidersHorizontal, Download, Key, Sparkles, Smartphone } from 'lucide-react';
+import { Search, ArrowUpDown, SlidersHorizontal, Download, Key, Sparkles, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface OpenRouterTelemetryRow {
   id: string;
@@ -25,6 +25,8 @@ export function DetailedOpenRouterUsageTable({
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<'cost' | 'tokens' | 'date'>('cost');
   const [sortAsc, setSortAsc] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4 }).format(val);
@@ -39,6 +41,7 @@ export function DetailedOpenRouterUsageTable({
       setSortField(field);
       setSortAsc(false);
     }
+    setCurrentPage(1);
   };
 
   const filtered = (data || []).filter((r) => {
@@ -61,6 +64,11 @@ export function DetailedOpenRouterUsageTable({
     return 0;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const paginatedItems = filtered.slice(startIndex, startIndex + pageSize);
+
   return (
     <div className="rounded-xl border border-dark-border bg-dark-card/90 overflow-hidden shadow-sm w-full space-y-2">
       {/* Header & Toolbar */}
@@ -79,7 +87,10 @@ export function DetailedOpenRouterUsageTable({
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Search key, model, client app..."
               className="h-7 w-64 pl-8 pr-3 text-xs bg-dark-surface border border-dark-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
             />
@@ -126,10 +137,10 @@ export function DetailedOpenRouterUsageTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto border-t border-dark-border/40">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/40 bg-dark-surface/40 whitespace-nowrap">
+            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/60 bg-dark-surface/40 whitespace-nowrap">
               <th className="py-2.5 px-3 font-normal">Date</th>
               <th className="py-2.5 px-3 font-normal">API Key</th>
               <th className="py-2.5 px-3 font-normal">Client Application</th>
@@ -152,7 +163,7 @@ export function DetailedOpenRouterUsageTable({
                 </td>
               </tr>
             ) : (
-              filtered.map((item) => (
+              paginatedItems.map((item) => (
                 <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">{item.date}</td>
                 <td className="py-2.5 px-3 font-medium text-white">
@@ -207,6 +218,35 @@ export function DetailedOpenRouterUsageTable({
           )}
           </tbody>
         </table>
+      </div>
+
+      {/* Footer / Pagination controls */}
+      <div className="px-4 py-2.5 border-t border-dark-border/40 bg-dark-surface/30 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+        <div>
+          Showing <span className="text-white font-medium">{filtered.length === 0 ? 0 : startIndex + 1}</span>–<span className="text-white font-medium">{Math.min(startIndex + pageSize, filtered.length)}</span> of <span className="text-white font-medium">{filtered.length}</span> records
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={validPage <= 1}
+            className="p-1.5 rounded-lg border border-dark-border hover:bg-white/5 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-300"
+            title="Previous Page"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          <span className="text-xs font-mono text-slate-300 px-1.5">
+            Page {validPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={validPage >= totalPages}
+            className="p-1.5 rounded-lg border border-dark-border hover:bg-white/5 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-300"
+            title="Next Page"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,56 @@
+﻿// Node 5: Deduplication & Prepare MongoDB Documents
+const input = $json;
+if (!input.success) return input;
+
+const { focusRecords, ...meta } = input;
+
+// Deduplicate using composite key (userId + resourceId)
+// resourceId is now "model_keyHash" — guaranteed unique per model×key
+const seenKeys = new Set();
+const deduplicatedDocs = [];
+let duplicatesPrevented = 0;
+
+for (const doc of (focusRecords || [])) {
+  // Use resourceId (already composite model_keyHash) as dedup key
+  const dedupKey = `${meta.userId}_${doc.resourceId}`;
+  if (!seenKeys.has(dedupKey)) {
+    seenKeys.add(dedupKey);
+    deduplicatedDocs.push(doc);
+  } else {
+    duplicatesPrevented++;
+  }
+}
+
+// Return each doc as a separate item for MongoDB batch upsert
+return deduplicatedDocs.map(doc => ({
+  ...doc,
+  ...meta,
+  // Override with per-doc values (spread of meta would overwrite these)
+  date: doc.date,
+  service: doc.service,
+  resourceId: doc.resourceId,
+  amortizedCost: doc.amortizedCost,
+  blendedCost: doc.blendedCost,
+  netAmortizedCost: doc.netAmortizedCost,
+  netCost: doc.netCost,
+  unblendedCost: doc.unblendedCost,
+  BilledCost: doc.BilledCost,
+  EffectiveCost: doc.EffectiveCost,
+  chargeDescription: doc.chargeDescription,
+  tags: doc.tags,
+  keyName: doc.keyName,
+  keyLabel: doc.keyLabel,
+  SubServiceName: doc.SubServiceName,
+  promptTokens: doc.promptTokens,
+  completionTokens: doc.completionTokens,
+  cachedTokens: doc.cachedTokens,
+  totalTokens: doc.totalTokens,
+  requests: doc.requests,
+  updatedAt: doc.updatedAt,
+  ChargePeriodStart: doc.ChargePeriodStart,
+  ChargePeriodEnd: doc.ChargePeriodEnd,
+  // Metadata
+  recordsIngested: deduplicatedDocs.length,
+  duplicatesPrevented: duplicatesPrevented,
+  lastSyncedAt: new Date().toISOString()
+}));
