@@ -46,94 +46,94 @@ export function DetailKpis({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 w-full">
       {/* 1. AWS Cost */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 px-3.5 py-3 flex items-center gap-3 shadow-sm hover:border-dark-borderHover transition-all min-h-[86px]">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#141824] border border-amber-500/30 text-amber-500 shadow-sm">
-          <span className="font-bold text-[11px] tracking-tight">aws</span>
+      <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3.5 shadow-sm hover:border-slate-300 transition-all min-h-[90px]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 border border-amber-200/60 text-amber-600 shadow-xs">
+          <span className="font-bold text-[12px] tracking-tight">aws</span>
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <p className="text-[11px] font-medium text-slate-400 truncate">AWS cost</p>
-          <h3 className="text-base font-bold text-white tracking-tight tabular-nums truncate mt-0.5">
+          <p className="text-[11px] font-medium text-slate-500 truncate">AWS Cost</p>
+          <h3 className="text-base font-bold text-slate-900 tracking-tight tabular-nums truncate mt-0.5">
             {format(totalCost)}
           </h3>
-          <div className="flex items-center gap-1 mt-0.5 text-[10.5px] font-semibold text-emerald-400 whitespace-nowrap truncate">
+          <div className="flex items-center gap-1 mt-0.5 text-[10.5px] font-semibold text-emerald-600 whitespace-nowrap truncate">
             <ArrowUp className="h-3 w-3 stroke-[2.5] shrink-0" />
-            <span>+{periodChange}% vs prev period</span>
+            <span>+{periodChange}% vs prev</span>
           </div>
         </div>
       </div>
 
       {/* 2. Daily Average */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 px-3.5 py-3 flex items-center gap-3 shadow-sm hover:border-dark-borderHover transition-all min-h-[86px]">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3.5 shadow-sm hover:border-slate-300 transition-all min-h-[90px]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 border border-blue-200/60 text-blue-600 shadow-xs">
           <BarChart3 className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <p className="text-[11px] font-medium text-slate-400 truncate">Daily average</p>
-          <h3 className="text-base font-bold text-white tracking-tight tabular-nums truncate mt-0.5">
+          <p className="text-[11px] font-medium text-slate-500 truncate">Daily Average</p>
+          <h3 className="text-base font-bold text-slate-900 tracking-tight tabular-nums truncate mt-0.5">
             {format(dailyAvg)}
           </h3>
-          <p className="text-[10.5px] text-slate-400 font-normal truncate mt-0.5">Based on 30 days active</p>
+          <p className="text-[10.5px] text-slate-400 font-normal truncate mt-0.5">30 days active</p>
         </div>
       </div>
 
       {/* 3. Top Service */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 px-3.5 py-3 flex items-center gap-3 shadow-sm hover:border-dark-borderHover transition-all min-h-[86px]">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3.5 shadow-sm hover:border-slate-300 transition-all min-h-[90px]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-50 border border-purple-200/60 text-purple-600 shadow-xs">
           <Box className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <p className="text-[11px] font-medium text-slate-400 truncate">Top service</p>
-          <h4 className="text-[13px] font-bold text-white tracking-tight truncate mt-0.5" title={topService}>
+          <p className="text-[11px] font-medium text-slate-500 truncate">Top Service</p>
+          <h4 className="text-[13px] font-bold text-slate-900 tracking-tight truncate mt-0.5" title={topService}>
             {topService}
           </h4>
           <div className="flex items-center gap-1.5 mt-0.5 text-[10.5px] truncate">
-            <span className="font-bold text-white tabular-nums">{format(topServiceCost)}</span>
-            <span className="text-slate-400 font-normal">({topServiceShare}%)</span>
+            <span className="font-bold text-slate-900 tabular-nums">{format(topServiceCost)}</span>
+            <span className="text-slate-500 font-normal">({topServiceShare}%)</span>
           </div>
         </div>
       </div>
 
       {/* 4. Top Region */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 px-3.5 py-3 flex items-center gap-3 shadow-sm hover:border-dark-borderHover transition-all min-h-[86px]">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3.5 shadow-sm hover:border-slate-300 transition-all min-h-[90px]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200/60 text-emerald-600 shadow-xs">
           <MapPin className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <p className="text-[11px] font-medium text-slate-400 truncate">Top region</p>
-          <h4 className="text-[13px] font-bold text-white tracking-tight truncate mt-0.5" title={topRegion}>
+          <p className="text-[11px] font-medium text-slate-500 truncate">Top Region</p>
+          <h4 className="text-[13px] font-bold text-slate-900 tracking-tight truncate mt-0.5" title={topRegion}>
             {topRegion}
           </h4>
           <div className="flex items-center gap-1.5 mt-0.5 text-[10.5px] truncate">
-            <span className="font-bold text-white tabular-nums">{format(topRegionCost)}</span>
-            <span className="text-slate-400 font-normal">({topRegionShare}%)</span>
+            <span className="font-bold text-slate-900 tabular-nums">{format(topRegionCost)}</span>
+            <span className="text-slate-500 font-normal">({topRegionShare}%)</span>
           </div>
         </div>
       </div>
 
       {/* 5. Top Account */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 px-3.5 py-3 flex items-center gap-3 shadow-sm hover:border-dark-borderHover transition-all min-h-[86px]">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-300 border border-amber-400/30 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3.5 shadow-sm hover:border-slate-300 transition-all min-h-[90px]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 border border-indigo-200/60 text-indigo-600 shadow-xs">
           <Building2 className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <p className="text-[11px] font-medium text-slate-400 truncate">Top account</p>
-          <h4 className="text-[13px] font-bold text-white tracking-tight truncate mt-0.5" title={topAccount}>
+          <p className="text-[11px] font-medium text-slate-500 truncate">Top Account</p>
+          <h4 className="text-[13px] font-bold text-slate-900 tracking-tight truncate mt-0.5" title={topAccount}>
             {topAccount}
           </h4>
           <div className="flex items-center gap-1.5 mt-0.5 text-[10.5px] truncate">
-            <span className="font-bold text-white tabular-nums">{format(topAccountCost)}</span>
-            <span className="text-slate-400 font-normal">({topAccountShare}%)</span>
+            <span className="font-bold text-slate-900 tabular-nums">{format(topAccountCost)}</span>
+            <span className="text-slate-500 font-normal">({topAccountShare}%)</span>
           </div>
         </div>
       </div>
 
       {/* 6. Resource Coverage Circular Ring */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 px-3.5 py-3 flex items-center gap-3 shadow-sm hover:border-dark-borderHover transition-all min-h-[86px]">
-        {/* SVG Circle Gauge - exactly 40x40 to align with all other cards */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3.5 shadow-sm hover:border-slate-300 transition-all min-h-[90px]">
+        {/* SVG Circle Gauge */}
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
           <svg height={size} width={size} className="rotate-[-90deg]">
             <circle
-              stroke="#1a273b"
+              stroke="#f1f5f9"
               fill="transparent"
               strokeWidth={stroke}
               r={normalizedRadius}
@@ -141,7 +141,7 @@ export function DetailKpis({
               cy={radius}
             />
             <circle
-              stroke="#10b981"
+              stroke="#8b5cf6"
               fill="transparent"
               strokeWidth={stroke}
               strokeDasharray={`${circumference} ${circumference}`}
@@ -152,11 +152,11 @@ export function DetailKpis({
               cy={radius}
             />
           </svg>
-          <span className="absolute text-[9px] font-bold text-emerald-400 tabular-nums">{resourceCoverage}%</span>
+          <span className="absolute text-[9px] font-bold text-slate-900 tabular-nums">{resourceCoverage}%</span>
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <p className="text-[11px] font-medium text-slate-400 truncate">Resource coverage</p>
-          <h3 className="text-base font-bold text-white tracking-tight tabular-nums truncate mt-0.5">
+          <p className="text-[11px] font-medium text-slate-500 truncate">Resource Coverage</p>
+          <h3 className="text-base font-bold text-slate-900 tracking-tight tabular-nums truncate mt-0.5">
             {resourceCoverage}%
           </h3>
           <p className="text-[10.5px] text-slate-400 font-normal truncate mt-0.5">Direct & tagged</p>

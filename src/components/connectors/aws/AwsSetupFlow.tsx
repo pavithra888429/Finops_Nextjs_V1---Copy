@@ -39,10 +39,22 @@ export function AwsSetupFlow() {
   const [existingBucketName, setExistingBucketName] = useState("");
   const [existingBucketRegion, setExistingBucketRegion] = useState("");
 
-  // Load existing connection from backend on mount
+  // Load existing connection from backend or localStorage on mount
   useEffect(() => {
     let isSubscribed = true;
     setIsLoadingActive(true);
+
+    if (typeof window !== "undefined") {
+      const savedConnId = localStorage.getItem("finops_aws_connection_id");
+      const savedAccountId = localStorage.getItem("finops_aws_account_id");
+      if (savedConnId) {
+        setConnectionId(savedConnId);
+      }
+      if (savedAccountId) {
+        setStep1Data((prev) => ({ ...prev, awsAccountId: savedAccountId }));
+        setBucketName(`finops-cur2-${savedAccountId}-v1`);
+      }
+    }
 
     finopsApi
       .listConnections()
@@ -52,9 +64,16 @@ export function AwsSetupFlow() {
           const active = connections.find((c) => c.status === "connected") || connections[0];
           setActiveRecord(active);
           setConnectionId(active.connectionId);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("finops_aws_connection_id", active.connectionId);
+            if (active.awsAccountId) {
+              localStorage.setItem("finops_aws_account_id", active.awsAccountId);
+            }
+          }
           setStep1Data({
             accountName: active.connectionName || "",
             region: active.region || "",
+            awsAccountId: active.awsAccountId || "",
             roleName: active.roleName || "",
             externalId: active.externalId || "",
           });
@@ -64,10 +83,9 @@ export function AwsSetupFlow() {
           if (active.awsAccountId) {
             setBucketName(`finops-cur2-${active.awsAccountId}-v1`);
           }
-          if (active.status === "connected" && !isExplicitNew) {
-            setState("success");
-          } else if (active.status === "verification_failed" && !isExplicitNew) {
-            setState("failure");
+          // Never prematurely set 'success' badge on mount — live verification must be explicitly triggered
+          if (isExplicitDetails) {
+            // Details mode is handled by isExplicitDetails flag
           }
         } else if (isExplicitDetails) {
           // If in details mode but no connection exists in backend, redirect to new
@@ -95,26 +113,35 @@ export function AwsSetupFlow() {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
+      let activeExtId = data.connectionRecord?.externalId || data.externalId;
+
       if (!connId && data.accountName && data.region) {
         const startRes = await finopsApi.startConnection({
           connectionName: data.accountName,
           region: data.region,
           awsAccountId: data.awsAccountId,
           roleName: data.roleName,
-          externalId: data.externalId,
+          externalId: activeExtId,
         });
         if (startRes && startRes.connectionId) {
           connId = startRes.connectionId;
           setConnectionId(connId);
           setActiveRecord(startRes);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("finops_aws_connection_id", connId);
+            if (data.awsAccountId) localStorage.setItem("finops_aws_account_id", data.awsAccountId);
+          }
+          if (startRes.externalId) {
+            activeExtId = startRes.externalId;
+          }
         }
       }
 
       if (connId) {
-        await finopsApi.confirmCloudFormation(connId, true, data.externalId);
+        await finopsApi.confirmCloudFormation(connId, true, activeExtId);
         const res = await finopsApi.verifyConnection(
           connId,
-          data.externalId,
+          activeExtId,
           data.roleName,
           data.awsAccountId
         );
@@ -150,9 +177,9 @@ export function AwsSetupFlow() {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
-      const extId = step1Data.externalId || activeRecord?.externalId;
-      const role = step1Data.roleName || activeRecord?.roleName;
-      const accId = step1Data.awsAccountId || activeRecord?.awsAccountId;
+      const extId = activeRecord?.externalId || step1Data.externalId;
+      const role = activeRecord?.roleName || step1Data.roleName;
+      const accId = activeRecord?.awsAccountId || step1Data.awsAccountId;
 
       await finopsApi.confirmCloudFormation(connectionId, true, extId);
       const res = await finopsApi.verifyConnection(connectionId, extId, role, accId);
@@ -174,6 +201,12 @@ export function AwsSetupFlow() {
       setError(errMsg);
       setState("failure");
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBackToStep1 = () => {
+    setState("step1");
+    setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -221,20 +254,20 @@ export function AwsSetupFlow() {
         <main className="w-full max-w-4xl space-y-6">
         
         {/* Header Banner */}
-        <div className="mb-8 border-b border-dark-border/80 pb-4">
-          <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <div className="mb-8 border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
             <span>FINOPS</span>
-            <span className="text-slate-600">/</span>
+            <span className="text-slate-300">/</span>
             <span>CONNECTORS</span>
-            <span className="text-slate-600">/</span>
-            <span className="text-blue-400">
+            <span className="text-slate-300">/</span>
+            <span className="text-purple-600 font-bold">
               {isExplicitDetails ? "AWS DETAILS" : "AWS SETUP"}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
             {isExplicitDetails ? "AWS Connection Details" : "Connect AWS Account"}
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-400 font-normal leading-relaxed">
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 font-normal leading-relaxed">
             {isExplicitDetails
               ? "Manage your AWS connection and data synchronization."
               : "Follow the steps below to connect your AWS environment."}
@@ -250,7 +283,7 @@ export function AwsSetupFlow() {
             <StepIndicator currentStep={currentStepNum} />
 
             {/* Step Card Container */}
-            <div className="mt-6 rounded-2xl border border-dark-border bg-dark-card/90 p-6 sm:p-8 shadow-xl shadow-black/20">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
               
               {/* STEP 1: Account Configuration */}
               {state === "step1" && (
@@ -267,13 +300,14 @@ export function AwsSetupFlow() {
                   connectionRecord={activeRecord}
                   onVerify={handleVerify}
                   onContinueToCloudCost={handleContinueToPhase2}
+                  onBackToStep1={handleBackToStep1}
                 />
               )}
 
               {/* STEP 2: Configure Cloud Cost (CUR 2.0 & S3) */}
               {state === "step2" && (
                 <div className="space-y-8 animate-in fade-in duration-300">
-                  <h2 className="text-base font-bold text-white">
+                  <h2 className="text-base font-bold text-slate-900">
                     Configure Cloud Cost & Usage Reports
                   </h2>
 
@@ -301,6 +335,7 @@ export function AwsSetupFlow() {
 
                   <CloudFormationSummary
                     connectionId={connectionId}
+                    awsAccountId={step1Data.awsAccountId || activeRecord?.awsAccountId}
                     formData={getStep2Data()}
                     isFormValid={isStep2Valid()}
                     onStackCreated={async (id: string) => {
@@ -317,6 +352,7 @@ export function AwsSetupFlow() {
                             bucketRegion: bRegion,
                             exportPathPrefix: s2Data.exportPrefix,
                             exportName: s2Data.exportName,
+                            awsAccountId: step1Data.awsAccountId || activeRecord?.awsAccountId,
                           });
                           if (confRes?.connection) {
                             setActiveRecord(confRes.connection);

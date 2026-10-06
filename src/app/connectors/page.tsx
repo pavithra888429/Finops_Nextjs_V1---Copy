@@ -27,11 +27,11 @@ export default function ConnectorsPage() {
       id: "gemini",
       name: "Gemini",
       category: "AI Model Provider",
-      status: "connected",
+      status: "not_connected",
       description: "Track Gemini API usage, models, tokens, requests, and cost.",
-      accountText: "Production account",
-      syncText: "Synced 10 minutes ago",
-      metricsText: "Tokens, requests, models, cost",
+      accountText: "No API key configured",
+      syncText: "Not synchronized",
+      metricsText: "Waiting for connection",
       logoType: "gemini",
     },
     {
@@ -58,11 +58,47 @@ export default function ConnectorsPage() {
     },
   ]);
 
+  const [activities, setActivities] = useState<any[]>([]);
+
+  const [realLastSynced, setRealLastSynced] = useState<string>("Today, Live");
+
   // Sync state from Backend API & localStorage
   useEffect(() => {
     let isSubscribed = true;
 
-    // 1. Check local storage for OpenRouter connection
+    // 1. Fetch live OpenRouter connection details from API
+    fetch("/api/finops/openrouter")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isSubscribed) return;
+        if (data && data.success && ((Array.isArray(data.keysList) && data.keysList.length > 0) || Number(data.totalUsage) > 0)) {
+          const rem = data.remainingBalance !== null && data.remainingBalance !== undefined && !isNaN(Number(data.remainingBalance))
+            ? `$${Number(data.remainingBalance).toFixed(2)}`
+            : data.creditLimit !== null && data.creditLimit !== undefined && !isNaN(Number(data.creditLimit))
+            ? `$${Number(data.creditLimit).toFixed(2)}`
+            : "Active";
+          setProviders((prev) =>
+            prev.map((p) => {
+              if (p.id === "openrouter") {
+                return {
+                  ...p,
+                  name: data.connectionId || "Production OpenRouter",
+                  status: "connected",
+                  accountText: data.keysList?.length ? `${data.keysList.length} Keys Tracked` : "10 Keys Tracked",
+                  syncText: "Synced live",
+                  metricsText: rem,
+                };
+              }
+              return p;
+            })
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch OpenRouter API status:", err);
+      });
+
+    // Also check local storage for OpenRouter connection
     try {
       const savedOpenRouter = localStorage.getItem("finops_openrouter_connection");
       if (savedOpenRouter) {
@@ -103,6 +139,15 @@ export default function ConnectorsPage() {
           const isConn = activeConn.status === "connected";
           const isFailed = activeConn.status === "verification_failed";
 
+          const rawDate = activeConn.lastSyncedAt || activeConn.verifiedAt || activeConn.updatedAt;
+          const formattedSync = rawDate
+            ? new Date(rawDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+            : "Just now";
+
+          if (isConn) {
+            setRealLastSynced(formattedSync);
+          }
+
           setProviders((prev) =>
             prev.map((p) => {
               if (p.id === "aws") {
@@ -123,6 +168,8 @@ export default function ConnectorsPage() {
                     : isConn
                     ? "Connected (Pending Cloud Cost)"
                     : "Action required in console",
+                  region: activeConn.region || "us-east-1",
+                  lastSynced: formattedSync,
                 };
               }
               return p;
@@ -144,6 +191,105 @@ export default function ConnectorsPage() {
             )
           );
         }
+
+        // 3. Build Real Dynamic Activities from Live Database Records
+        const realActivities: any[] = [];
+
+        if (connections && connections.length > 0) {
+          connections.forEach((c) => {
+            const isConn = c.status === "connected";
+            const dateStr = c.lastSyncedAt || c.verifiedAt || c.updatedAt || c.createdAt;
+            const formattedTime = dateStr
+              ? new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+                ", " +
+                new Date(dateStr).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
+              : "Today";
+
+            if (isConn) {
+              if (c.recordsProcessed && c.recordsProcessed > 0) {
+                realActivities.push({
+                  id: `aws-sync-${c.connectionId}`,
+                  provider: "aws",
+                  providerName: "AWS",
+                  event: "CUR 2.0 Cost Data Synchronized",
+                  status: "success",
+                  dateTime: formattedTime,
+                  details: `${c.recordsProcessed.toLocaleString()} records imported`,
+                });
+              } else if (c.syncStatus === "pending_aws_export") {
+                realActivities.push({
+                  id: `aws-pending-${c.connectionId}`,
+                  provider: "aws",
+                  providerName: "AWS",
+                  event: "Awaiting First AWS CUR 2.0 Export",
+                  status: "success",
+                  dateTime: formattedTime,
+                  details: c.bucketName ? `S3: ${c.bucketName}` : "Pipeline active",
+                });
+              } else {
+                realActivities.push({
+                  id: `aws-conn-${c.connectionId}`,
+                  provider: "aws",
+                  providerName: "AWS",
+                  event: "CloudFormation & IAM Role Verified",
+                  status: "success",
+                  dateTime: formattedTime,
+                  details: `Account: ${c.awsAccountId || "Active"}`,
+                });
+              }
+
+              if (c.roleArn) {
+                realActivities.push({
+                  id: `aws-role-${c.connectionId}`,
+                  provider: "aws",
+                  providerName: "AWS",
+                  event: "STS Cross-Account Session Verified",
+                  status: "success",
+                  dateTime: formattedTime,
+                  details: `Role: ${c.roleName || "FinOpsAwsIntegrationRole"}`,
+                });
+              }
+            } else if (c.status === "verification_failed") {
+              realActivities.push({
+                id: `aws-fail-${c.connectionId}`,
+                provider: "aws",
+                providerName: "AWS",
+                event: "Connection Verification Failed",
+                status: "warning",
+                dateTime: formattedTime,
+                details: c.lastError?.message || "Action required",
+              });
+            }
+          });
+        }
+
+        // Also check if OpenRouter is configured in localStorage
+        try {
+          const savedOpenRouter = localStorage.getItem("finops_openrouter_connection");
+          if (savedOpenRouter) {
+            const parsed = JSON.parse(savedOpenRouter);
+            const orDate = parsed.verifiedAt || parsed.updatedAt;
+            const orFormatted = orDate
+              ? new Date(orDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+                ", " +
+                new Date(orDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
+              : "Today";
+
+            realActivities.push({
+              id: `or-conn-${parsed.connectionId || "openrouter"}`,
+              provider: "openrouter",
+              providerName: "OpenRouter",
+              event: "AI Model Gateway Synchronized",
+              status: "success",
+              dateTime: orFormatted,
+              details: parsed.keysList?.length
+                ? `${parsed.keysList.length} Keys Tracked`
+                : "Active Gateway",
+            });
+          }
+        } catch (e) {}
+
+        setActivities(realActivities);
       } catch (err) {
         console.warn("Backend connections fetch notice:", err);
       }
@@ -158,27 +304,6 @@ export default function ConnectorsPage() {
       window.removeEventListener("finops_store_update", handleUpdate);
     };
   }, []);
-
-  const [activities, setActivities] = useState<any[]>([
-    {
-      id: "1",
-      provider: "gemini",
-      providerName: "Gemini",
-      event: "Usage data synchronized",
-      status: "success",
-      dateTime: "Today, 10:42 AM",
-      details: "4.2M records imported",
-    },
-    {
-      id: "2",
-      provider: "aws",
-      providerName: "AWS",
-      event: "Billing export setup incomplete",
-      status: "warning",
-      dateTime: "Today, 09:15 AM",
-      details: "Action required",
-    },
-  ]);
 
   // Handle successful AWS connection
   const handleAwsConnected = (accountDetails: any) => {
@@ -258,21 +383,21 @@ export default function ConnectorsPage() {
   const actionRequiredCount = providers.filter((p) => p.status === "action_required").length;
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white">
+    <div className="w-full flex-1 flex flex-col justify-between font-sans bg-[#f8fafc] text-slate-800">
       {/* Main Content */}
       <main className="w-full max-w-[1600px] mx-auto flex-1 px-6 lg:px-10 py-6 space-y-6">
         
-        {/* Page Banner / Header matching Agent_Builder_Nextjs_V1 */}
+        {/* Page Banner / Header */}
         <div className="pb-2">
-          <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <span>FINOPS</span>
-            <span className="text-slate-600">/</span>
-            <span className="text-blue-400">CONNECTORS</span>
+          <div className="flex items-center gap-1.5 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <span>FINOPS ANALYTICS</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-purple-600 font-bold">CONNECTORS</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
             Connectors
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-400 font-normal leading-relaxed">
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 font-normal leading-relaxed">
             Connect billing and usage providers to start FinOps analytics
           </p>
         </div>
@@ -282,7 +407,7 @@ export default function ConnectorsPage() {
           total={providers.length}
           connected={connectedCount}
           actionRequired={actionRequiredCount}
-          lastSynced="Today, 10:42 AM"
+          lastSynced={realLastSynced}
         />
 
         {/* Available Providers Section */}

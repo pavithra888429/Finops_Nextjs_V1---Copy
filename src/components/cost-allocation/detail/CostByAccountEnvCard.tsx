@@ -20,47 +20,49 @@ export function CostByAccountEnvCard({ productName = 'Workbench' }: { productNam
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between shadow-sm h-full">
       {/* Header */}
-      <div className="pb-3 border-b border-dark-border/60">
-        <h3 className="text-sm font-semibold text-white tracking-tight">Cost by Account and Environment</h3>
+      <div className="pb-3 border-b border-slate-100">
+        <h3 className="text-sm font-bold text-slate-900 tracking-tight">Cost by Account and Environment</h3>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto my-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/40">
-              <th className="py-2 pr-2 font-normal">Account</th>
-              <th className="py-2 px-2 font-normal">Environment</th>
-              <th className="py-2 px-2 text-right font-normal">Cost</th>
-              <th className="py-2 px-2 text-right font-normal">Share</th>
-              <th className="py-2 pl-2 text-right font-normal">Change</th>
+            <tr className="text-[10.5px] font-semibold text-slate-400 border-b border-slate-100">
+              <th className="py-2.5 pr-2">Account</th>
+              <th className="py-2.5 px-2">Environment</th>
+              <th className="py-2.5 px-2 text-right">Cost</th>
+              <th className="py-2.5 px-2 text-right">Share</th>
+              <th className="py-2.5 pl-2 text-right">Change</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/30 text-slate-300">
+          <tbody className="divide-y divide-slate-100 text-slate-700">
             {ACCOUNT_ENV_DATA.map((item) => (
-              <tr key={item.account} className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-2.5 pr-2 font-medium text-white truncate max-w-[140px]">
+              <tr key={item.account} className="hover:bg-slate-50/80 transition-colors">
+                <td className="py-3 pr-2 font-semibold text-slate-800 truncate max-w-[140px]">
                   {item.account.replace('Workbench', productName)}
                 </td>
-                <td className="py-2.5 px-2 text-slate-400 text-[11px] truncate">
-                  {item.env}
+                <td className="py-3 px-2 text-slate-500 text-[11px] truncate">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-600 font-medium">
+                    {item.env}
+                  </span>
                 </td>
-                <td className="py-2.5 px-2 text-right text-white font-medium tabular-nums">
+                <td className="py-3 px-2 text-right text-slate-900 font-bold tabular-nums">
                   {format(item.cost)}
                 </td>
-                <td className="py-2.5 px-2 text-right text-slate-400 tabular-nums">
+                <td className="py-3 px-2 text-right text-slate-500 tabular-nums">
                   {item.share}%
                 </td>
-                <td className="py-2.5 pl-2 text-right font-medium">
+                <td className="py-3 pl-2 text-right font-medium">
                   {item.change >= 0 ? (
-                    <span className="text-emerald-400 inline-flex items-center gap-0.5 justify-end">
+                    <span className="text-emerald-600 inline-flex items-center gap-0.5 justify-end font-semibold">
                       <ArrowUp className="h-2.5 w-2.5 stroke-[2.5]" />
                       <span>+{item.change}%</span>
                     </span>
                   ) : (
-                    <span className="text-rose-400 inline-flex items-center gap-0.5 justify-end">
+                    <span className="text-rose-600 inline-flex items-center gap-0.5 justify-end font-semibold">
                       <ArrowDown className="h-2.5 w-2.5 stroke-[2.5]" />
                       <span>{item.change}%</span>
                     </span>

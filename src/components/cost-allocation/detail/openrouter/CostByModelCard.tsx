@@ -9,7 +9,7 @@ export function CostByModelCard({ topModels = [], keysList = [] }: CostByModelCa
   const format = (val: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(val);
 
-  const colors = ['bg-[#ff781f]', 'bg-[#0070f3]', 'bg-[#8b5cf6]', 'bg-[#00e599]', 'bg-[#ec4899]', 'bg-amber-400'];
+  const colors = ['bg-purple-600', 'bg-blue-600', 'bg-cyan-500', 'bg-amber-500', 'bg-emerald-500', 'bg-slate-500'];
 
   // Prefer keysList if topModels is not supplied or has fewer items
   const source = (keysList && keysList.length > 0) ? keysList : topModels;
@@ -30,53 +30,53 @@ export function CostByModelCard({ topModels = [], keysList = [] }: CostByModelCa
   });
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-dark-border/60">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-sm font-semibold text-white tracking-tight">Top Workload Keys by Spend</h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">Ranked real expenditure across OpenRouter keys</p>
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight">Top Workload Keys by Spend</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Ranked real expenditure across OpenRouter keys</p>
         </div>
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 font-mono font-medium">
+        <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-sans font-semibold">
           {displayItems.length} Keys
         </span>
       </div>
 
       {/* Column sub-headers */}
-      <div className="grid grid-cols-12 gap-2 text-[10.5px] font-medium text-slate-400 pt-2 pb-1 border-b border-dark-border/40">
+      <div className="grid grid-cols-12 gap-2 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider pt-2 pb-1 border-b border-slate-100">
         <span className="col-span-6">API Key Workload</span>
         <span className="col-span-3 text-right">Spend</span>
         <span className="col-span-3 text-right">Share</span>
       </div>
 
-      {/* Scrollable Rows - Shows all keys without truncation */}
-      <div className="space-y-3 pt-2 max-h-72 overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-transparent hover:scrollbar-thumb-slate-600">
+      {/* Scrollable Rows */}
+      <div className="space-y-3 pt-2 max-h-72 overflow-y-auto pr-1.5 scrollbar-thin">
         {displayItems.length === 0 ? (
-          <div className="py-6 text-center text-slate-500 text-xs">
+          <div className="py-6 text-center text-slate-400 text-xs">
             No OpenRouter keys ingested yet.
           </div>
         ) : (
           displayItems.map((item) => (
-            <div key={item.name} className="space-y-1 group hover:bg-white/[0.02] p-1 rounded transition-colors">
+            <div key={item.name} className="space-y-1 group hover:bg-slate-50 p-1 rounded-lg transition-colors">
               <div className="grid grid-cols-12 gap-2 items-center text-xs">
                 <div className="col-span-6 flex items-center gap-1.5 truncate">
-                  <span className={`h-2 w-2 rounded-sm shrink-0 ${item.barColor}`} />
-                  <span className="font-medium text-slate-200 truncate group-hover:text-white transition-colors" title={item.name}>
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${item.barColor}`} />
+                  <span className="font-semibold text-slate-800 truncate group-hover:text-purple-600 transition-colors" title={item.name}>
                     {item.name}
                   </span>
                 </div>
 
-                <span className="col-span-3 text-right text-white font-medium tabular-nums">
+                <span className="col-span-3 text-right text-slate-900 font-bold tabular-nums font-sans">
                   {format(item.cost)}
                 </span>
 
-                <span className="col-span-3 text-right text-slate-400 tabular-nums font-mono text-[11px]">
+                <span className="col-span-3 text-right text-slate-500 tabular-nums font-sans text-xs">
                   {item.share}%
                 </span>
               </div>
 
               {/* Proportion Bar */}
-              <div className="w-full h-1.5 rounded-full bg-dark-border/60 overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className={`h-full rounded-full ${item.barColor} transition-all duration-300`}
                   style={{ width: `${Math.min(100, Math.max(item.cost > 0 ? 2 : 0, item.share))}%` }}

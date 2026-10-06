@@ -184,76 +184,76 @@ export function OpenRouterDataVerification({
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
       <div>
-        <h2 className="text-base font-bold text-dark-heading">
+        <h2 className="text-base font-bold text-slate-900">
           Verify & Ingest OpenRouter Data
         </h2>
-        <p className="mt-1 text-xs text-dark-muted">
+        <p className="mt-1 text-xs text-slate-500">
           Validating token credentials and ingesting live consumption data from OpenRouter.
         </p>
       </div>
 
       {/* Progress Stepper Box */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 p-5 sm:p-6 space-y-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 space-y-4 shadow-sm">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
           Data Pipeline Handshake
         </h3>
 
         <div className="space-y-3">
           {/* Step 1: Authentication */}
-          <div className="flex items-center justify-between py-2 border-b border-dark-border/40 text-xs">
+          <div className="flex items-center justify-between py-2.5 border-b border-slate-100 text-xs">
             <div className="flex items-center gap-3">
-              {stepStatuses.auth === 'running' && <Loader2 className="h-4 w-4 animate-spin text-blue-400" />}
-              {stepStatuses.auth === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-              {stepStatuses.auth === 'failed' && <XCircle className="h-4 w-4 text-rose-400" />}
-              {stepStatuses.auth === 'pending' && <span className="h-2 w-2 rounded-full bg-slate-600 ml-1 mr-1" />}
-              <span className={stepStatuses.auth === 'running' ? 'text-white font-medium' : 'text-slate-300'}>
+              {stepStatuses.auth === 'running' && <Loader2 className="h-4 w-4 animate-spin text-purple-600" />}
+              {stepStatuses.auth === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+              {stepStatuses.auth === 'failed' && <XCircle className="h-4 w-4 text-rose-500" />}
+              {stepStatuses.auth === 'pending' && <span className="h-2 w-2 rounded-full bg-slate-300 ml-1 mr-1" />}
+              <span className={stepStatuses.auth === 'running' ? 'text-slate-900 font-semibold' : 'text-slate-700'}>
                 1. Authenticate with OpenRouter Management API
               </span>
             </div>
-            <span className="font-mono text-[11px] text-slate-400">
+            <span className="font-mono text-[11px] text-slate-500">
               {stepStatuses.auth === 'running' && 'Connecting...'}
-              {stepStatuses.auth === 'success' && <span className="text-emerald-400 font-semibold">200 OK</span>}
-              {stepStatuses.auth === 'failed' && <span className="text-rose-400 font-semibold">Failed</span>}
+              {stepStatuses.auth === 'success' && <span className="text-emerald-700 font-bold">200 OK</span>}
+              {stepStatuses.auth === 'failed' && <span className="text-rose-600 font-bold">Failed</span>}
             </span>
           </div>
 
           {/* Step 2: Credits & Limits */}
-          <div className="flex items-center justify-between py-2 border-b border-dark-border/40 text-xs">
+          <div className="flex items-center justify-between py-2.5 border-b border-slate-100 text-xs">
             <div className="flex items-center gap-3">
-              {stepStatuses.credits === 'running' && <Loader2 className="h-4 w-4 animate-spin text-blue-400" />}
-              {stepStatuses.credits === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-              {stepStatuses.credits === 'failed' && <XCircle className="h-4 w-4 text-rose-400" />}
-              {stepStatuses.credits === 'pending' && <span className="h-2 w-2 rounded-full bg-slate-600 ml-1 mr-1" />}
-              <span className={stepStatuses.credits === 'running' ? 'text-white font-medium' : 'text-slate-300'}>
+              {stepStatuses.credits === 'running' && <Loader2 className="h-4 w-4 animate-spin text-purple-600" />}
+              {stepStatuses.credits === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+              {stepStatuses.credits === 'failed' && <XCircle className="h-4 w-4 text-rose-500" />}
+              {stepStatuses.credits === 'pending' && <span className="h-2 w-2 rounded-full bg-slate-300 ml-1 mr-1" />}
+              <span className={stepStatuses.credits === 'running' ? 'text-slate-900 font-semibold' : 'text-slate-700'}>
                 2. Ingest workspace credit pool & aggregate lifetime spend
               </span>
             </div>
-            <span className="font-mono text-[11px] text-slate-400">
+            <span className="font-mono text-[11px] text-slate-500">
               {stepStatuses.credits === 'running' && 'Fetching...'}
-              {stepStatuses.credits === 'success' && <span className="text-emerald-400 font-semibold">Synced</span>}
-              {stepStatuses.credits === 'failed' && <span className="text-rose-400 font-semibold">Failed</span>}
+              {stepStatuses.credits === 'success' && <span className="text-emerald-700 font-bold">Synced</span>}
+              {stepStatuses.credits === 'failed' && <span className="text-rose-600 font-bold">Failed</span>}
             </span>
           </div>
 
           {/* Step 3: Ingest Model Usage */}
-          <div className="flex items-center justify-between py-2 text-xs">
+          <div className="flex items-center justify-between py-2.5 text-xs">
             <div className="flex items-center gap-3">
-              {stepStatuses.ingestion === 'running' && <Loader2 className="h-4 w-4 animate-spin text-blue-400" />}
-              {stepStatuses.ingestion === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-              {stepStatuses.ingestion === 'failed' && <XCircle className="h-4 w-4 text-rose-400" />}
-              {stepStatuses.ingestion === 'pending' && <span className="h-2 w-2 rounded-full bg-slate-600 ml-1 mr-1" />}
-              <span className={stepStatuses.ingestion === 'running' ? 'text-white font-medium' : 'text-slate-300'}>
+              {stepStatuses.ingestion === 'running' && <Loader2 className="h-4 w-4 animate-spin text-purple-600" />}
+              {stepStatuses.ingestion === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+              {stepStatuses.ingestion === 'failed' && <XCircle className="h-4 w-4 text-rose-500" />}
+              {stepStatuses.ingestion === 'pending' && <span className="h-2 w-2 rounded-full bg-slate-300 ml-1 mr-1" />}
+              <span className={stepStatuses.ingestion === 'running' ? 'text-slate-900 font-semibold' : 'text-slate-700'}>
                 3. Discover active project keys & register shared gateway
               </span>
             </div>
-            <span className="font-mono text-[11px] text-slate-400">
+            <span className="font-mono text-[11px] text-slate-500">
               {stepStatuses.ingestion === 'running' && 'Ingesting...'}
               {stepStatuses.ingestion === 'success' && (
-                <span className="text-emerald-400 font-semibold">
+                <span className="text-emerald-700 font-bold">
                   {ingestionResult ? `${ingestionResult.recordsIngested} keys discovered` : 'Synced'}
                 </span>
               )}
-              {stepStatuses.ingestion === 'failed' && <span className="text-rose-400 font-semibold">Failed</span>}
+              {stepStatuses.ingestion === 'failed' && <span className="text-rose-600 font-bold">Failed</span>}
             </span>
           </div>
         </div>
@@ -262,68 +262,68 @@ export function OpenRouterDataVerification({
       {/* Success Notification Box */}
       {pipelineStep === 'success' && ingestionResult && (
         <div className="space-y-5 animate-in slide-in-from-bottom-2 duration-300">
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-5 sm:p-6 space-y-4">
-            <div className="flex items-center gap-2.5 text-emerald-400 font-bold text-sm">
-              <CheckCircle2 className="h-5 w-5 shrink-0" />
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5 sm:p-6 space-y-4 shadow-sm">
+            <div className="flex items-center gap-2.5 text-emerald-900 font-bold text-sm">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
               <span>We have successfully connected your OpenRouter Shared Gateway!</span>
             </div>
 
-            <p className="text-xs text-emerald-300/90 leading-relaxed">
+            <p className="text-xs text-emerald-800 leading-relaxed">
               Your OpenRouter workspace is fully verified. Active project keys, centralized credit limits, and usage metrics have been discovered and aggregated.
             </p>
 
-            {/* 3 Metric Cards matching AWS */}
+            {/* 3 Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div className="rounded-lg border border-dark-border bg-dark-card p-4 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-semibold">
-                  <Database className="h-3.5 w-3.5 text-blue-400" />
+              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-1 shadow-xs">
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+                  <Database className="h-3.5 w-3.5 text-purple-600" />
                   <span>Tracked Project Keys</span>
                 </div>
-                <div className="text-lg font-bold font-mono text-white">
+                <div className="text-lg font-bold font-mono text-slate-900">
                   {ingestionResult.recordsIngested}
                 </div>
-                <div className="text-[10px] text-slate-400">Active workspace keys</div>
+                <div className="text-[10px] text-slate-500">Active workspace keys</div>
               </div>
 
-              <div className="rounded-lg border border-dark-border bg-dark-card p-4 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-semibold">
-                  <Coins className="h-3.5 w-3.5 text-amber-400" />
+              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-1 shadow-xs">
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+                  <Coins className="h-3.5 w-3.5 text-amber-500" />
                   <span>Total Workspace Spend</span>
                 </div>
-                <div className="text-lg font-bold font-mono text-white">
+                <div className="text-lg font-bold font-mono text-slate-900">
                   ${(Number(ingestionResult.totalUsage) || 0).toFixed(2)}
                 </div>
-                <div className="text-[10px] text-slate-400">Lifetime spend across all keys</div>
+                <div className="text-[10px] text-slate-500">Lifetime spend across all keys</div>
               </div>
 
-              <div className="rounded-lg border border-dark-border bg-dark-card p-4 space-y-1">
-                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-semibold">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-1 shadow-xs">
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                   <span>Remaining Credit Pool</span>
                 </div>
-                <div className="text-lg font-bold font-mono text-emerald-400">
+                <div className="text-lg font-bold font-mono text-slate-900">
                   {ingestionResult.remainingBalance !== null && ingestionResult.remainingBalance !== undefined && !isNaN(Number(ingestionResult.remainingBalance))
                     ? `$${Number(ingestionResult.remainingBalance).toFixed(2)}`
                     : 'Unlimited'}
                 </div>
-                <div className="text-[10px] text-slate-400">Available workspace balance</div>
+                <div className="text-[10px] text-slate-500">Available workspace balance</div>
               </div>
             </div>
 
             {/* Discovered Project Keys Table */}
             {ingestionResult.keysList && ingestionResult.keysList.length > 0 && (
-              <div className="rounded-lg border border-dark-border bg-dark-card/90 overflow-hidden space-y-2 p-4 pt-3">
-                <div className="flex items-center justify-between pb-2 border-b border-dark-border/60">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-white">
-                    <Key className="h-4 w-4 text-amber-400" />
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden space-y-2 p-4 pt-3 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                    <Key className="h-4 w-4 text-purple-600" />
                     <span>Discovered Workspace Project Keys ({ingestionResult.keysList.length})</span>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400">Active Discovery</span>
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full font-semibold">Active Discovery</span>
                 </div>
                 <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-dark-border/40 text-[10px] font-semibold uppercase text-slate-400">
+                      <tr className="border-b border-slate-100 text-[10px] font-semibold uppercase text-slate-400">
                         <th className="py-2 px-2">Key Name</th>
                         <th className="py-2 px-2">Masked Token</th>
                         <th className="py-2 px-2 text-right">Spend</th>
@@ -331,17 +331,17 @@ export function OpenRouterDataVerification({
                         <th className="py-2 px-2 text-right">Remaining</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-dark-border/30 font-mono text-[11px]">
+                    <tbody className="divide-y divide-slate-100 font-mono text-[11px] text-slate-700">
                       {ingestionResult.keysList.map((k, idx) => (
-                        <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="py-2 px-2 font-sans font-medium text-white flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-2 px-2 font-sans font-semibold text-slate-800 flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-purple-600 shrink-0" />
                             <span className="truncate max-w-[160px]" title={k.name}>{k.name}</span>
                           </td>
-                          <td className="py-2 px-2 text-slate-400">{k.label}</td>
-                          <td className="py-2 px-2 text-right font-semibold text-amber-400">${(Number(k.usage) || 0).toFixed(2)}</td>
-                          <td className="py-2 px-2 text-right text-slate-300">{k.limit !== null && k.limit !== undefined && !isNaN(Number(k.limit)) ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited'}</td>
-                          <td className="py-2 px-2 text-right text-emerald-400">{k.remaining !== null && k.remaining !== undefined && !isNaN(Number(k.remaining)) ? `$${Number(k.remaining).toFixed(2)}` : 'N/A'}</td>
+                          <td className="py-2 px-2 text-slate-500">{k.label}</td>
+                          <td className="py-2 px-2 text-right font-bold text-slate-900">${(Number(k.usage) || 0).toFixed(2)}</td>
+                          <td className="py-2 px-2 text-right text-slate-600">{k.limit !== null && k.limit !== undefined && !isNaN(Number(k.limit)) ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited'}</td>
+                          <td className="py-2 px-2 text-right text-slate-600">{k.remaining !== null && k.remaining !== undefined && !isNaN(Number(k.remaining)) ? `$${Number(k.remaining).toFixed(2)}` : 'N/A'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -358,7 +358,7 @@ export function OpenRouterDataVerification({
               variant="primary"
               size="md"
               onClick={() => onSuccess(ingestionResult)}
-              className="text-xs font-semibold px-6"
+              className="text-xs font-semibold px-6 rounded-lg shadow-sm"
             >
               <span>Activate & View Connection Details</span>
               <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
@@ -370,12 +370,12 @@ export function OpenRouterDataVerification({
       {/* Failure Notification Box */}
       {pipelineStep === 'failed' && (
         <div className="space-y-5 animate-in slide-in-from-bottom-2 duration-300">
-          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-5 sm:p-6 space-y-3">
-            <div className="flex items-center gap-2.5 text-rose-400 font-bold text-sm">
-              <XCircle className="h-5 w-5 shrink-0" />
+          <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-5 sm:p-6 space-y-3">
+            <div className="flex items-center gap-2.5 text-rose-900 font-bold text-sm">
+              <XCircle className="h-5 w-5 shrink-0 text-rose-600" />
               <span>Failed to fetch data from OpenRouter</span>
             </div>
-            <p className="text-xs text-rose-300/90 leading-relaxed">
+            <p className="text-xs text-rose-800 leading-relaxed">
               {errorMessage || 'Unable to authenticate with OpenRouter or retrieve billing data.'}
             </p>
           </div>
@@ -386,7 +386,7 @@ export function OpenRouterDataVerification({
               variant="secondary"
               size="md"
               onClick={onBack}
-              className="text-xs"
+              className="text-xs rounded-lg"
             >
               Edit API Key
             </Button>
@@ -395,7 +395,7 @@ export function OpenRouterDataVerification({
               variant="primary"
               size="md"
               onClick={runIngestionPipeline}
-              className="text-xs"
+              className="text-xs rounded-lg"
             >
               <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
               <span>Retry Ingestion</span>

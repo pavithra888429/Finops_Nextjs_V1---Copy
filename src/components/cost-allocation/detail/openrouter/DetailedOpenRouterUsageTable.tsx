@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ArrowUpDown, SlidersHorizontal, Download, Key, Sparkles, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ArrowUpDown, SlidersHorizontal, Download, Key, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface OpenRouterTelemetryRow {
   id: string;
@@ -70,20 +70,20 @@ export function DetailedOpenRouterUsageTable({
   const paginatedItems = filtered.slice(startIndex, startIndex + pageSize);
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 overflow-hidden shadow-sm w-full space-y-2">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm w-full space-y-2">
       {/* Header & Toolbar */}
-      <div className="p-4 border-b border-dark-border/60 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-white tracking-tight">Granular Date-Wise Telemetry</h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            Breakdown of API keys, client apps, model inference tokens, prompt caching, and consumption costs.
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight">Granular Date-Wise Telemetry</h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Breakdown of API keys, model inference tokens, prompt caching, and consumption costs.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Search Box */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
               value={search}
@@ -91,16 +91,16 @@ export function DetailedOpenRouterUsageTable({
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Search key, model, client app..."
-              className="h-7 w-64 pl-8 pr-3 text-xs bg-dark-surface border border-dark-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              placeholder="Search key, model..."
+              className="h-8 w-64 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
             />
           </div>
 
           {/* Sort Buttons */}
           <button
             onClick={() => handleSort('cost')}
-            className={`h-7 flex items-center gap-1 px-2.5 rounded-lg border text-xs font-medium transition-colors ${
-              sortField === 'cost' ? 'bg-blue-600/15 border-blue-500/40 text-blue-400' : 'border-dark-border text-slate-300 hover:text-white'
+            className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+              sortField === 'cost' ? 'bg-slate-900 text-white font-semibold border-slate-900 shadow-xs' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-xs'
             }`}
           >
             <ArrowUpDown className="h-3 w-3" />
@@ -109,8 +109,8 @@ export function DetailedOpenRouterUsageTable({
 
           <button
             onClick={() => handleSort('tokens')}
-            className={`h-7 flex items-center gap-1 px-2.5 rounded-lg border text-xs font-medium transition-colors ${
-              sortField === 'tokens' ? 'bg-blue-600/15 border-blue-500/40 text-blue-400' : 'border-dark-border text-slate-300 hover:text-white'
+            className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+              sortField === 'tokens' ? 'bg-slate-900 text-white font-semibold border-slate-900 shadow-xs' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-xs'
             }`}
           >
             <ArrowUpDown className="h-3 w-3" />
@@ -128,7 +128,7 @@ export function DetailedOpenRouterUsageTable({
               downloadAnchor.click();
               downloadAnchor.remove();
             }}
-            className="h-7 flex items-center gap-1.5 px-2.5 rounded-lg border border-dark-border text-xs text-slate-300 hover:text-white transition-colors"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
           >
             <Download className="h-3 w-3" />
             <span>Export</span>
@@ -137,111 +137,104 @@ export function DetailedOpenRouterUsageTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border-t border-dark-border/40">
+      <div className="overflow-x-auto border-t border-slate-100">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/60 bg-dark-surface/40 whitespace-nowrap">
-              <th className="py-2.5 px-3 font-normal">Date</th>
-              <th className="py-2.5 px-3 font-normal">API Key</th>
-              <th className="py-2.5 px-3 font-normal">Client Application</th>
-              <th className="py-2.5 px-3 font-normal">Model</th>
-              <th className="py-2.5 px-3 text-right font-normal">Prompt Tokens</th>
-              <th className="py-2.5 px-3 text-right font-normal">Completion Tokens</th>
-              <th className="py-2.5 px-3 text-right font-normal">Cached Tokens</th>
-              <th className="py-2.5 px-3 text-right font-normal">Requests</th>
-              <th className="py-2.5 px-4 text-right font-normal">Cost ($)</th>
+            <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 bg-slate-50/95 whitespace-nowrap">
+              <th className="py-3 px-3">Date</th>
+              <th className="py-3 px-3">API Key</th>
+              <th className="py-3 px-3">Model</th>
+              <th className="py-3 px-3 text-right">Prompt Tokens</th>
+              <th className="py-3 px-3 text-right">Completion Tokens</th>
+              <th className="py-3 px-3 text-right">Cached Tokens</th>
+              <th className="py-3 px-3 text-right">Requests</th>
+              <th className="py-3 px-4 text-right">Cost ($)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/30 text-slate-300 whitespace-nowrap font-sans">
+          <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap font-sans">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-slate-400 text-xs">
+                <td colSpan={8} className="py-8 text-center text-slate-400 text-xs">
                   <div className="flex flex-col items-center justify-center gap-1.5 py-4">
-                    <span className="text-slate-300 font-medium">No live telemetry records ingested yet</span>
+                    <span className="text-slate-800 font-semibold">No live telemetry records ingested yet</span>
                     <span className="text-[11px] text-slate-500">Run the workflow sync to fetch your date-wise OpenRouter consumption records</span>
                   </div>
                 </td>
               </tr>
             ) : (
               paginatedItems.map((item) => (
-                <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">{item.date}</td>
-                <td className="py-2.5 px-3 font-medium text-white">
-                  <div className="flex items-center gap-1.5">
-                    <Key className="w-3 h-3 text-amber-400 shrink-0" />
-                    <span>{item.keyName}</span>
-                    {item.keyLabel && (
-                      <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-1 py-0.5 rounded">
-                        {item.keyLabel}
+                <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px]">{item.date}</td>
+                  <td className="py-2.5 px-3 font-semibold text-slate-800">
+                    <div className="flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                      <span>{item.keyName}</span>
+                      {item.keyLabel && (
+                        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">
+                          {item.keyLabel}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">
+                    {item.model && item.model !== item.keyName && !item.model.startsWith('PF') && item.model !== 'OpenRouter Model' ? (
+                      <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-mono bg-purple-50 text-purple-700 border border-purple-200/60">
+                        {item.model}
                       </span>
+                    ) : (
+                      <span>—</span>
                     )}
-                  </div>
-                </td>
-                <td className="py-2.5 px-3 text-slate-300">
-                  <div className="flex items-center gap-1.5">
-                    <Smartphone className="w-3 h-3 text-blue-400 shrink-0" />
-                    <span>{item.app}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px]">
-                  {item.model && item.model !== item.keyName && !item.model.startsWith('PF') && item.model !== 'OpenRouter Model' ? (
-                    <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      {item.model}
-                    </span>
-                  ) : (
-                    <span>—</span>
-                  )}
-                </td>
-                <td className="py-2.5 px-3 text-right tabular-nums text-slate-300 font-mono text-[11px]">
-                  {formatNumber(item.promptTokens)}
-                </td>
-                <td className="py-2.5 px-3 text-right tabular-nums text-slate-300 font-mono text-[11px]">
-                  {formatNumber(item.completionTokens)}
-                </td>
-                <td className="py-2.5 px-3 text-right tabular-nums font-mono text-[11px]">
-                  {item.cachedTokens > 0 ? (
-                    <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-                      {formatNumber(item.cachedTokens)}
-                    </span>
-                  ) : (
-                    <span className="text-slate-500">-</span>
-                  )}
-                </td>
-                <td className="py-2.5 px-3 text-right tabular-nums text-slate-400">
-                  {formatNumber(item.requests)}
-                </td>
-                <td className="py-2.5 px-4 text-right font-semibold text-white tabular-nums">
-                  {formatCurrency(item.cost)}
-                </td>
-              </tr>
-            ))
-          )}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums text-slate-600 font-mono text-[11px]">
+                    {formatNumber(item.promptTokens)}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums text-slate-600 font-mono text-[11px]">
+                    {formatNumber(item.completionTokens)}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums font-mono text-[11px]">
+                    {item.cachedTokens > 0 ? (
+                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded-md">
+                        {formatNumber(item.cachedTokens)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3 text-right tabular-nums text-slate-500">
+                    {formatNumber(item.requests)}
+                  </td>
+                  <td className="py-2.5 px-4 text-right font-bold text-slate-900 tabular-nums">
+                    {formatCurrency(item.cost)}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Footer / Pagination controls */}
-      <div className="px-4 py-2.5 border-t border-dark-border/40 bg-dark-surface/30 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+      <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
         <div>
-          Showing <span className="text-white font-medium">{filtered.length === 0 ? 0 : startIndex + 1}</span>–<span className="text-white font-medium">{Math.min(startIndex + pageSize, filtered.length)}</span> of <span className="text-white font-medium">{filtered.length}</span> records
+          Showing <span className="text-slate-900 font-semibold">{filtered.length === 0 ? 0 : startIndex + 1}</span>–<span className="text-slate-900 font-semibold">{Math.min(startIndex + pageSize, filtered.length)}</span> of <span className="text-slate-900 font-semibold">{filtered.length}</span> records
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={validPage <= 1}
-            className="p-1.5 rounded-lg border border-dark-border hover:bg-white/5 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-300"
+            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-600 shadow-xs"
             title="Previous Page"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>
-          <span className="text-xs font-mono text-slate-300 px-1.5">
+          <span className="text-xs font-medium text-slate-700 px-1.5">
             Page {validPage} of {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={validPage >= totalPages}
-            className="p-1.5 rounded-lg border border-dark-border hover:bg-white/5 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-300"
+            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-600 shadow-xs"
             title="Next Page"
           >
             <ChevronRight className="h-3.5 w-3.5" />

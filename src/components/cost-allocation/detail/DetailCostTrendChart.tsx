@@ -100,19 +100,19 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
   const hoveredPoint = TREND_POINTS[hoverIndex];
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full">
-      {/* Header with Toggles - NO flex-wrap so buttons NEVER drop to the left down */}
-      <div className="flex items-center justify-between gap-3 w-full">
-        <h3 className="text-sm font-semibold text-white tracking-tight truncate min-w-0">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between shadow-sm h-full">
+      {/* Header with Toggles */}
+      <div className="flex items-center justify-between gap-3 w-full pb-3 border-b border-slate-100">
+        <h3 className="text-sm font-bold text-slate-900 tracking-tight truncate min-w-0">
           {productName} {providerName} {titleSuffix}
         </h3>
 
-        {/* Top Right Toggles - shrink-0 to stay permanently anchored top right */}
-        <div className="flex items-center p-0.5 rounded-lg border border-dark-border bg-dark-surface text-xs shrink-0">
+        {/* Top Right Toggles */}
+        <div className="flex items-center p-0.5 rounded-lg border border-slate-200/70 bg-slate-100 text-xs shrink-0">
           <button
             onClick={() => setActiveTab('cost')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-              activeTab === 'cost' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30' : 'text-slate-400 hover:text-white'
+              activeTab === 'cost' ? 'bg-white text-slate-900 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Cost
@@ -120,7 +120,7 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
           <button
             onClick={() => setActiveTab('usage')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-              activeTab === 'usage' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30' : 'text-slate-400 hover:text-white'
+              activeTab === 'usage' ? 'bg-white text-slate-900 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Usage quantity
@@ -128,7 +128,7 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
           <button
             onClick={() => setActiveTab('resource')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-              activeTab === 'resource' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30' : 'text-slate-400 hover:text-white'
+              activeTab === 'resource' ? 'bg-white text-slate-900 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Resource count
@@ -155,7 +155,7 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
             y={12}
             transform="rotate(-90)"
             textAnchor="middle"
-            className="fill-slate-500 text-[9px] font-medium"
+            className="fill-slate-400 text-[9px] uppercase tracking-wider font-semibold"
           >
             {axisLabel}
           </text>
@@ -172,7 +172,7 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
                   y1={y}
                   x2={width - paddingRight}
                   y2={y}
-                  stroke="#16253c"
+                  stroke="#f1f5f9"
                   strokeWidth="1"
                 />
                 <text
@@ -207,18 +207,18 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
           <path
             d={createSmoothPath(previousKey)}
             fill="none"
-            stroke="#38bdf8"
+            stroke="#cbd5e1"
             strokeWidth="1.5"
             strokeDasharray="4,4"
-            className="opacity-70 transition-all duration-300"
+            className="transition-all duration-300"
           />
 
-          {/* Current Period Solid Curve */}
+          {/* Current Period Solid Curve (Purple) */}
           <path
             d={createSmoothPath(currentKey)}
             fill="none"
-            stroke="#0070f3"
-            strokeWidth="2.2"
+            stroke="#8b5cf6"
+            strokeWidth="2.5"
             strokeLinecap="round"
             className="transition-all duration-300"
           />
@@ -230,8 +230,8 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
               cx={getX(i)}
               cy={getY(pt[currentKey])}
               r="2.5"
-              fill="#0070f3"
-              stroke="#0b1322"
+              fill="#8b5cf6"
+              stroke="#ffffff"
               strokeWidth="1"
               className="transition-all duration-300"
             />
@@ -244,18 +244,18 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
               y1={paddingTop}
               x2={getX(hoverIndex)}
               y2={height - paddingBottom}
-              stroke="#38bdf8"
+              stroke="#8b5cf6"
               strokeWidth="1.2"
               strokeDasharray="2,2"
-              className="opacity-80"
+              className="opacity-40"
             />
           )}
 
           {/* Active Hover Points */}
           {hoveredPoint && (
             <>
-              <circle cx={getX(hoverIndex)} cy={getY(hoveredPoint[currentKey])} r="4" fill="#0070f3" stroke="#ffffff" strokeWidth="1.5" />
-              <circle cx={getX(hoverIndex)} cy={getY(hoveredPoint[previousKey])} r="3.5" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5" />
+              <circle cx={getX(hoverIndex)} cy={getY(hoveredPoint[currentKey])} r="4.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="2" />
+              <circle cx={getX(hoverIndex)} cy={getY(hoveredPoint[previousKey])} r="3.5" fill="#94a3b8" stroke="#ffffff" strokeWidth="1.5" />
             </>
           )}
         </svg>
@@ -263,44 +263,44 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
         {/* Dynamic Tooltip */}
         {hoveredPoint && (
           <div
-            className="absolute z-20 pointer-events-none rounded-lg border border-[#1f314c] bg-[#0c1526]/95 px-3 py-2 shadow-2xl backdrop-blur-md text-xs min-w-[170px]"
+            className="absolute z-20 pointer-events-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-lg text-xs min-w-[170px]"
             style={{
               left: `${Math.min(74, Math.max(22, (getX(hoverIndex) / width) * 100))}%`,
               top: '8px',
               transform: 'translateX(-50%)',
             }}
           >
-            <p className="text-[11px] font-semibold text-white mb-1.5 pb-1 border-b border-[#1b283e]">
+            <p className="text-[11px] font-bold text-slate-900 mb-1.5 pb-1 border-b border-slate-100">
               {hoveredPoint.label}, 2024
             </p>
             <div className="space-y-1 text-[11px]">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[#0070f3]" />
-                  <span className="text-slate-300 text-xs">{currentLabel}</span>
+                  <span className="h-2 w-2 rounded-full bg-purple-600" />
+                  <span className="text-slate-600 text-xs">{currentLabel}</span>
                 </div>
-                <span className="font-semibold text-white tabular-nums">{formatValue(hoveredPoint[currentKey])}</span>
+                <span className="font-bold text-slate-900 tabular-nums">{formatValue(hoveredPoint[currentKey])}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[#38bdf8]" />
-                  <span className="text-slate-300 text-xs">{previousLabel}</span>
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  <span className="text-slate-600 text-xs">{previousLabel}</span>
                 </div>
-                <span className="font-semibold text-slate-300 tabular-nums">{formatValue(hoveredPoint[previousKey])}</span>
+                <span className="font-semibold text-slate-600 tabular-nums">{formatValue(hoveredPoint[previousKey])}</span>
               </div>
-              <div className="flex items-center justify-between gap-3 pt-0.5 border-t border-[#1b283e]/60">
+              <div className="flex items-center justify-between gap-3 pt-0.5 border-t border-slate-100">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[#f59e0b]" />
-                  <span className="text-slate-400 text-xs">Service</span>
+                  <span className="h-2 w-2 rounded-full bg-slate-300" />
+                  <span className="text-slate-500 text-xs">Service</span>
                 </div>
-                <span className="text-white text-xs font-medium">{hoveredPoint.service}</span>
+                <span className="text-slate-900 text-xs font-semibold">{hoveredPoint.service}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-[#10b981]" />
-                  <span className="text-slate-400 text-xs">Region</span>
+                  <span className="h-2 w-2 rounded-full bg-slate-300" />
+                  <span className="text-slate-500 text-xs">Region</span>
                 </div>
-                <span className="text-white text-xs font-medium">{hoveredPoint.region}</span>
+                <span className="text-slate-900 text-xs font-semibold">{hoveredPoint.region}</span>
               </div>
             </div>
           </div>
@@ -308,14 +308,14 @@ export function DetailCostTrendChart({ productName = 'Workbench', providerName =
       </div>
 
       {/* Legend Footer */}
-      <div className="mt-2 pt-2 border-t border-dark-border/40 flex items-center justify-center gap-6 text-xs text-slate-300 font-normal">
+      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-center gap-6 text-xs text-slate-600 font-normal">
         <div className="flex items-center gap-2">
-          <span className="h-0.5 w-4 bg-[#0070f3]" />
-          <span>Current period</span>
+          <span className="h-1 w-4 bg-purple-600 rounded-full" />
+          <span className="font-medium text-slate-700">Current period</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-0.5 w-4 bg-[#38bdf8] border-b border-dashed border-[#38bdf8]" />
-          <span>Previous period</span>
+          <span className="h-1 w-4 bg-slate-300 rounded-full border-b border-dashed border-slate-400" />
+          <span className="font-medium text-slate-500">Previous period</span>
         </div>
       </div>
     </div>

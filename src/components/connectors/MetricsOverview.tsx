@@ -9,10 +9,10 @@ interface MetricsOverviewProps {
 }
 
 export function MetricsOverview({
-  total = 3,
-  connected = 2,
-  actionRequired = 1,
-  lastSynced = "Today, 10:42 AM",
+  total = 0,
+  connected = 0,
+  actionRequired = 0,
+  lastSynced = "Not synchronized",
 }: MetricsOverviewProps) {
   const metrics = [
     {
@@ -20,32 +20,24 @@ export function MetricsOverview({
       label: "Total connectors",
       value: total.toString(),
       icon: Link2,
-      iconColor: "text-blue-400",
-      iconBg: "bg-blue-600/15 border border-blue-500/20",
     },
     {
       id: "connected",
       label: "Connected",
       value: connected.toString(),
       icon: Check,
-      iconColor: "text-emerald-400",
-      iconBg: "bg-emerald-500/15 border border-emerald-500/20",
     },
     {
       id: "actionRequired",
       label: "Action required",
       value: actionRequired.toString(),
       icon: AlertTriangle,
-      iconColor: "text-amber-400",
-      iconBg: "bg-amber-500/15 border border-amber-500/20",
     },
     {
       id: "lastSynced",
       label: "Last synchronized",
       value: lastSynced,
       icon: Clock,
-      iconColor: "text-purple-400",
-      iconBg: "bg-purple-500/15 border border-purple-500/20",
     },
   ];
 
@@ -56,16 +48,16 @@ export function MetricsOverview({
         return (
           <div
             key={item.id}
-            className="flex items-center gap-3.5 rounded-xl border border-dark-border bg-dark-card/90 p-4 transition-all duration-200 hover:border-dark-borderHover hover:shadow-lg hover:shadow-black/20"
+            className="flex items-center gap-3.5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-slate-300"
           >
             <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg} ${item.iconColor}`}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 border border-slate-200 text-purple-600"
             >
               <Icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] font-medium text-slate-400 tracking-wide">{item.label}</p>
-              <p className="mt-0.5 text-xl font-bold tracking-tight text-white">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{item.label}</p>
+              <p className="mt-0.5 text-xl font-bold tracking-tight text-slate-900 font-sans">
                 {item.value}
               </p>
             </div>

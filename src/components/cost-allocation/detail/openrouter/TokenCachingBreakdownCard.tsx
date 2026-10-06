@@ -66,56 +66,56 @@ export function TokenCachingBreakdownCard({ keysList = [] }: TokenCachingBreakdo
   const currentItems = getItemsForTab();
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between shadow-sm h-full">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-dark-border/60">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-sm font-semibold text-white tracking-tight">OpenRouter Usage & Velocity Breakdown</h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">Real API key velocity & credit limits from OpenRouter</p>
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight">OpenRouter Usage & Velocity Breakdown</h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">Real API key velocity & credit limits from OpenRouter</p>
         </div>
-        <span className="text-[11px] px-2 py-0.5 rounded bg-dark-surface border border-dark-border text-slate-300 font-mono">
+        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/70 text-slate-600 font-medium">
           {keysList.length} Keys
         </span>
       </div>
 
       {/* Pill Tabs */}
-      <div className="flex items-center gap-1.5 pt-2 pb-1 overflow-x-auto text-[11px]">
+      <div className="flex items-center gap-1.5 pt-3 pb-1 overflow-x-auto text-[11px]">
         <button
           onClick={() => setActiveTab('spend')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
             activeTab === 'spend'
-              ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30'
-              : 'bg-dark-surface text-slate-400 hover:text-white'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           By Lifetime Spend
         </button>
         <button
           onClick={() => setActiveTab('limits')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
             activeTab === 'limits'
-              ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30'
-              : 'bg-dark-surface text-slate-400 hover:text-white'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           Credit Quotas
         </button>
         <button
           onClick={() => setActiveTab('monthly')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
             activeTab === 'monthly'
-              ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30'
-              : 'bg-dark-surface text-slate-400 hover:text-white'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           Monthly Velocity
         </button>
         <button
           onClick={() => setActiveTab('weekly')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
             activeTab === 'weekly'
-              ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30'
-              : 'bg-dark-surface text-slate-400 hover:text-white'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           Weekly Velocity
@@ -123,28 +123,28 @@ export function TokenCachingBreakdownCard({ keysList = [] }: TokenCachingBreakdo
       </div>
 
       {/* Column sub-headers */}
-      <div className="grid grid-cols-12 gap-2 text-[10.5px] font-medium text-slate-400 pt-2 pb-1 border-b border-dark-border/40">
+      <div className="grid grid-cols-12 gap-2 text-[10.5px] font-semibold text-slate-400 pt-3 pb-1.5 border-b border-slate-100">
         <span className="col-span-5">API Key Name</span>
         <span className="col-span-4">Status / Detail</span>
         <span className="col-span-3 text-right">Value</span>
       </div>
 
       {/* Breakdown Rows */}
-      <div className="space-y-2.5 pt-2 max-h-56 overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-transparent hover:scrollbar-thumb-slate-600">
+      <div className="space-y-1.5 pt-2 max-h-56 overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
         {currentItems.length === 0 ? (
-          <div className="py-6 text-center text-slate-500 text-xs">
+          <div className="py-6 text-center text-slate-400 text-xs">
             No keys available.
           </div>
         ) : (
           currentItems.map((item) => (
-            <div key={item.name} className="grid grid-cols-12 gap-2 items-center text-xs group hover:bg-white/[0.02] p-1 rounded transition-colors">
-              <span className="col-span-5 font-medium text-slate-200 truncate group-hover:text-white transition-colors" title={item.name}>
+            <div key={item.name} className="grid grid-cols-12 gap-2 items-center text-xs group hover:bg-slate-50 p-1.5 rounded-lg transition-colors">
+              <span className="col-span-5 font-semibold text-slate-800 truncate group-hover:text-purple-600 transition-colors" title={item.name}>
                 {item.name}
               </span>
-              <span className="col-span-4 text-slate-400 truncate text-[11px]">
+              <span className="col-span-4 text-slate-500 truncate text-[11px]">
                 {item.detail}
               </span>
-              <span className="col-span-3 text-right text-white font-medium tabular-nums">
+              <span className="col-span-3 text-right text-slate-900 font-bold tabular-nums">
                 {format(item.cost)}
               </span>
             </div>

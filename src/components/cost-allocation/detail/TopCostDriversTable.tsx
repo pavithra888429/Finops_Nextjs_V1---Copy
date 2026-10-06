@@ -55,11 +55,11 @@ export function TopCostDriversTable({ productName = 'Workbench' }: { productName
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 overflow-hidden shadow-sm flex flex-col">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm flex flex-col">
       {/* Header */}
-      <div className="px-5 py-3.5 border-b border-dark-border/60 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white tracking-tight">Top AWS Cost Drivers</h3>
-        <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-slate-900 tracking-tight">Top AWS Cost Drivers</h3>
+        <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors">
           View all
         </button>
       </div>
@@ -68,38 +68,38 @@ export function TopCostDriversTable({ productName = 'Workbench' }: { productName
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/40 bg-dark-surface/40">
-              <th className="py-2.5 px-4 font-normal">Resource</th>
-              <th className="py-2.5 px-3 font-normal">Service</th>
-              <th className="py-2.5 px-3 font-normal">Account</th>
-              <th className="py-2.5 px-3 font-normal">Region</th>
-              <th className="py-2.5 px-3 font-normal">Usage type</th>
-              <th className="py-2.5 px-3 text-right font-normal">Cost</th>
-              <th className="py-2.5 px-4 text-right font-normal">Change</th>
+            <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 bg-slate-50/95">
+              <th className="py-3 px-4">Resource</th>
+              <th className="py-3 px-3">Service</th>
+              <th className="py-3 px-3">Account</th>
+              <th className="py-3 px-3">Region</th>
+              <th className="py-3 px-3">Usage type</th>
+              <th className="py-3 px-3 text-right">Cost</th>
+              <th className="py-3 px-4 text-right">Change</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/30 text-slate-300">
+          <tbody className="divide-y divide-slate-100 text-slate-700">
             {DRIVERS_DATA.map((item) => (
-              <tr key={item.resource} className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-2.5 px-4 font-medium text-white truncate max-w-[150px]">
+              <tr key={item.resource} className="hover:bg-slate-50/80 transition-colors">
+                <td className="py-2.5 px-4 font-semibold text-slate-800 truncate max-w-[150px]">
                   {item.resource.replace('Workbench', productName)}
                 </td>
-                <td className="py-2.5 px-3 text-slate-300 truncate">
+                <td className="py-2.5 px-3 text-slate-700 truncate">
                   {item.service}
                 </td>
-                <td className="py-2.5 px-3 text-slate-400 truncate">
+                <td className="py-2.5 px-3 text-slate-500 truncate">
                   {item.account.replace('Workbench', productName)}
                 </td>
-                <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
+                <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px]">
                   {item.region}
                 </td>
-                <td className="py-2.5 px-3 text-slate-300 text-[11px] truncate">
+                <td className="py-2.5 px-3 text-slate-600 text-[11px] truncate">
                   {item.usageType}
                 </td>
-                <td className="py-2.5 px-3 text-right font-medium text-white tabular-nums">
+                <td className="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums">
                   {format(item.cost)}
                 </td>
-                <td className="py-2.5 px-4 text-right text-emerald-400 font-medium">
+                <td className="py-2.5 px-4 text-right text-emerald-600 font-semibold">
                   <span className="inline-flex items-center gap-0.5 justify-end">
                     <ArrowUp className="h-2.5 w-2.5 stroke-[2.5]" />
                     <span>+{item.change}%</span>

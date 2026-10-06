@@ -53,6 +53,11 @@ Parameters:
     Default: ''
     Description: (Optional) KMS Key ARN for S3 Bucket encryption. Leave blank for default AWS-managed SSE-S3 encryption.
 
+  PlatformAccountId:
+    Type: String
+    Default: '864981730114'
+    Description: FinOps Platform AWS Account ID authorized to read CUR export files.
+
   CreateBcmExport:
     Type: String
     Default: 'true'
@@ -92,6 +97,16 @@ Resources:
             Condition:
               StringEquals:
                 aws:SourceAccount: !Ref 'AWS::AccountId'
+          - Sid: AllowFinOpsPlatformRead
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${PlatformAccountId}:root'
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+            Resource:
+              - !Sub 'arn:aws:s3:::${S3BucketName}'
+              - !Sub 'arn:aws:s3:::${S3BucketName}/*'
 
   FinOpsCurReadPolicy:
     Type: AWS::IAM::Policy

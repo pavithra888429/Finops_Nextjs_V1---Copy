@@ -23,9 +23,9 @@ interface FinOpsState {
 
 const DEFAULT_STATE: FinOpsState = {
   isConnected: false,
-  syncStatus: 'synced',
-  lastSync: 'August 22, 2026',
-  recordsProcessed: 9495,
+  syncStatus: 'not_synced',
+  lastSync: '',
+  recordsProcessed: 0,
   accounts: [],
 };
 
@@ -60,28 +60,34 @@ export const finopsStore = {
       year: 'numeric',
     });
 
-    const accountId = accountDetails?.accountId || '864981730114';
+    const accountId = accountDetails?.accountId || '';
     const newAccount: AwsAccount = {
-      id: accountDetails?.id || `aws-${accountId}`,
-      name: accountDetails?.name || 'Production AWS Account',
+      id: accountDetails?.id || (accountId ? `aws-${accountId}` : ''),
+      name: accountDetails?.name || 'AWS Account',
       accountId: accountId,
       region: accountDetails?.region || 'us-east-1',
       connectedAt: formattedDate,
-      lastSync: formattedDate,
-      recordsProcessed: accountDetails?.recordsProcessed || 9495,
-      syncStatus: 'synced',
+      lastSync: accountDetails?.lastSync || formattedDate,
+      recordsProcessed: accountDetails?.recordsProcessed || 0,
+      syncStatus: accountDetails?.syncStatus || 'synced',
     };
 
     saveState({
       isConnected: true,
       syncStatus: 'synced',
-      lastSync: formattedDate,
+      lastSync: newAccount.lastSync,
       recordsProcessed: newAccount.recordsProcessed,
       accounts: [newAccount],
     });
   },
 
   disconnectAws: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('finops_aws_connection_id');
+      localStorage.removeItem('finops_aws_account_id');
+      localStorage.removeItem('finops_aws_external_id');
+    }
     saveState({
       isConnected: false,
       syncStatus: 'not_synced',

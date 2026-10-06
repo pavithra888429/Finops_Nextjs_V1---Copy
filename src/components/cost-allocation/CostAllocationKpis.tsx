@@ -118,10 +118,10 @@ export function CostAllocationKpis({
   const isUp = metrics.avgChange >= 0;
   const coverageColor =
     metrics.allocationRate >= 95
-      ? { bar: 'bg-emerald-500', text: 'text-emerald-400', label: 'Excellent' }
+      ? { bar: 'bg-emerald-500', text: 'text-emerald-700', label: 'Excellent' }
       : metrics.allocationRate >= 80
-      ? { bar: 'bg-amber-500', text: 'text-amber-400', label: 'Good' }
-      : { bar: 'bg-red-500', text: 'text-red-400', label: 'Needs attention' };
+      ? { bar: 'bg-blue-500', text: 'text-blue-700', label: 'Good' }
+      : { bar: 'bg-amber-500', text: 'text-amber-700', label: 'Needs attention' };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3.5 w-full">
@@ -129,51 +129,49 @@ export function CostAllocationKpis({
       {/* ── Card 1: Total Organization Spend ── */}
       <div
         onClick={() => onProductClick('all')}
-        className={`group rounded-xl border p-4 flex items-start gap-3.5 transition-all duration-200 cursor-pointer shadow-sm relative overflow-hidden ${
+        className={`group rounded-xl border p-4.5 flex items-start gap-3.5 transition-all duration-200 cursor-pointer shadow-sm relative overflow-hidden bg-white ${
           selectedProduct === 'all'
-            ? 'border-blue-500/60 bg-gradient-to-br from-blue-950/30 to-blue-900/10 ring-1 ring-blue-500/30'
-            : 'border-dark-border bg-dark-card/90 hover:border-blue-500/30 hover:bg-dark-card'
+            ? 'border-purple-500 ring-2 ring-purple-500/20 shadow-md'
+            : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
         }`}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent pointer-events-none rounded-xl" />
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-50 border border-purple-100 text-purple-600">
           <DollarSign className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 relative z-10">
-          <p className="text-[11px] font-medium text-slate-400 truncate">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
             {selectedProduct === 'all' ? 'Total Organization Spend' : 'Filtered Spend'}
           </p>
-          <h3 className="text-xl font-bold text-white tracking-tight tabular-nums mt-0.5 leading-tight">
+          <h3 className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mt-0.5 leading-tight font-sans">
             {fmt(metrics.totalCost)}
           </h3>
-          <div className={`flex items-center gap-1 mt-1 text-[10.5px] font-semibold ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-            {isUp ? <ArrowUp className="h-3 w-3 stroke-[2.5]" /> : <ArrowDown className="h-3 w-3 stroke-[2.5]" />}
-            <span>{isUp ? '+' : ''}{metrics.avgChange.toFixed(1)}% vs previous period</span>
+          <div className="flex items-center gap-1 mt-1 text-[11px] font-semibold text-slate-500 font-sans">
+            {isUp ? <ArrowUp className="h-3 w-3 text-red-500 stroke-[2.5]" /> : <ArrowDown className="h-3 w-3 text-emerald-500 stroke-[2.5]" />}
+            <span className={isUp ? 'text-red-600' : 'text-emerald-600'}>{isUp ? '+' : ''}{metrics.avgChange.toFixed(1)}% vs previous</span>
           </div>
         </div>
       </div>
 
       {/* ── Card 2: Top Cost Driver ── */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 hover:border-purple-500/30 p-4 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent pointer-events-none rounded-xl" />
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400">
+      <div className="rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md p-4.5 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-50 border border-purple-100 text-purple-600">
           <TrendingUp className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 relative z-10">
-          <p className="text-[11px] font-medium text-slate-400">Top Cost Driver</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Top Cost Driver</p>
           <div className="flex items-baseline gap-2 mt-0.5">
-            <h3 className="text-xl font-bold text-white tracking-tight tabular-nums leading-tight">
+            <h3 className="text-2xl font-bold text-purple-600 tracking-tight tabular-nums leading-tight font-sans">
               {metrics.topDriver ? fmtCompact(metrics.topDriverCost) : '—'}
             </h3>
             {metrics.topDriver && (
-              <span className="text-[10.5px] font-semibold text-purple-400">
+              <span className="text-xs font-semibold text-slate-500 font-sans">
                 {metrics.topDriverShare.toFixed(1)}%
               </span>
             )}
           </div>
           <div className="flex items-center gap-1 mt-1">
-            <Sparkles className="h-3 w-3 text-purple-400 shrink-0" />
-            <p className="text-[11px] text-slate-300 font-medium truncate">
+            <Sparkles className="h-3 w-3 text-purple-600 shrink-0" />
+            <p className="text-xs text-slate-700 font-medium truncate">
               {metrics.topDriver?.name ?? 'No products'}
             </p>
           </div>
@@ -181,22 +179,21 @@ export function CostAllocationKpis({
       </div>
 
       {/* ── Card 3: Allocation Coverage Rate ── */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 hover:border-emerald-500/30 p-4 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-transparent pointer-events-none rounded-xl" />
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+      <div className="rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md p-4.5 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600">
           <ShieldCheck className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 relative z-10">
-          <p className="text-[11px] font-medium text-slate-400">Allocation Coverage</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Allocation Coverage</p>
           <div className="flex items-baseline gap-2 mt-0.5">
-            <h3 className="text-xl font-bold text-white tracking-tight tabular-nums leading-tight">
+            <h3 className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums leading-tight font-sans">
               {metrics.allocationRate.toFixed(1)}%
             </h3>
-            <span className={`text-[10.5px] font-semibold ${coverageColor.text}`}>
+            <span className={`text-[11px] font-semibold font-sans ${coverageColor.text}`}>
               {coverageColor.label}
             </span>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full bg-dark-border overflow-hidden">
+          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-700 ${coverageColor.bar}`}
               style={{ width: `${Math.min(metrics.allocationRate, 100)}%` }}
@@ -204,8 +201,8 @@ export function CostAllocationKpis({
           </div>
           {metrics.unallocatedCost > 0 && (
             <div className="flex items-center gap-1 mt-1">
-              <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-              <p className="text-[10.5px] text-amber-400 font-medium truncate">
+              <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
+              <p className="text-[11px] text-amber-600 font-medium truncate font-sans">
                 {fmtCompact(metrics.unallocatedCost)} unallocated
               </p>
             </div>
@@ -214,42 +211,41 @@ export function CostAllocationKpis({
       </div>
 
       {/* ── Card 4: Active Products & Portfolios ── */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 hover:border-cyan-500/30 p-4 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-transparent pointer-events-none rounded-xl" />
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
+      <div className="rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md p-4.5 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 border border-blue-100 text-blue-600">
           <Boxes className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 relative z-10">
-          <p className="text-[11px] font-medium text-slate-400">Active Products</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Products</p>
           <div className="flex items-baseline gap-1 mt-0.5">
-            <h3 className="text-xl font-bold text-white tracking-tight tabular-nums leading-tight">
+            <h3 className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums leading-tight font-sans">
               {metrics.activeProducts.length}
             </h3>
-            <span className="text-sm font-medium text-slate-400">products</span>
+            <span className="text-xs font-medium text-slate-500">products</span>
           </div>
-          <p className="text-[10.5px] text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             across{' '}
-            <span className="text-cyan-400 font-semibold">
+            <span className="text-slate-800 font-semibold font-sans">
               {metrics.totalProviders} provider{metrics.totalProviders !== 1 ? 's' : ''}
             </span>
           </p>
-          {/* Clickable mini product pills — scales to any N */}
+          {/* Clickable mini product pills */}
           <div className="flex items-center gap-1 mt-2 flex-wrap">
             {metrics.activeProducts.slice(0, 5).map((p) => (
               <span
                 key={p.id}
                 onClick={(e) => { e.stopPropagation(); onProductClick(selectedProduct === p.id ? 'all' : p.id); }}
-                className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9.5px] font-medium cursor-pointer transition-all border ${
+                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium cursor-pointer transition-all border ${
                   selectedProduct === p.id
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                    : 'bg-dark-border/40 text-slate-400 border-dark-border hover:text-white hover:bg-dark-border/80'
+                    ? 'bg-purple-600 text-white font-semibold border-purple-600'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                 }`}
               >
                 {p.name}
               </span>
             ))}
             {metrics.activeProducts.length > 5 && (
-              <span className="text-[9.5px] text-slate-500 font-medium">
+              <span className="text-[10px] text-slate-400 font-medium font-sans">
                 +{metrics.activeProducts.length - 5} more
               </span>
             )}
@@ -258,34 +254,33 @@ export function CostAllocationKpis({
       </div>
 
       {/* ── Card 5: Forecasted Run Rate ── */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 hover:border-violet-500/30 p-4 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 to-transparent pointer-events-none rounded-xl" />
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400">
+      <div className="rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md p-4.5 flex items-start gap-3.5 transition-all duration-200 shadow-sm relative overflow-hidden">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 border border-amber-100 text-amber-600">
           <CalendarClock className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 relative z-10">
-          <p className="text-[11px] font-medium text-slate-400">Forecasted Run Rate</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Forecasted Run Rate</p>
           <div className="flex items-baseline gap-1 mt-0.5">
-            <h3 className="text-xl font-bold text-white tracking-tight tabular-nums leading-tight">
+            <h3 className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums leading-tight font-sans">
               {fmtCompact(metrics.totalDailyAvg)}
             </h3>
-            <span className="text-sm font-medium text-slate-400">/ day</span>
+            <span className="text-xs font-medium text-slate-500">/ day</span>
           </div>
-          <p className="text-[10.5px] text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Month-end est.{' '}
-            <span className="text-violet-400 font-semibold">
+            <span className="text-slate-800 font-semibold font-sans">
               {fmtCompact(metrics.monthEndForecast)}
             </span>
           </p>
           {/* Monthly day progress bar */}
           <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 h-1.5 rounded-full bg-dark-border overflow-hidden">
+            <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-400 transition-all duration-700"
+                className="h-full rounded-full bg-amber-500 transition-all duration-700"
                 style={{ width: `${Math.min(metrics.dayProgress, 100)}%` }}
               />
             </div>
-            <span className="text-[9.5px] text-slate-500 shrink-0 tabular-nums">
+            <span className="text-[10px] text-slate-400 shrink-0 tabular-nums font-sans">
               Day {metrics.currentDay}/{metrics.daysInMonth}
             </span>
           </div>

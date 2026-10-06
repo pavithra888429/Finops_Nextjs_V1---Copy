@@ -1,0 +1,920 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-10-03T11:57:44.332Z",
+  "_fingerprint": "YWN0aW9uOmNvZGUuZXhlY3V0ZXxhY3Rpb246bW9uZ29kYi5maW5kX2RvY3VtZW50",
+  "nodes": [
+    {
+      "id": "webhook-1790843991079001",
+      "data": {
+        "label": "Webhook Trigger",
+        "inputs": {
+          "path": "7c53bda3-c369-4e08-bb54-c645901b89c2",
+          "method": "POST",
+          "options": {},
+          "allowedRoles": "admin, staff",
+          "jwtAlgorithm": "HS256",
+          "responseMode": "lastNode",
+          "roleClaimKey": "role",
+          "sessionClaim": "sub",
+          "sessionSource": "none",
+          "authentication": "none",
+          "requireRoleCheck": false
+        },
+        "toolId": "webhook",
+        "toolData": {
+          "id": "webhook",
+          "displayName": "Webhook Trigger",
+          "category": "Input /  Output",
+          "icon": "webhook",
+          "description": "Trigger workflow via webhook",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The path to listen on (e.g. \"my-hook\")"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "PATCH",
+                  "HEAD"
+                ],
+                "default": "POST",
+                "description": "HTTP Method"
+              },
+              "responseMode": {
+                "type": "string",
+                "enum": [
+                  "onReceived",
+                  "lastNode",
+                  "respondWithNode",
+                  "streaming"
+                ],
+                "default": "lastNode",
+                "description": "When to respond"
+              },
+              "authentication": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "basicAuth",
+                  "headerAuth",
+                  "jwtAuth"
+                ],
+                "default": "none",
+                "description": "Authentication"
+              },
+              "basicAuthUser": {
+                "type": "string",
+                "description": "Username"
+              },
+              "basicAuthPassword": {
+                "type": "string",
+                "description": "Password"
+              },
+              "headerAuthName": {
+                "type": "string",
+                "description": "Name"
+              },
+              "headerAuthValue": {
+                "type": "string",
+                "description": "Value"
+              },
+              "jwtSecret": {
+                "type": "string",
+                "description": "Secret"
+              },
+              "jwtAlgorithm": {
+                "type": "string",
+                "enum": [
+                  "HS256",
+                  "HS384",
+                  "HS512"
+                ],
+                "default": "HS256",
+                "description": "Algorithm"
+              },
+              "sessionClaim": {
+                "type": "string",
+                "default": "sub",
+                "description": "JWT claim used to identify the session"
+              },
+              "requireRoleCheck": {
+                "type": "boolean",
+                "default": false,
+                "description": "Require Role Check (RBAC)"
+              },
+              "roleClaimKey": {
+                "type": "string",
+                "default": "role",
+                "description": "Role Claim Key"
+              },
+              "allowedRoles": {
+                "type": "string",
+                "default": "admin, staff",
+                "description": "Allowed Roles (comma separated)"
+              },
+              "sessionSource": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "auto",
+                  "header",
+                  "cookie",
+                  "body"
+                ],
+                "default": "none",
+                "description": "Session Source"
+              },
+              "sessionSourceName": {
+                "type": "string",
+                "description": "Session Source Name (header / cookie / body field)"
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "allowedOrigins": {
+                    "type": "string",
+                    "description": "Allowed Origins (CORS)"
+                  },
+                  "binaryDataFieldName": {
+                    "type": "string",
+                    "description": "Field Name for Binary Data"
+                  },
+                  "ignoreBots": {
+                    "type": "boolean",
+                    "description": "Ignore Bots"
+                  },
+                  "ipAllowlist": {
+                    "type": "string",
+                    "description": "IP(s) Allowlist"
+                  },
+                  "noResponseBody": {
+                    "type": "boolean",
+                    "description": "No Response Body"
+                  },
+                  "rawBody": {
+                    "type": "boolean",
+                    "description": "Raw Body"
+                  },
+                  "responseCode": {
+                    "type": "number",
+                    "description": "Response Code"
+                  },
+                  "responseData": {
+                    "type": "string",
+                    "description": "Response Data"
+                  }
+                },
+                "additionalProperties": false,
+                "default": {},
+                "description": "Options"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          },
+          "fields": [
+            {
+              "name": "path",
+              "displayName": "Path",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "description": "The path to listen on (e.g. \"my-hook\")"
+            },
+            {
+              "name": "method",
+              "displayName": "HTTP Method",
+              "type": "options",
+              "default": "POST",
+              "required": true,
+              "options": [
+                {
+                  "name": "GET",
+                  "value": "GET"
+                },
+                {
+                  "name": "POST",
+                  "value": "POST"
+                },
+                {
+                  "name": "PUT",
+                  "value": "PUT"
+                },
+                {
+                  "name": "DELETE",
+                  "value": "DELETE"
+                },
+                {
+                  "name": "PATCH",
+                  "value": "PATCH"
+                },
+                {
+                  "name": "HEAD",
+                  "value": "HEAD"
+                }
+              ],
+              "description": "HTTP Method to listen for"
+            },
+            {
+              "name": "responseMode",
+              "displayName": "Respond",
+              "type": "options",
+              "default": "lastNode",
+              "required": true,
+              "options": [
+                {
+                  "name": "Immediately",
+                  "value": "onReceived"
+                },
+                {
+                  "name": "When Last Node Finishes",
+                  "value": "lastNode"
+                },
+                {
+                  "name": "Using 'Respond to Webhook' Node",
+                  "value": "respondWithNode"
+                },
+                {
+                  "name": "Streaming",
+                  "value": "streaming"
+                }
+              ],
+              "description": "When to respond to the webhook request"
+            },
+            {
+              "name": "authentication",
+              "displayName": "Authentication",
+              "type": "options",
+              "default": "none",
+              "options": [
+                {
+                  "name": "Basic Auth",
+                  "value": "basicAuth"
+                },
+                {
+                  "name": "Header Auth",
+                  "value": "headerAuth"
+                },
+                {
+                  "name": "JWT Auth",
+                  "value": "jwtAuth"
+                },
+                {
+                  "name": "None",
+                  "value": "none"
+                }
+              ],
+              "description": "The type of authentication to use for incoming webhook requests"
+            },
+            {
+              "name": "sessionSource",
+              "displayName": "Session Source",
+              "type": "options",
+              "default": "none",
+              "options": [
+                {
+                  "name": "None (legacy, no session)",
+                  "value": "none"
+                },
+                {
+                  "name": "Auto (platform issues a session id)",
+                  "value": "auto"
+                },
+                {
+                  "name": "From Header",
+                  "value": "header"
+                },
+                {
+                  "name": "From Cookie",
+                  "value": "cookie"
+                },
+                {
+                  "name": "From Body Field",
+                  "value": "body"
+                }
+              ],
+              "description": "How the platform identifies the caller for per-user session continuity. Required when memory or loops should partition by caller."
+            },
+            {
+              "name": "sessionSourceName",
+              "displayName": "Session Source Name",
+              "type": "string",
+              "default": "",
+              "placeholder": "e.g. X-Caller-Id (header), userId (body field), session_id (cookie)",
+              "description": "Header name, body field path, or cookie name used as the caller id.",
+              "displayOptions": {
+                "show": {
+                  "sessionSource": [
+                    "header",
+                    "cookie",
+                    "body"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "basicAuthUser",
+              "displayName": "User",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "description": "The username for Basic Authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "basicAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "basicAuthPassword",
+              "displayName": "Password",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "typeOptions": {
+                "password": true
+              },
+              "description": "The password for Basic Authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "basicAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "headerAuthName",
+              "displayName": "Name",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "description": "The header name to check for authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "headerAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "headerAuthValue",
+              "displayName": "Value",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "typeOptions": {
+                "password": true
+              },
+              "description": "The expected header value for authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "headerAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "jwtSecret",
+              "displayName": "Secret",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "typeOptions": {
+                "password": true
+              },
+              "description": "The secret key used to verify the JWT token",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "jwtAlgorithm",
+              "displayName": "Algorithm",
+              "type": "options",
+              "default": "HS256",
+              "options": [
+                {
+                  "name": "HS256",
+                  "value": "HS256"
+                },
+                {
+                  "name": "HS384",
+                  "value": "HS384"
+                },
+                {
+                  "name": "HS512",
+                  "value": "HS512"
+                }
+              ],
+              "description": "The algorithm used to sign the JWT token",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "sessionClaim",
+              "displayName": "Session Claim",
+              "type": "string",
+              "default": "sub",
+              "description": "The claim in the JWT payload that identifies the user (e.g. sub, email, userId). Leave blank to skip session tracking.",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "requireRoleCheck",
+              "displayName": "Require Role Check (RBAC)",
+              "type": "boolean",
+              "default": false,
+              "description": "If enabled, the incoming JWT must contain an authorized role claim to execute the workflow.",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "roleClaimKey",
+              "displayName": "Role Claim Key",
+              "type": "string",
+              "default": "role",
+              "description": "The field name inside the JWT payload that contains the user's role (e.g., \"role\", \"groups\").",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ],
+                  "requireRoleCheck": [
+                    true
+                  ]
+                }
+              }
+            },
+            {
+              "name": "allowedRoles",
+              "displayName": "Allowed Roles",
+              "type": "string",
+              "default": "admin, staff",
+              "description": "A comma-separated list of roles that are allowed to trigger this workflow. If empty, all roles pass.",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ],
+                  "requireRoleCheck": [
+                    true
+                  ]
+                }
+              }
+            },
+            {
+              "name": "options",
+              "displayName": "Options",
+              "type": "collection",
+              "default": {},
+              "placeholder": "Add option",
+              "fields": [
+                {
+                  "name": "allowedOrigins",
+                  "displayName": "Allowed Origins (CORS)",
+                  "type": "string",
+                  "default": "*",
+                  "placeholder": "*",
+                  "description": "Comma-separated list of allowed origins for CORS. Use * to allow all origins."
+                },
+                {
+                  "name": "binaryDataFieldName",
+                  "displayName": "Field Name for Binary Data",
+                  "type": "string",
+                  "default": "data",
+                  "placeholder": "data",
+                  "description": "The name of the field in the request that contains binary data (for file uploads)."
+                },
+                {
+                  "name": "ignoreBots",
+                  "displayName": "Ignore Bots",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If enabled, requests from known bots (crawlers, spiders) will be ignored."
+                },
+                {
+                  "name": "ipAllowlist",
+                  "displayName": "IP(s) Allowlist",
+                  "type": "string",
+                  "default": "",
+                  "placeholder": "e.g. 127.0.0.1, 192.168.1.0/24",
+                  "description": "Comma-separated list of IPs or CIDR ranges. Only these IPs can trigger the webhook."
+                },
+                {
+                  "name": "noResponseBody",
+                  "displayName": "No Response Body",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If enabled, the webhook will respond with an empty body (only status code)."
+                },
+                {
+                  "name": "rawBody",
+                  "displayName": "Raw Body",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If enabled, the raw request body will be passed as-is without parsing."
+                },
+                {
+                  "name": "responseData",
+                  "displayName": "Response Data",
+                  "type": "string",
+                  "default": "",
+                  "placeholder": "Response body content",
+                  "description": "Custom response data to return when the webhook is triggered (JSON or text)."
+                }
+              ]
+            }
+          ]
+        },
+        "isTrigger": true,
+        "isFormWait": false,
+        "executionId": "6ac0e0ade3f0f64699b479c7",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": true
+      },
+      "type": "webhook",
+      "width": 220,
+      "height": 100,
+      "dragging": false,
+      "position": {
+        "x": 224.48652361958236,
+        "y": 221.7297236042002
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 224.48652361958236,
+        "y": 221.7297236042002
+      }
+    },
+    {
+      "id": "mongodb.find_document-1790844000266002",
+      "data": {
+        "label": "Find Document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awscostexplorer",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.find_document",
+        "toolData": {
+          "id": "mongodb.find_document",
+          "displayName": "Find Document",
+          "category": "Memory & State",
+          "provider": "mongodb",
+          "operation": "find_document",
+          "icon": "https://www.mongodb.com/assets/images/global/favicon.ico",
+          "description": "Retrieve documents from MongoDB collection",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "connectionUri": {
+                "type": "string",
+                "description": "MongoDB connection URI (overrides credentials)"
+              },
+              "credentials": {
+                "description": "Optional credentials object for project auth flows"
+              },
+              "database": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Database name"
+              },
+              "collection": {
+                "type": "string",
+                "description": "Collection name (optional). Leave empty to search across ALL collections in the database."
+              },
+              "query": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Query filter — must be a valid JSON object. Three modes:\n1. {} — return all documents in the collection.\n2. {\"field\": \"value\"} — standard MongoDB filter.\n3. {\"$search\": \"keyword\"} — search keyword across ALL string fields in every document.\nExample: {\"status\": \"pending\"}"
+              },
+              "limit": {
+                "type": "number",
+                "description": "Maximum number of documents to return (default 1000, max 5000)"
+              },
+              "sort": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Sort order (JSON). Example: {\"createdAt\": -1}"
+              },
+              "skip": {
+                "type": "number",
+                "description": "Number of documents to skip for pagination"
+              },
+              "projection": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Fields to include/exclude (JSON). Example: {\"name\": 1, \"email\": 1}"
+              }
+            },
+            "required": [
+              "database",
+              "query"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          },
+          "executionMode": "batch"
+        },
+        "isTrigger": false,
+        "isFormWait": false,
+        "executionId": "6ac0e0ade3f0f64699b479c7",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "dragging": false,
+      "position": {
+        "x": 530.327585676716,
+        "y": 224.03795803482006
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 530.327585676716,
+        "y": 224.03795803482006
+      }
+    },
+    {
+      "id": "code.execute-1790844068866003",
+      "data": {
+        "label": "Code",
+        "inputs": {
+          "code": "// ---------------------------------------------------------------\n// 1. Resolve Requested Billing Period (Live Webhook + Canvas Test)\n// ---------------------------------------------------------------\nconst webhookData = \n  $node[\"Webhook Trigger\"]?.json || \n  $node[\"Webhook\"]?.json || \n  $node[\"webhook-1790843991079001\"]?.json || \n  {};\n\nconst webhookBody = webhookData.body || webhookData;\nconst inputItem = (typeof $input !== 'undefined' && typeof $input.first === 'function') \n  ? ($input.first()?.json || {}) \n  : {};\n\n// Reads from Webhook POST body, Webhook URL query ?billingPeriod=, or direct test input\nconst requestedBillingPeriod = \n  webhookBody.billingPeriod || \n  webhookData.query?.billingPeriod || \n  inputItem.billingPeriod || \n  '';\n\n// ---------------------------------------------------------------\n// 2. Resolve Documents from Upstream \"Find Document\" Node\n// ---------------------------------------------------------------\nconst docs = \n  inputItem.documents || \n  $node[\"Find Document\"]?.json?.documents || \n  $node[\"mongodb.find_document-1790844000266002\"]?.json?.documents || \n  [];\n\n// Available billing periods list across all returned documents\nconst availableBillingPeriods = Array.from(new Set(\n  docs.map(d => d.billingPeriod).filter(Boolean)\n)).sort();\n\n// Select the matching document based on requested billingPeriod\nlet doc = null;\nif (requestedBillingPeriod) {\n  doc = docs.find(d => d.billingPeriod === requestedBillingPeriod);\n}\n\n// Fallback: If not found or not specified, pick the most recent document\nif (!doc && docs.length > 0) {\n  const sortedDocs = [...docs].sort((a, b) => {\n    const periodA = a.billingPeriod || '';\n    const periodB = b.billingPeriod || '';\n    if (periodA !== periodB) return periodB.localeCompare(periodA);\n    const dateA = a.fetchedAt ? new Date(a.fetchedAt).getTime() : 0;\n    const dateB = b.fetchedAt ? new Date(b.fetchedAt).getTime() : 0;\n    return dateB - dateA;\n  });\n  doc = sortedDocs[0];\n}\n\nif (!doc) {\n  doc = (inputItem.billingPeriod ? inputItem : {}) || {};\n}\n\n// ---------------------------------------------------------------\n// 3. Extract Core Properties Dynamically\n// ---------------------------------------------------------------\nconst accountId = doc.accountId || '864981730114';\nconst accountName = doc.accountName || 'Production AWS Account';\nconst billingPeriod = doc.billingPeriod || (doc.timePeriod?.start ? doc.timePeriod.start.slice(0, 7) : '2026-10');\nconst timePeriod = doc.timePeriod || { start: `${billingPeriod}-01`, end: `${billingPeriod}-30` };\n\nconst totalSpend = Number(doc.summary?.totalUnblendedCost || 0);\nconst totalAmortized = Number(doc.summary?.totalAmortizedCost || totalSpend);\nconst currency = doc.summary?.currency || 'USD';\n\nconst projects = Array.isArray(doc.projectSummary) ? doc.projectSummary : [];\nconst services = Array.isArray(doc.serviceSummary) ? doc.serviceSummary : [];\nconst dailyTotals = Array.isArray(doc.dailyTotals) ? doc.dailyTotals : [];\nconst serviceWiseDaily = Array.isArray(doc.serviceWiseDaily) ? doc.serviceWiseDaily : [];\n\n// ---------------------------------------------------------------\n// 4. Compute High-Level FinOps KPIs\n// ---------------------------------------------------------------\nconst daysCount = dailyTotals.length > 0 ? dailyTotals.length : 30;\nconst dailyAvg = totalSpend > 0 ? Number((totalSpend / daysCount).toFixed(2)) : 0;\n\n// Top Project\nconst topProj = projects.find(p => (p.projectName || p.project_name) !== 'Untagged') || projects[0] || null;\nconst topProjName = topProj ? (topProj.projectName || topProj.project_name) : 'Agent_Builder';\nconst topProjCost = topProj ? Number(topProj.unblendedCost || 0) : 0;\nconst topProjShare = totalSpend > 0 ? Number(((topProjCost / totalSpend) * 100).toFixed(1)) : 0;\n\n// Top Service\nconst topSvc = services[0] || null;\nconst topSvcName = topSvc?.service || 'Amazon Elastic Compute Cloud - Compute';\nconst topSvcCost = topSvc ? Number(topSvc.unblendedCost || 0) : 0;\nconst topSvcShare = totalSpend > 0 ? Number(((topSvcCost / totalSpend) * 100).toFixed(1)) : 0;\n\n// Tag Coverage & Governance\nconst untaggedItem = projects.find(p => (p.projectName || p.project_name) === 'Untagged');\nconst untaggedSpend = untaggedItem ? Number(Number(untaggedItem.unblendedCost || 0).toFixed(2)) : 0;\nconst taggedSpend = Number(Math.max(0, totalSpend - untaggedSpend).toFixed(2));\nconst tagCoveragePercentage = totalSpend > 0 ? Number(((taggedSpend / totalSpend) * 100).toFixed(1)) : 0;\n\n// ---------------------------------------------------------------\n// 5. Generate Interactive Project x Service Heatmap Matrix\n// ---------------------------------------------------------------\nconst topMatrixProjects = projects.slice(0, 10);\nconst topMatrixServices = services.slice(0, 10).map(s => s.service);\n\nconst matrixRows = topMatrixProjects.map(p => {\n  const pName = p.projectName || p.project_name || 'Untagged';\n  const pServices = p.services || [];\n  const srvCostMap = {};\n  \n  pServices.forEach(s => {\n    srvCostMap[s.service] = Number(s.unblendedCost || 0);\n  });\n\n  return {\n    productId: pName,\n    productName: pName,\n    project: pName,\n    projectName: pName,\n    project_name: pName,\n    services: srvCostMap,\n    serviceCosts: srvCostMap,\n    total: Number(p.unblendedCost || 0),\n    totalCost: Number(p.unblendedCost || 0)\n  };\n});\n\nconst matrix = {\n  services: topMatrixServices,\n  rows: matrixRows\n};\n\n// ---------------------------------------------------------------\n// 6. Top Cost Drivers (for Table & Cards)\n// ---------------------------------------------------------------\nconst topCostDrivers = (doc.topCostDrivers && doc.topCostDrivers.length > 0)\n  ? doc.topCostDrivers\n  : projects.slice(0, 5).map(p => ({\n      name: p.projectName || p.project_name,\n      cost: Number(p.unblendedCost || 0),\n      share: totalSpend > 0 ? Number(((Number(p.unblendedCost || 0) / totalSpend) * 100).toFixed(1)) : 0\n    }));\n\n// ---------------------------------------------------------------\n// 7. Structure KPI Payload for UI\n// ---------------------------------------------------------------\nconst kpis = {\n  totalSpend,\n  totalAmortized,\n  currency,\n  dailyAvg,\n  daysCount,\n  projectsCount: projects.length,\n  servicesCount: services.length,\n  taggedSpend,\n  untaggedSpend,\n  tagCoveragePercentage,\n  topProject: {\n    name: topProjName,\n    cost: topProjCost,\n    share: topProjShare\n  },\n  topService: {\n    name: topSvcName,\n    cost: topSvcCost,\n    share: topSvcShare\n  }\n};\n\n// ---------------------------------------------------------------\n// 8. Return Payload for Webhook Response\n// ---------------------------------------------------------------\nreturn {\n  json: {\n    success: true,\n    source: 'agentbuilder_workflow',\n    accountId,\n    accountName,\n    billingPeriod,\n    timePeriod,\n    availableBillingPeriods,\n    kpis,\n    totalSpend,\n    totalAmortized,\n    currency,\n    dailyAvg,\n    daysCount,\n    projectsCount: projects.length,\n    servicesCount: services.length,\n    taggedSpend,\n    untaggedSpend,\n    tagCoveragePercentage,\n    topProject: kpis.topProject,\n    topService: kpis.topService,\n    projects,\n    projectSummary: projects,\n    services,\n    serviceSummary: services,\n    dailyTotals,\n    dailyTimeline: dailyTotals,\n    serviceWiseDaily,\n    matrix,\n    topCostDrivers,\n    fetchedAt: doc.fetchedAt || new Date().toISOString()\n  }\n};\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "toolData": {
+          "id": "code.execute",
+          "displayName": "Code",
+          "category": "Data  Processing",
+          "provider": "code",
+          "operation": "execute",
+          "icon": "💻",
+          "description": "Execute custom JavaScript or Python code",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "language": {
+                "type": "string",
+                "enum": [
+                  "javascript",
+                  "python"
+                ],
+                "description": "Programming language to execute"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "each"
+                ],
+                "default": "all",
+                "description": "Execution mode"
+              },
+              "code": {
+                "type": "string",
+                "description": "Code to execute"
+              },
+              "input": {
+                "description": "Input data available as \"input\" variable"
+              },
+              "context": {
+                "description": "Execution context including other node results"
+              }
+            },
+            "required": [
+              "language",
+              "code"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        "isTrigger": false,
+        "isFormWait": false,
+        "executionId": "6ac0e0ade3f0f64699b479c7",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "dragging": false,
+      "position": {
+        "x": 828.8415246033936,
+        "y": 221.87332902787364
+      },
+      "selected": true,
+      "positionAbsolute": {
+        "x": 828.8415246033936,
+        "y": 221.87332902787364
+      }
+    },
+    {
+      "id": "respondToWebhook-1790844092601004",
+      "data": {
+        "label": "Webhook Response",
+        "inputs": {
+          "respondWith": "All Incoming Items",
+          "inputFieldName": "data"
+        },
+        "toolId": "respondToWebhook",
+        "toolData": {
+          "id": "respondToWebhook",
+          "displayName": "Webhook Response",
+          "category": "Input /  Output",
+          "icon": "reply",
+          "description": "Send response to webhook",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "respondWith": {
+                "type": "string",
+                "enum": [
+                  "All Incoming Items",
+                  "First Incoming Item",
+                  "JSON",
+                  "Binary File",
+                  "JWT Token",
+                  "Text",
+                  "Redirect",
+                  "No Data"
+                ],
+                "default": "All Incoming Items",
+                "description": "What to respond with."
+              },
+              "responseBody": {
+                "type": "string",
+                "description": "The body of the response (can be an expression)"
+              },
+              "credentialId": {
+                "type": "string",
+                "description": "JWT credential ID"
+              },
+              "payload": {
+                "type": "string",
+                "description": "JWT Token Payload (JSON string or expression)"
+              },
+              "redirectUrl": {
+                "type": "string",
+                "description": "Redirect URL"
+              },
+              "inputFieldName": {
+                "type": "string",
+                "default": "data",
+                "description": "Input Field Name containing the binary file"
+              },
+              "responseCode": {
+                "type": "number",
+                "description": "HTTP Response Code"
+              },
+              "putResponseInField": {
+                "type": "string",
+                "description": "If set, put the response into this field instead of the default output"
+              },
+              "enableStreaming": {
+                "type": "boolean",
+                "description": "Stream the response back to the caller when supported"
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "headers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        "isTrigger": false,
+        "isFormWait": false,
+        "executionId": "6ac0e0ade3f0f64699b479c7",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "dragging": false,
+      "position": {
+        "x": 1151.3968005889817,
+        "y": 212.44364358124045
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1151.3968005889817,
+        "y": 212.44364358124045
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-webhook-1790843991079001-mongodb.find_document-1790844000266002",
+      "data": {},
+      "type": "custom",
+      "source": "webhook-1790843991079001",
+      "target": "mongodb.find_document-1790844000266002"
+    },
+    {
+      "id": "reactflow__edge-mongodb.find_document-1790844000266002-code.execute-1790844068866003",
+      "data": {},
+      "type": "custom",
+      "source": "mongodb.find_document-1790844000266002",
+      "target": "code.execute-1790844068866003"
+    },
+    {
+      "id": "reactflow__edge-code.execute-1790844068866003-respondToWebhook-1790844092601004",
+      "data": {},
+      "type": "custom",
+      "source": "code.execute-1790844068866003",
+      "target": "respondToWebhook-1790844092601004"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ interface OpenRouterCostTrendChartProps {
 }
 
 export function OpenRouterCostTrendChart({
-  productName = 'Dragon Suite',
+  productName = 'All Products',
   providerName = 'OpenRouter',
   keysList = [],
 }: OpenRouterCostTrendChartProps) {
@@ -199,29 +199,30 @@ export function OpenRouterCostTrendChart({
   const tooltipY = getY(hoveredPoint[currentCfg.currentKey]);
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full relative">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between shadow-sm h-full relative">
       {/* Header with Title & Metric Toggle Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-dark-border/60">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-sm font-semibold text-white tracking-tight">
-            {productName} {providerName} Cost Trend
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+            {productName === 'All Products'
+              ? 'OpenRouter Cost Trend across All Products'
+              : `${productName} · ${providerName} Cost Trend`}
           </h3>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Timeline Range Toggle */}
-          <div className="flex items-center rounded-lg bg-dark-surface/80 p-0.5 border border-dark-border/60 text-xs">
+          <div className="flex items-center rounded-lg bg-slate-100 p-0.5 border border-slate-200/70 text-xs">
             <button
               onClick={() => {
                 setRangeMode('fullYear');
                 setHoverIndex(8); // Sep
               }}
               title="Show all 12 calendar months (Jan - Dec)"
-              className={`px-2 py-0.5 rounded text-[10.5px] font-medium transition-colors cursor-pointer ${
-                rangeMode === 'fullYear'
-                  ? 'bg-slate-700 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${rangeMode === 'fullYear'
+                  ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Jan – Dec
             </button>
@@ -231,35 +232,32 @@ export function OpenRouterCostTrendChart({
                 setHoverIndex(Math.max(0, activeOnlyPoints.length - 1));
               }}
               title="Filter to months with verified DB telemetry only"
-              className={`px-2 py-0.5 rounded text-[10.5px] font-medium transition-colors cursor-pointer ${
-                rangeMode === 'activeOnly'
-                  ? 'bg-slate-700 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${rangeMode === 'activeOnly'
+                  ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Active Ingested
             </button>
           </div>
 
           {/* Metric Tab Switcher: Cost vs Active Keys */}
-          <div className="flex items-center rounded-lg bg-dark-surface/80 p-0.5 border border-dark-border/60 text-xs">
+          <div className="flex items-center rounded-lg bg-slate-100 p-0.5 border border-slate-200/70 text-xs">
             <button
               onClick={() => setActiveTab('cost')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
-                activeTab === 'cost'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${activeTab === 'cost'
+                  ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Cost ($)
             </button>
             <button
               onClick={() => setActiveTab('resource')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
-                activeTab === 'resource'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${activeTab === 'resource'
+                  ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Active Keys
             </button>
@@ -283,14 +281,14 @@ export function OpenRouterCostTrendChart({
                   y1={y}
                   x2={svgWidth - margin.right}
                   y2={y}
-                  stroke="rgba(255,255,255,0.06)"
+                  stroke="#f1f5f9"
                   strokeDasharray="3 3"
                 />
                 <text
                   x={margin.left - 8}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-slate-400 text-[9.5px] font-mono"
+                  className="fill-slate-400 text-[10px] font-mono"
                 >
                   {tickVal}
                 </text>
@@ -309,21 +307,12 @@ export function OpenRouterCostTrendChart({
             {currentCfg.axisLabel}
           </text>
 
-          {/* Previous Period Line (Muted Dashed White) */}
-          <path
-            d={createSmoothPath('previousKey')}
-            fill="none"
-            stroke="rgba(255, 255, 255, 0.25)"
-            strokeWidth="1.75"
-            strokeDasharray="4 4"
-          />
-
-          {/* Current Period Line (Electric Blue #0070f3) */}
+          {/* OpenRouter Spend Line (Purple #8b5cf6) */}
           <path
             d={createSmoothPath('currentKey')}
             fill="none"
-            stroke="#0070f3"
-            strokeWidth="2.5"
+            stroke="#8b5cf6"
+            strokeWidth="3"
             strokeLinecap="round"
           />
 
@@ -333,19 +322,19 @@ export function OpenRouterCostTrendChart({
             y1={margin.top}
             x2={tooltipX}
             y2={margin.top + chartHeight}
-            stroke="rgba(0, 112, 243, 0.6)"
-            strokeDasharray="2 2"
-            strokeWidth="1"
+            stroke="rgba(139, 92, 246, 0.3)"
+            strokeDasharray="3 3"
+            strokeWidth="1.5"
           />
 
           {/* Current Point Dot */}
           <circle
             cx={tooltipX}
             cy={tooltipY}
-            r="4.5"
-            fill="#0070f3"
-            stroke="#0a0d14"
-            strokeWidth="2"
+            r="5"
+            fill="#8b5cf6"
+            stroke="#ffffff"
+            strokeWidth="2.5"
             className="transition-all duration-150 shadow-sm"
           />
 
@@ -359,11 +348,10 @@ export function OpenRouterCostTrendChart({
                 x={x}
                 y={svgHeight - 8}
                 textAnchor="middle"
-                className={`text-[9.5px] transition-colors cursor-pointer ${
-                  isHovered
-                    ? 'fill-blue-400 font-semibold'
+                className={`text-[10px] transition-colors cursor-pointer ${isHovered
+                    ? 'fill-purple-600 font-bold'
                     : 'fill-slate-400 font-normal'
-                }`}
+                  }`}
                 onClick={() => setHoverIndex(i)}
               >
                 {d.label}
@@ -392,66 +380,37 @@ export function OpenRouterCostTrendChart({
 
         {/* Floating Tooltip Box */}
         <div
-          className="absolute z-20 pointer-events-none rounded-lg border border-dark-border bg-dark-card/95 p-3 shadow-xl backdrop-blur-md text-xs transition-all duration-150 w-52"
+          className="absolute z-20 pointer-events-none rounded-xl border border-slate-200 bg-white p-3 shadow-lg text-xs transition-all duration-150 w-48"
           style={{
-            left: `${Math.min(62, Math.max(10, (safeHoverIndex / Math.max(1, activePoints.length - 1)) * 80))}%`,
+            left: `${Math.min(65, Math.max(10, (safeHoverIndex / Math.max(1, activePoints.length - 1)) * 80))}%`,
             top: '25px',
           }}
         >
-          <div className="font-semibold text-white border-b border-dark-border/60 pb-1.5 mb-1.5 flex justify-between items-center text-[11px]">
+          <div className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex justify-between items-center text-[11px]">
             <span>{hoveredPoint.label} 2026</span>
-            <span className="text-[10px] text-blue-400 font-mono">OpenRouter Live</span>
+            <span className="text-[10px] text-purple-600 font-mono font-medium">OpenRouter</span>
           </div>
           <div className="space-y-1 text-[11px]">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[#0070f3]" />
-                <span className="text-slate-300">{currentCfg.currentLabel}:</span>
+                <span className="h-2 w-2 rounded-full bg-purple-600" />
+                <span className="text-slate-600">{currentCfg.currentLabel}:</span>
               </div>
-              <span className="font-semibold text-white font-mono">
+              <span className="font-bold text-slate-900 font-mono">
                 {currentCfg.formatValue(hoveredPoint[currentCfg.currentKey])}
               </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-slate-500" />
-                <span className="text-slate-400">{currentCfg.previousLabel}:</span>
-              </div>
-              <span className="font-normal text-slate-400 font-mono">
-                {currentCfg.formatValue(hoveredPoint[currentCfg.previousKey])}
-              </span>
-            </div>
-            <div className="pt-1 mt-1 border-t border-dark-border/40 text-[10px] text-slate-400 flex flex-col gap-0.5">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  <span>API Key:</span>
-                </div>
-                <span className="text-white font-medium truncate max-w-[120px]" title={hoveredPoint.service}>
-                  {hoveredPoint.service}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Product:</span>
-                </div>
-                <span className="text-slate-300 truncate max-w-[120px]">{hoveredPoint.project || productName}</span>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Legend Footer */}
-      <div className="flex items-center justify-center gap-6 pt-2 border-t border-dark-border/40 text-xs">
+      <div className="flex items-center justify-center gap-6 pt-3 border-t border-slate-100 text-xs">
         <div className="flex items-center gap-2">
-          <span className="h-0.5 w-4 bg-blue-500 rounded-full" />
-          <span className="text-slate-300 text-[11px] font-medium">Current period</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="h-0.5 w-4 bg-slate-500 border-b border-dashed border-slate-400 rounded-full" />
-          <span className="text-slate-400 text-[11px]">Previous period</span>
+          <span className="h-2 w-4 bg-purple-600 rounded-full" />
+          <span className="text-slate-600 text-[11px] font-medium">
+            {activeTab === 'cost' ? 'OpenRouter Spend ($)' : 'Active Keys'}
+          </span>
         </div>
       </div>
     </div>

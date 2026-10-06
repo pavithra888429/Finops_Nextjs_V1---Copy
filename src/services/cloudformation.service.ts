@@ -61,7 +61,7 @@ export function getCloudFormationLaunchUrl(params: CloudFormationLaunchParams): 
   queryParams.set('param_IAMRoleName', roleName);
 
   const queryString = queryParams.toString();
-  return `https://${params.region}.console.aws.amazon.com/cloudformation/home?region=${params.region}#/stacks/create/review?${queryString}`;
+  return `https://${params.region}.console.aws.amazon.com/cloudformation/home?region=${params.region}#/stacks/quickcreate?${queryString}`;
 }
 
 export function getPhase2CloudFormationLaunchUrl(params: {

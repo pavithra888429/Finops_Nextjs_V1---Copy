@@ -1,0 +1,442 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-10-05T06:36:54.729Z",
+  "nodes": [
+    {
+      "id": "webhook-1790568044023001",
+      "data": {
+        "label": "Webhook Trigger",
+        "inputs": {
+          "path": "2384b920-a830-48b2-8388-8a0031f5171c",
+          "method": "POST",
+          "options": {},
+          "allowedRoles": "admin, staff",
+          "jwtAlgorithm": "HS256",
+          "responseMode": "respondWithNode",
+          "roleClaimKey": "role",
+          "sessionClaim": "sub",
+          "sessionSource": "none",
+          "authentication": "none",
+          "requireRoleCheck": false
+        },
+        "toolId": "webhook",
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      },
+      "type": "webhook",
+      "width": 220,
+      "height": 100,
+      "position": {
+        "x": 182,
+        "y": 300
+      }
+    },
+    {
+      "id": "mongodb.find_document-1790568218526002",
+      "data": {
+        "label": "Find Document",
+        "inputs": {
+          "query": "{\n  \"$or\": [\n    { \"awsAccountId\": \"{{ $json.body.awsAccountId || '992382766703' }}\" },\n    { \"connectionId\": \"{{ $json.body.connectionId }}\" }\n  ]\n}\n",
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.find_document"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 436,
+        "y": 302
+      }
+    },
+    {
+      "id": "httpRequest-1790568302468003",
+      "data": {
+        "label": "Http Request",
+        "inputs": {
+          "url": "https://sts.amazonaws.com/",
+          "method": "POST",
+          "timeout": 300000,
+          "bodyType": "json",
+          "contentType": "json",
+          "authentication": {
+            "type": "predefinedCredentialType",
+            "config": {
+              "credentialId": "ede77268-8d19-45df-bfbc-9b79d770ade5",
+              "credentialType": "awsApi"
+            }
+          },
+          "includeHeaders": false,
+          "responseFormat": "auto",
+          "queryParameters": {
+            "Action": "AssumeRole",
+            "RoleArn": "{{ 'arn:aws:iam::' + ($json.documents[0].awsAccountId || '864981730114') + ':role/' + ($json.documents[0].roleName || 'FinOpsAwsIntegrationRole') }} ",
+            "Version": "2011-06-15",
+            "ExternalId": "{{ $json.documents[0].externalId }}",
+            "DurationSeconds": "3600",
+            "RoleSessionName": "FinOpsWorkbenchIngestion"
+          },
+          "lowercaseHeaders": true,
+          "allowUnauthorized": false,
+          "ignoreResponseCode": false,
+          "outputPropertyName": "data"
+        },
+        "toolId": "httpRequest"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 673,
+        "y": 302
+      }
+    },
+    {
+      "id": "httpRequest-1790568498761004",
+      "data": {
+        "label": "Http Request",
+        "inputs": {
+          "url": "https://{{ ($node[\"Find Document\"]?.json?.documents?.[0]?.bucketName || 'finops-cur2-864981730114-v1') }}.s3.{{ ($node[\"Find Document\"]?.json?.documents?.[0]?.bucketRegion || $node[\"Find Document\"]?.json?.documents?.[0]?.region || 'us-east-1') }}.amazonaws.com/?list-type=2  ",
+          "method": "GET",
+          "timeout": 300000,
+          "bodyType": "json",
+          "contentType": "json",
+          "authentication": {
+            "type": "predefinedCredentialType",
+            "config": {
+              "credentialId": "ede77268-8d19-45df-bfbc-9b79d770ade5",
+              "credentialType": "awsApi"
+            }
+          },
+          "includeHeaders": false,
+          "responseFormat": "auto",
+          "lowercaseHeaders": true,
+          "allowUnauthorized": false,
+          "ignoreResponseCode": false,
+          "outputPropertyName": "data"
+        },
+        "toolId": "httpRequest"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 947,
+        "y": 306
+      }
+    },
+    {
+      "id": "code.execute-1790568570096005",
+      "data": {
+        "label": "Code",
+        "inputs": {
+          "code": "const item = $input.first().json;\nconst rawBody = item.body || item;\n\n// 1. Resolve connection details from MongoDB Find Document\nconst conn = \n  $node[\"Find Document\"]?.json?.documents?.[0] || \n  $node[\"Find Document\"]?.json || \n  {};\nconst lastSyncedFile = conn.lastSyncedFile || '';\n\n// 2. Check for manual/force sync flag from webhook trigger\nconst webhookBody = \n  $node[\"Webhook Trigger\"]?.json?.body || \n  $node[\"Ingestion Webhook Trigger\"]?.json?.body || \n  {};\nconst isForceSync = webhookBody.force === true || webhookBody.forceSync === true;\n\nlet fileKeys = [];\n\n// 3. Parse XML from S3 ListBucket (or JSON object)\nif (typeof rawBody === 'string') {\n  const matches = rawBody.match(/<Key>(.*?)<\\/Key>/g) || [];\n  fileKeys = matches\n    .map(m => m.replace(/<\\/?Key>/g, ''))\n    .filter(k => \n      (k.endsWith('.parquet') || k.endsWith('.csv.gz')) && \n      !k.includes('-Manifest.json') && \n      !k.includes('/metadata/') && \n      !k.includes('test-object')\n    );\n} else if (rawBody && typeof rawBody === 'object') {\n  const contents = rawBody.ListBucketResult?.Contents || rawBody.Contents || [];\n  const list = Array.isArray(contents) ? contents : [contents];\n  fileKeys = list\n    .map(c => c?.Key || c?.key || '')\n    .filter(k => \n      (k.endsWith('.parquet') || k.endsWith('.csv.gz')) && \n      !k.includes('-Manifest.json') && \n      !k.includes('/metadata/') && \n      !k.includes('test-object')\n    );\n}\n\n// 4. If no cost files found in S3 yet\nif (fileKeys.length === 0) {\n  return {\n    json: {\n      hasData: false,\n      status: 'pending_aws_export',\n      message: 'S3 bucket is connected and ready. Awaiting first AWS daily CUR 2.0 export delivery (AWS exports take up to 24 hours).',\n      recordsProcessed: 0\n    }\n  };\n}\n\nconst latestFile = fileKeys[fileKeys.length - 1];\n\n// 5. ⚡ DEDUPLICATION: Only skip if file was ALREADY ingested AND records actually exist in the DB\nconst recordsAlreadyProcessed = (conn.recordsProcessed || 0) > 0 && conn.syncStatus === 'synced';\n\nif (!isForceSync && recordsAlreadyProcessed && lastSyncedFile && lastSyncedFile === latestFile) {\n  return {\n    json: {\n      hasData: false, // Routes to IF Condition False branch (already up to date)\n      status: 'already_synced',\n      message: `S3 data is already up to date. Latest export file (${latestFile.split('/').pop()}) has already been ingested.`,\n      latestFile: latestFile,\n      recordsProcessed: conn.recordsProcessed || 0\n    }\n  };\n}\n\n// 6. When a new/unprocessed export file exists, or sync is re-requested:\nreturn {\n  json: {\n    hasData: true, // Routes to IF Condition True branch (downloads & ingests parquet)\n    status: 'files_found',\n    latestFile: latestFile,\n    totalFiles: fileKeys.length,\n    isForceSync: isForceSync\n  }\n};",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1204,
+        "y": 304
+      }
+    },
+    {
+      "id": "ifnode-1790568714966006",
+      "data": {
+        "label": "IF Condition",
+        "inputs": {
+          "conditions": {
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "031zw3xjo",
+                "operator": {
+                  "name": "filter.operator.equals",
+                  "type": "string",
+                  "operation": "equals"
+                },
+                "leftValue": "{{ $json.hasData }}",
+                "rightValue": "true"
+              }
+            ]
+          }
+        },
+        "toolId": "ifnode"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1467,
+        "y": 303
+      }
+    },
+    {
+      "id": "mongodb.update_document-1790568800142007",
+      "data": {
+        "label": "Update Document",
+        "inputs": {
+          "mode": "updateOne",
+          "query": "{ \"awsAccountId\": \"{{ $node[\\\"Find Document\\\"].json.documents[0].awsAccountId || '992382766703' }}\" }\n\n",
+          "update": "{   \"$set\": {     \"syncStatus\": \"pending_aws_export\",     \"lastSyncAttempt\": \"{{ $now }}\",     \"recordsProcessed\": 0   } }   ",
+          "upsert": false,
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.update_document"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1774,
+        "y": 377
+      }
+    },
+    {
+      "id": "respondToWebhook-1790568889372008",
+      "data": {
+        "label": "Webhook Response",
+        "inputs": {
+          "respondWith": "All Incoming Items",
+          "inputFieldName": "data"
+        },
+        "toolId": "respondToWebhook"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 2020,
+        "y": 366
+      }
+    },
+    {
+      "id": "httpRequest-1790569032056009",
+      "data": {
+        "label": "Http Request",
+        "inputs": {
+          "url": "https://{{$node[\"mongodb.find_document-1790568218526002\"].json[\"documents\"][0][\"bucketName\"]}}.s3.{{$node[\"mongodb.find_document-1790568218526002\"].json[\"documents\"][0][\"bucketRegion\"]}}.amazonaws.com/{{$node[\"code.execute-1790568570096005\"].json[\"latestFile\"]}} ",
+          "method": "GET",
+          "timeout": 300000,
+          "bodyType": "json",
+          "contentType": "json",
+          "authentication": {
+            "type": "predefinedCredentialType",
+            "config": {
+              "credentialId": "ede77268-8d19-45df-bfbc-9b79d770ade5",
+              "credentialType": "awsApi"
+            }
+          },
+          "includeHeaders": false,
+          "responseFormat": "auto",
+          "lowercaseHeaders": true,
+          "allowUnauthorized": false,
+          "ignoreResponseCode": false,
+          "outputPropertyName": "data"
+        },
+        "toolId": "httpRequest"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1774,
+        "y": 209
+      }
+    },
+    {
+      "id": "code.execute-1790569089089010",
+      "data": {
+        "label": "Code",
+        "inputs": {
+          "code": "// 1. Resolve Connection & Account details dynamically from upstream nodes\nconst conn = \n  $node[\"Find Document\"]?.json?.documents?.[0] || \n  $node[\"Get Active Connection Details\"]?.json?.documents?.[0] || \n  $node[\"Find Document\"]?.json || \n  $node[\"Get Active Connection Details\"]?.json || \n  {};\n\nconst webhookBody = \n  $node[\"Webhook Trigger\"]?.json?.body || \n  $node[\"Ingestion Webhook Trigger\"]?.json?.body || \n  {};\n\nconst connectionId = String(conn.connectionId || conn._id || webhookBody.connectionId || '');\nconst awsAccountId = String(conn.awsAccountId || webhookBody.awsAccountId || '');\nconst targetRegion = String(conn.bucketRegion || conn.region || 'us-east-1');\n\n// 2. Extract raw Base64 Parquet file from previous Http Request step\nconst firstItem = $input.first();\nconst rawBody = \n  firstItem?.json?.body || \n  firstItem?.json?.data || \n  firstItem?.body || \n  firstItem?.data || \n  '';\n\n// 3. Fast Base64 Decoder (uses native Buffer when available, pure JS fallback)\nfunction decodeBase64Fallback(str) {\n  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';\n  const lookup = new Uint8Array(256);\n  for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;\n\n  const clean = str.replace(/[^A-Za-z0-9+/=]/g, '');\n  let len = clean.length;\n  if (clean.endsWith('==')) len -= 2;\n  else if (clean.endsWith('=')) len -= 1;\n  const byteLen = Math.floor((len * 3) / 4);\n  const u8 = new Uint8Array(byteLen);\n  let p = 0;\n  for (let i = 0; i < clean.length; i += 4) {\n    const a = lookup[clean.charCodeAt(i)];\n    const b = lookup[clean.charCodeAt(i + 1)];\n    const c = lookup[clean.charCodeAt(i + 2)];\n    const d = lookup[clean.charCodeAt(i + 3)];\n    if (p < byteLen) u8[p++] = (a << 2) | (b >> 4);\n    if (p < byteLen) u8[p++] = ((b & 15) << 4) | (c >> 2);\n    if (p < byteLen) u8[p++] = ((c & 3) << 6) | (d & 63);\n  }\n  return u8;\n}\n\nif (!rawBody || typeof rawBody !== 'string') {\n  return {\n    json: {\n      status: 'skipped',\n      message: 'No Parquet binary available in previous step. Run the full workflow to download S3 data.'\n    }\n  };\n}\n\nconst bytes = (typeof Buffer !== 'undefined') ? Buffer.from(rawBody, 'base64') : decodeBase64Fallback(rawBody);\n\nif (!bytes || bytes.length < 12) {\n  return {\n    json: {\n      status: 'skipped',\n      message: 'Empty or invalid Parquet file received. Make sure the S3 download step executed successfully.'\n    }\n  };\n}\n\n// 4. Thrift Compact Protocol Deserializer\nfunction readVarInt(r) {\n  let res = 0, shift = 0;\n  while (r.offset < r.view.byteLength) {\n    const b = r.view.getUint8(r.offset++);\n    res |= (b & 0x7f) << shift;\n    if (!(b & 0x80)) return res;\n    shift += 7;\n  }\n  return res;\n}\nfunction readZigZag(r) { const z = readVarInt(r); return z >>> 1 ^ -(z & 1); }\nfunction deserializeThrift(r) {\n  const val = {};\n  let fid = 0;\n  while (r.offset < r.view.byteLength) {\n    const byte = r.view.getUint8(r.offset++);\n    const type = byte & 0x0f;\n    if (type === 0) break;\n    const delta = byte >> 4;\n    fid = delta ? fid + delta : readZigZag(r);\n    val['field_' + fid] = readElem(r, type);\n  }\n  return val;\n}\nfunction readElem(r, type) {\n  if (type === 1) return true;\n  if (type === 2) return false;\n  if (type === 3) return r.view.getInt8(r.offset++);\n  if (type === 4 || type === 5) return readZigZag(r);\n  if (type === 6) {\n    let res = 0n, shift = 0n;\n    while (r.offset < r.view.byteLength) {\n      const b = r.view.getUint8(r.offset++);\n      res |= BigInt(b & 0x7f) << shift;\n      if (!(b & 0x80)) break;\n      shift += 7n;\n    }\n    return Number(res >> 1n ^ -(res & 1n));\n  }\n  if (type === 7) { const v = r.view.getFloat64(r.offset, true); r.offset += 8; return v; }\n  if (type === 8) {\n    const len = readVarInt(r);\n    const b = new Uint8Array(r.view.buffer, r.view.byteOffset + r.offset, len);\n    r.offset += len;\n    return b;\n  }\n  if (type === 9) {\n    const b = r.view.getUint8(r.offset++);\n    const elemType = b & 0x0f;\n    let sz = b >> 4;\n    if (sz === 15) sz = readVarInt(r);\n    const arr = new Array(sz);\n    for (let i = 0; i < sz; i++) arr[i] = readElem(r, elemType);\n    return arr;\n  }\n  if (type === 12) return deserializeThrift(r);\n  return null;\n}\n\n// 5. Snappy Decompressor\nfunction snappy(src) {\n  let p = 0;\n  while (p < src.length && src[p++] >= 128) {}\n  const out = [];\n  while (p < src.length) {\n    const b = src[p++];\n    const t = b & 3;\n    if (t === 0) {\n      let l = (b >> 2) + 1;\n      if (l > 60) {\n        let e = l - 60; l = 0;\n        for (let i = 0; i < e; i++) l |= src[p++] << (i * 8);\n        l += 1;\n      }\n      for (let i = 0; i < l; i++) out.push(src[p++]);\n    } else if (t === 1) {\n      const l = ((b >> 2) & 7) + 4;\n      const off = ((b >> 5) << 8) | src[p++];\n      for (let i = 0; i < l; i++) out.push(out[out.length - off]);\n    } else if (t === 2) {\n      const l = (b >> 2) + 1;\n      const off = src[p++] | (src[p++] << 8);\n      for (let i = 0; i < l; i++) out.push(out[out.length - off]);\n    } else if (t === 3) {\n      const l = (b >> 2) + 1;\n      const off = src[p++] | (src[p++] << 8) | (src[p++] << 16) | (src[p++] << 24);\n      for (let i = 0; i < l; i++) out.push(out[out.length - off]);\n    }\n  }\n  return new Uint8Array(out);\n}\n\n// 6. RLE & Bit-Packed Hybrid Decoder\nfunction readRleBitPackedHybrid(reader, width, output, length) {\n  if (length === undefined) {\n    length = reader.view.getUint32(reader.offset, true);\n    reader.offset += 4;\n  }\n  const startOffset = reader.offset;\n  let seen = 0;\n  while (seen < output.length && reader.offset < startOffset + length) {\n    const header = readVarInt(reader);\n    if (header & 1) {\n      let count = (header >> 1) * 8;\n      const mask = (1 << width) - 1;\n      let data = 0, left = 8, right = 0;\n      if (reader.offset < reader.view.byteLength) data = reader.view.getUint8(reader.offset++);\n      while (count > 0 && seen < output.length) {\n        if (right > 8) {\n          right -= 8; left -= 8; data >>>= 8;\n        } else if (left - right < width) {\n          if (reader.offset < reader.view.byteLength) data |= reader.view.getUint8(reader.offset++) << left;\n          left += 8;\n        } else {\n          output[seen++] = (data >> right) & mask;\n          count--;\n          right += width;\n        }\n      }\n    } else {\n      const count = header >>> 1;\n      let val = 0;\n      const byteWidth = (width + 7) >> 3;\n      for (let i = 0; i < byteWidth; i++) val |= reader.view.getUint8(reader.offset++) << (i * 8);\n      for (let i = 0; i < count; i++) if (seen < output.length) output[seen++] = val;\n    }\n  }\n}\n\n// 7. Parse Parquet Metadata\nconst view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);\nconst metaLen = view.getUint32(bytes.length - 8, true);\nconst metaOffset = bytes.length - 8 - metaLen;\nconst meta = deserializeThrift({ view, offset: metaOffset });\nconst numRows = meta.field_3 || 0;\nconst schema = meta.field_2 || [];\nconst colNames = schema.slice(1).map(s => {\n  const sb = s.field_4;\n  let str = '';\n  if (sb) {\n    for (let i = 0; i < sb.length; i++) str += String.fromCharCode(sb[i]);\n  }\n  return str;\n});\nconst colChunks = (meta.field_4 && meta.field_4[0] && meta.field_4[0].field_1) || [];\n\n// 8. ⚡ OPTIMIZATION: ONLY decode the 10 columns we actually use\nconst NEEDED_COLUMNS = new Set([\n  'line_item_usage_start_date',\n  'line_item_usage_account_id',\n  'bill_payer_account_id',\n  'line_item_product_code',\n  'line_item_resource_id',\n  'line_item_usage_type',\n  'line_item_operation',\n  'line_item_unblended_cost',\n  'line_item_blended_cost',\n  'line_item_line_item_description'\n]);\n\nconst columnsData = {};\n\nfor (let cIdx = 0; cIdx < colChunks.length; cIdx++) {\n  const colName = colNames[cIdx];\n  if (!NEEDED_COLUMNS.has(colName)) continue;\n\n  const m = colChunks[cIdx].field_3;\n  const colType = m.field_1;\n  const dictOffset = m.field_11;\n  const dataOffset = m.field_9;\n\n  let dictValues = [];\n  if (dictOffset !== undefined) {\n    let r = { view, offset: dictOffset };\n    const dictH = deserializeThrift(r);\n    const dictBytes = snappy(bytes.subarray(r.offset, r.offset + dictH.field_3));\n    const dView = new DataView(dictBytes.buffer, dictBytes.byteOffset, dictBytes.byteLength);\n    let dOff = 0;\n    const count = (dictH.field_7 && dictH.field_7.field_1) || 0;\n    for (let i = 0; i < count; i++) {\n      if (colType === 6) {\n        const len = dView.getInt32(dOff, true); dOff += 4;\n        let s = '';\n        for (let j = 0; j < len; j++) s += String.fromCharCode(dictBytes[dOff + j]);\n        dOff += len;\n        dictValues.push(s);\n      } else if (colType === 5) {\n        dictValues.push(dView.getFloat64(dOff, true));\n        dOff += 8;\n      } else if (colType === 3) {\n        const nano = dView.getBigInt64(dOff, true);\n        const julianDay = dView.getInt32(dOff + 8, true);\n        dOff += 12;\n        const millis = (julianDay - 2440588) * 86400000 + Number(nano / 1000000n);\n        dictValues.push(new Date(millis).toISOString());\n      } else {\n        dictValues.push(null);\n      }\n    }\n  }\n\n  let r = { view, offset: dataOffset };\n  const dataH = deserializeThrift(r);\n  const dataBytes = snappy(bytes.subarray(r.offset, r.offset + dataH.field_3));\n  const pReader = { view: new DataView(dataBytes.buffer, dataBytes.byteOffset, dataBytes.byteLength), offset: 0 };\n  \n  const defLevels = new Array(numRows);\n  readRleBitPackedHybrid(pReader, 1, defLevels);\n\n  const bitWidth = pReader.view.getUint8(pReader.offset++);\n  let values = [];\n  if (bitWidth === 0) {\n    values = new Array(numRows).fill(0);\n  } else {\n    values = new Array(numRows);\n    readRleBitPackedHybrid(pReader, bitWidth, values, pReader.view.byteLength - pReader.offset);\n  }\n\n  const colResult = new Array(numRows);\n  let nonNullIdx = 0;\n  for (let i = 0; i < numRows; i++) {\n    if (defLevels[i] === 0) {\n      colResult[i] = null;\n    } else {\n      colResult[i] = dictValues.length > 0 ? dictValues[values[nonNullIdx++]] : values[nonNullIdx++];\n    }\n  }\n  columnsData[colName] = colResult;\n}\n\n// 9. ⚡ FAST SINGLE-PASS DIRECT MAPPING\nconst d_date = columnsData['line_item_usage_start_date'] || [];\nconst d_acct = columnsData['line_item_usage_account_id'] || columnsData['bill_payer_account_id'] || [];\nconst d_prod = columnsData['line_item_product_code'] || [];\nconst d_res  = columnsData['line_item_resource_id'] || [];\nconst d_type = columnsData['line_item_usage_type'] || [];\nconst d_oper = columnsData['line_item_operation'] || [];\nconst d_cost = columnsData['line_item_unblended_cost'] || [];\nconst d_bcost = columnsData['line_item_blended_cost'] || [];\nconst d_desc = columnsData['line_item_line_item_description'] || [];\n\nconst today = new Date().toISOString().substring(0, 10);\nlet detectedBillingPeriod = today.substring(0, 7);\nconst parsedRecords = new Array(numRows);\n\nfor (let i = 0; i < numRows; i++) {\n  const fileDate = d_date[i];\n  const dateStr = fileDate ? String(fileDate).substring(0, 10) : today;\n  if (i === 0 && dateStr.length >= 7) detectedBillingPeriod = dateStr.substring(0, 7);\n\n  const recordAccountId = String(d_acct[i] || awsAccountId);\n\n  parsedRecords[i] = {\n    connectionId: connectionId,\n    billingPeriod: detectedBillingPeriod,\n    date: dateStr,\n    accountId: recordAccountId,\n    accountName: 'Production AWS Account',\n    service: String(d_prod[i] || ''),\n    region: targetRegion,\n    resourceId: String(d_res[i] || ''),\n    usageType: String(d_type[i] || ''),\n    operation: String(d_oper[i] || ''),\n    unblendedCost: Number(d_cost[i] || 0),\n    blendedCost: Number(d_bcost[i] || 0),\n    amortizedCost: Number(d_cost[i] || 0),\n    netCost: Number(d_cost[i] || 0),\n    usageAmount: 1.0,\n    description: String(d_desc[i] || '')\n  };\n}\n\nconst activeRunId = webhookBody.runId || ('run_' + Date.now().toString(36));\nconst fileName = \n  $node[\"code.execute-1790568570096005\"]?.json?.latestFile || \n  $node[\"Evaluate S3 Files\"]?.json?.latestFile || \n  $node[\"Code\"]?.json?.latestFile || \n  'cur_export.parquet';\nconst completedTimestamp = new Date().toISOString();\n\n// 10. ⚡ Prepare Upsert Document (Updates the single monthly document in place)\nconst costDocument = {\n  connectionId: connectionId,\n  awsAccountId: awsAccountId,\n  runId: activeRunId,\n  billingPeriod: detectedBillingPeriod,\n  records: parsedRecords,\n  recordsProcessed: parsedRecords.length,\n  status: 'completed',\n  fileName: fileName,\n  completedAt: completedTimestamp\n};\n\nreturn {\n  connectionId: connectionId,\n  awsAccountId: awsAccountId,\n  runId: activeRunId,\n  billingPeriod: detectedBillingPeriod,\n  records: parsedRecords,\n  recordsProcessed: parsedRecords.length,\n  status: 'completed',\n  fileName: fileName,\n  completedAt: completedTimestamp,\n  document: costDocument\n};",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 2014,
+        "y": 209
+      }
+    },
+    {
+      "id": "mongodb.update_document-1790684435848005",
+      "data": {
+        "label": "Update Document",
+        "inputs": {
+          "mode": "updateOne",
+          "query": "{\n  \"awsAccountId\": \"{{ $json.awsAccountId }}\",\n  \"billingPeriod\": \"{{ $json.billingPeriod }}\"\n}\n",
+          "update": "{\n  \"$set\": {{ JSON.stringify($json.document) }}\n}",
+          "upsert": true,
+          "database": "finops_3",
+          "collection": "finopscostrecords",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.update_document"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 2300,
+        "y": 208
+      }
+    },
+    {
+      "id": "mongodb.insert_document-1790569337053012",
+      "data": {
+        "label": "Insert Document",
+        "inputs": {
+          "fields": "runId, connectionId, awsAccountId, status, recordsProcessed, fileName, message, completedAt ",
+          "database": "finops_3",
+          "collection": "finops_ingestion_logs",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.insert_document"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 2612,
+        "y": 195
+      }
+    },
+    {
+      "id": "mongodb.update_document-1790569467148013",
+      "data": {
+        "label": "Update Document",
+        "inputs": {
+          "mode": "updateMany",
+          "query": "{ \"awsAccountId\": \"{{ $json.awsAccountId || $node[\\\"Code\\\"].json.awsAccountId }}\" }\n",
+          "update": "{   \"$set\": {     \"syncStatus\": \"synced\",     \"lastSyncedAt\": \"{{ $now }}\",     \"lastSyncedFile\": \"{{ $json.fileName || $node[\\\"Code\\\"].json.fileName }}\",     \"recordsProcessed\": {{ $json.recordsProcessed || $node[\\\"Code\\\"].json.recordsProcessed || 0 }}   } }    ",
+          "upsert": false,
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.update_document"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 2875,
+        "y": 179
+      }
+    },
+    {
+      "id": "respondToWebhook-1790569508987014",
+      "data": {
+        "label": "Webhook Response",
+        "inputs": {
+          "respondWith": "All Incoming Items",
+          "inputFieldName": "data"
+        },
+        "toolId": "respondToWebhook"
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 3114,
+        "y": 180
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-webhook-1790568044023001-mongodb.find_document-1790568218526002",
+      "type": "custom",
+      "source": "webhook-1790568044023001",
+      "target": "mongodb.find_document-1790568218526002"
+    },
+    {
+      "id": "reactflow__edge-mongodb.find_document-1790568218526002-httpRequest-1790568302468003",
+      "type": "custom",
+      "source": "mongodb.find_document-1790568218526002",
+      "target": "httpRequest-1790568302468003"
+    },
+    {
+      "id": "reactflow__edge-httpRequest-1790568302468003-httpRequest-1790568498761004",
+      "type": "custom",
+      "source": "httpRequest-1790568302468003",
+      "target": "httpRequest-1790568498761004"
+    },
+    {
+      "id": "reactflow__edge-httpRequest-1790568498761004-code.execute-1790568570096005",
+      "type": "custom",
+      "source": "httpRequest-1790568498761004",
+      "target": "code.execute-1790568570096005"
+    },
+    {
+      "id": "reactflow__edge-code.execute-1790568570096005-ifnode-1790568714966006",
+      "type": "custom",
+      "source": "code.execute-1790568570096005",
+      "target": "ifnode-1790568714966006"
+    },
+    {
+      "id": "reactflow__edge-ifnode-1790568714966006false-mongodb.update_document-1790568800142007",
+      "type": "custom",
+      "source": "ifnode-1790568714966006",
+      "target": "mongodb.update_document-1790568800142007",
+      "sourceHandle": "false"
+    },
+    {
+      "id": "reactflow__edge-mongodb.update_document-1790568800142007-respondToWebhook-1790568889372008",
+      "type": "custom",
+      "source": "mongodb.update_document-1790568800142007",
+      "target": "respondToWebhook-1790568889372008"
+    },
+    {
+      "id": "reactflow__edge-ifnode-1790568714966006true-httpRequest-1790569032056009",
+      "type": "custom",
+      "source": "ifnode-1790568714966006",
+      "target": "httpRequest-1790569032056009",
+      "sourceHandle": "true"
+    },
+    {
+      "id": "reactflow__edge-httpRequest-1790569032056009-code.execute-1790569089089010",
+      "type": "custom",
+      "source": "httpRequest-1790569032056009",
+      "target": "code.execute-1790569089089010"
+    },
+    {
+      "id": "reactflow__edge-code.execute-1790569089089010-mongodb.update_document-1790684435848005",
+      "type": "custom",
+      "source": "code.execute-1790569089089010",
+      "target": "mongodb.update_document-1790684435848005"
+    },
+    {
+      "id": "reactflow__edge-code.execute-1790569089089010-mongodb.insert_document-1790569337053012",
+      "type": "custom",
+      "source": "code.execute-1790569089089010",
+      "target": "mongodb.insert_document-1790569337053012"
+    },
+    {
+      "id": "reactflow__edge-mongodb.insert_document-1790569337053012-mongodb.update_document-1790569467148013",
+      "type": "custom",
+      "source": "mongodb.insert_document-1790569337053012",
+      "target": "mongodb.update_document-1790569467148013"
+    },
+    {
+      "id": "reactflow__edge-mongodb.update_document-1790569467148013-respondToWebhook-1790569508987014",
+      "type": "custom",
+      "source": "mongodb.update_document-1790569467148013",
+      "target": "respondToWebhook-1790569508987014"
+    }
+  ]
+}

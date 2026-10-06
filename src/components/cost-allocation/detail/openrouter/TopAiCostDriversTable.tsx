@@ -23,34 +23,34 @@ export function TopAiCostDriversTable({ productName = 'Dragon Suite', keysList =
   const sortedKeys = [...(keysList || [])].sort((a: any, b: any) => (Number(b.usage) || 0) - (Number(a.usage) || 0));
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 overflow-hidden shadow-sm flex flex-col">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm flex flex-col">
       {/* Header */}
-      <div className="px-5 py-3.5 border-b border-dark-border/60 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-white tracking-tight">Top OpenRouter Key Drivers</h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">Ranked by lifetime expenditure across workspace</p>
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight">Top OpenRouter Key Drivers</h3>
+          <p className="text-[11px] text-slate-500 mt-0.5">Ranked by lifetime expenditure across workspace</p>
         </div>
-        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-dark-surface border border-dark-border text-slate-300">
+        <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/70 text-slate-600">
           {sortedKeys.length} Keys
         </span>
       </div>
 
       {/* Scrollable Table Container */}
-      <div className="overflow-x-auto max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700/80 scrollbar-track-transparent hover:scrollbar-thumb-slate-600">
+      <div className="overflow-x-auto max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
         <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 bg-dark-card z-10">
-            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/60 bg-dark-surface/80 backdrop-blur-sm">
-              <th className="py-2.5 px-4 font-normal">Key Name</th>
-              <th className="py-2.5 px-3 font-normal">Masked Label</th>
-              <th className="py-2.5 px-3 font-normal">Credit Limit</th>
-              <th className="py-2.5 px-3 font-normal">Remaining</th>
-              <th className="py-2.5 px-4 text-right font-normal">Lifetime Spend</th>
+          <thead className="sticky top-0 bg-slate-50/95 backdrop-blur-xs z-10 border-b border-slate-200">
+            <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="py-3 px-4">Key Name</th>
+              <th className="py-3 px-3">Masked Label</th>
+              <th className="py-3 px-3">Credit Limit</th>
+              <th className="py-3 px-3">Remaining</th>
+              <th className="py-3 px-4 text-right">Lifetime Spend</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/30 text-slate-300">
+          <tbody className="divide-y divide-slate-100 text-slate-700">
             {sortedKeys.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
+                <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">
                   No key telemetry records ingested yet. Click Sync to fetch live keys.
                 </td>
               </tr>
@@ -60,56 +60,56 @@ export function TopAiCostDriversTable({ productName = 'Dragon Suite', keysList =
                 const isStandby = !isDeletedOrInactive && (Number(k.usage) || 0) === 0;
 
                 return (
-                  <tr key={k.keyId || k.name} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-2.5 px-4 font-medium text-white truncate max-w-[200px]">
+                  <tr key={k.keyId || k.name} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-2.5 px-4 font-medium text-slate-900 truncate max-w-[200px]">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                          className={`h-2 w-2 rounded-full shrink-0 ${
                             isDeletedOrInactive
-                              ? 'bg-amber-400/80'
+                              ? 'bg-slate-400'
                               : isStandby
-                              ? 'bg-slate-500'
-                              : 'bg-emerald-400'
+                              ? 'bg-amber-400'
+                              : 'bg-purple-600'
                           }`}
                         />
-                        <span className="truncate" title={k.name}>
+                        <span className="truncate font-semibold text-slate-800" title={k.name}>
                           {k.name}
                         </span>
                         {isDeletedOrInactive ? (
-                          <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
-                            inactive / deleted
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-medium">
+                            inactive
                           </span>
                         ) : isStandby ? (
-                          <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 font-medium">
                             standby
                           </span>
                         ) : null}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px] truncate">
+                    <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px] truncate">
                       {k.label && k.label !== 'Deleted Key' ? (
                         k.label
                       ) : (
-                        <span className="text-slate-500 italic font-sans text-[11px]">Historical Key</span>
+                        <span className="text-slate-400 italic font-sans text-[11px]">Historical Key</span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-300 text-[11px]">
+                    <td className="py-2.5 px-3 text-slate-600 text-[11px]">
                       {isDeletedOrInactive
-                        ? <span className="text-slate-500">—</span>
+                        ? <span className="text-slate-400">—</span>
                         : k.limit !== null && k.limit !== undefined
                         ? `$${Number(k.limit).toFixed(2)}`
                         : 'Unlimited'}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-300 font-mono text-[11px]">
+                    <td className="py-2.5 px-3 text-slate-700 font-mono text-[11px]">
                       {isDeletedOrInactive ? (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-slate-400">—</span>
                       ) : k.remaining !== null && k.remaining !== undefined ? (
-                        <span className="text-emerald-400 font-mono">${Number(k.remaining).toFixed(2)}</span>
+                        <span className="text-slate-900 font-medium font-mono">${Number(k.remaining).toFixed(2)}</span>
                       ) : (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="py-2.5 px-4 text-right font-medium text-amber-400 tabular-nums">
+                    <td className="py-2.5 px-4 text-right font-bold text-slate-900 tabular-nums">
                       {format(Number(k.usage || 0))}
                     </td>
                   </tr>

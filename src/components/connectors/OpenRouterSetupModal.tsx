@@ -156,27 +156,27 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200 font-sans">
-      <div className="relative w-full max-w-xl rounded-2xl border border-dark-border bg-dark-card p-6 shadow-2xl shadow-black/80">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200 font-sans">
+      <div className="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-dark-muted hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-3 border-b border-dark-border/60 pb-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400">
-            <Key className="h-4 w-4" />
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 border border-purple-200/60 text-purple-600 shadow-xs">
+            <Key className="h-4 w-4 text-purple-600" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-dark-heading">
+            <h3 className="text-base font-bold text-slate-900">
               Connect OpenRouter AI Gateway
             </h3>
-            <p className="text-xs text-dark-muted">
+            <p className="text-xs text-slate-500">
               Track multi-model AI token consumption, real-time rates, and cost allocation
             </p>
           </div>
@@ -188,8 +188,8 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
             <form onSubmit={handleValidateAndConnect} className="space-y-4">
               {/* Connection Name */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Connection name <span className="text-rose-400">*</span>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Connection name <span className="text-purple-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -197,21 +197,21 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
                   value={connectionName}
                   onChange={(e) => setConnectionName(e.target.value)}
                   placeholder="e.g. Production Account"
-                  className="w-full rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none transition-all shadow-xs"
                 />
               </div>
 
               {/* OpenRouter API Key */}
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    OpenRouter API key <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-semibold text-slate-700">
+                    OpenRouter API key <span className="text-purple-600">*</span>
                   </label>
                   <a
                     href="https://openrouter.ai/keys"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                    className="text-[11px] font-medium text-purple-600 hover:text-purple-700 flex items-center gap-1 transition-colors"
                   >
                     <span>Get Key from OpenRouter</span>
                     <ExternalLink className="w-3 h-3" />
@@ -224,17 +224,17 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="sk-or-v1-..."
-                    className="w-full rounded-lg border border-dark-border bg-dark-card px-3.5 pr-10 py-2 text-xs font-mono text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-colors"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 pr-10 py-2 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none transition-all shadow-xs"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
                   >
                     {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-[11px] text-slate-500 mt-1">
                   Your key is validated securely via OpenRouter and encrypted for token metering.
                 </p>
               </div>
@@ -243,14 +243,14 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Product Allocation */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-blue-400" />
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-purple-600" />
                     <span>Cost allocation product</span>
                   </label>
                   <select
                     value={productTag}
                     onChange={(e) => setProductTag(e.target.value)}
-                    className="w-full rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none transition-colors"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none transition-all shadow-xs"
                   >
                     <option value="all">All Products (Shared Gateway)</option>
                     <option value="dragon">Dragon</option>
@@ -262,12 +262,12 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
 
                 {/* Low Balance Alert */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                    <Bell className="w-3.5 h-3.5 text-blue-400" />
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <Bell className="w-3.5 h-3.5 text-purple-600" />
                     <span>Low credit alert ($)</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 text-xs">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
                       $
                     </div>
                     <input
@@ -277,7 +277,7 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
                       value={lowBalanceAlert}
                       onChange={(e) => setLowBalanceAlert(e.target.value)}
                       placeholder="15.00"
-                      className="w-full rounded-lg border border-dark-border bg-dark-card pl-7 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-colors"
+                      className="w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none transition-all shadow-xs"
                     />
                   </div>
                 </div>
@@ -285,14 +285,14 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
 
               {/* Error Message */}
               {validationError && (
-                <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 flex items-start gap-2.5 text-xs text-rose-300 animate-in fade-in">
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 flex items-start gap-2.5 text-xs text-rose-800 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   <span>{validationError}</span>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-dark-border/40">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="secondary"
@@ -312,7 +312,7 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
                 >
                   {isValidating ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />
                       <span>Validating with OpenRouter...</span>
                     </>
                   ) : (
@@ -327,34 +327,34 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
           ) : (
             /* Success Verification Display */
             <div className="space-y-4 animate-in zoom-in-95 duration-200">
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
                   <span>OpenRouter API Key Verified Successfully</span>
                 </div>
-                <p className="text-xs text-emerald-300/80">
+                <p className="text-xs text-slate-600">
                   Connected to OpenRouter. Live key usage metadata and rate limits retrieved.
                 </p>
 
                 {/* Data Summary Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2 border-t border-emerald-500/20 text-xs font-mono">
-                  <div className="rounded-lg bg-dark-card p-2.5 border border-dark-border">
-                    <span className="text-[10px] text-dark-muted font-sans font-semibold uppercase block mb-0.5">Total Spent:</span>
-                    <span className="text-white font-semibold text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2 border-t border-emerald-200/60 text-xs">
+                  <div className="rounded-lg bg-white p-3 border border-slate-200 shadow-xs">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Total Spent:</span>
+                    <span className="text-slate-900 font-bold text-sm">
                       ${validationSuccess.usage !== undefined ? validationSuccess.usage.toFixed(2) : '0.00'}
                     </span>
                   </div>
 
-                  <div className="rounded-lg bg-dark-card p-2.5 border border-dark-border">
-                    <span className="text-[10px] text-dark-muted font-sans font-semibold uppercase block mb-0.5">Credit Limit:</span>
-                    <span className="text-blue-400 font-semibold text-sm">
+                  <div className="rounded-lg bg-white p-3 border border-slate-200 shadow-xs">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Credit Limit:</span>
+                    <span className="text-slate-900 font-bold text-sm">
                       {validationSuccess.limit !== null ? `$${validationSuccess.limit.toFixed(2)}` : 'Unlimited'}
                     </span>
                   </div>
 
-                  <div className="rounded-lg bg-dark-card p-2.5 border border-dark-border col-span-2 sm:col-span-1">
-                    <span className="text-[10px] text-dark-muted font-sans font-semibold uppercase block mb-0.5">Remaining Balance:</span>
-                    <span className="text-emerald-400 font-semibold text-sm">
+                  <div className="rounded-lg bg-white p-3 border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Remaining Balance:</span>
+                    <span className="text-slate-900 font-bold text-sm">
                       {validationSuccess.remainingBalance !== null ? `$${validationSuccess.remainingBalance.toFixed(2)}` : 'Active'}
                     </span>
                   </div>
@@ -362,20 +362,20 @@ export function OpenRouterSetupModal({ isOpen, onClose, onSuccess }: OpenRouterS
               </div>
 
               {/* Connection Details Preview */}
-              <div className="rounded-lg border border-dark-border bg-dark-card p-3.5 text-xs space-y-2 text-slate-300">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs space-y-2.5 text-slate-600">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Connection:</span>
-                  <span className="text-white font-medium">{connectionName}</span>
+                  <span className="text-slate-500">Connection:</span>
+                  <span className="text-slate-900 font-semibold">{connectionName}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Allocated Product:</span>
-                  <span className="text-blue-400 uppercase text-[11px] font-semibold tracking-wider">
+                  <span className="text-slate-500">Allocated Product:</span>
+                  <span className="text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded-md uppercase text-[10px] font-bold tracking-wider">
                     {productTag}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Low Balance Alert:</span>
-                  <span className="text-amber-400 font-mono">${lowBalanceAlert}</span>
+                  <span className="text-slate-500">Low Balance Alert:</span>
+                  <span className="text-slate-900 font-mono font-semibold">${lowBalanceAlert}</span>
                 </div>
               </div>
 

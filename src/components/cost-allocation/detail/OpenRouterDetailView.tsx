@@ -25,8 +25,8 @@ interface OpenRouterDetailViewProps {
 }
 
 export function OpenRouterDetailView({
-  productId = 'dragon',
-  productName = 'Dragon Suite',
+  productId = 'all',
+  productName = 'All Products',
   providerId = 'openrouter',
   providerName = 'OpenRouter',
   onBack,
@@ -61,7 +61,7 @@ export function OpenRouterDetailView({
           const merged = { ...(prev || {}), ...wfData };
           try {
             localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
-          } catch (e) {}
+          } catch (e) { }
           return merged;
         });
         setLastSyncText('AgentBuilder Workflow (Live)');
@@ -84,7 +84,7 @@ export function OpenRouterDetailView({
           const merged = { ...(prev || {}), ...data };
           try {
             localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
-          } catch (e) {}
+          } catch (e) { }
           return merged;
         });
         setLastSyncText('MongoDB Atlas (Direct)');
@@ -110,7 +110,7 @@ export function OpenRouterDetailView({
           localStorage.removeItem('finops_openrouter_connection');
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // Always fetch fresh from MongoDB Atlas on mount
     loadDataFromMongo().then((hasMongoData) => {
@@ -139,10 +139,10 @@ export function OpenRouterDetailView({
                   const merged = { ...(prev || {}), ...syncRes };
                   try {
                     localStorage.setItem('finops_openrouter_connection', JSON.stringify(merged));
-                  } catch (err) {}
+                  } catch (err) { }
                   return merged;
                 });
-                setLastSyncText('Workbench Webhook Live');
+                setLastSyncText('AgentBuilder Live Telemetry');
               } else if (!hasMongoData) {
                 loadDataFromMongo();
               }
@@ -151,7 +151,7 @@ export function OpenRouterDetailView({
               if (!hasMongoData) loadDataFromMongo();
             });
         }
-      } catch (e) {}
+      } catch (e) { }
     });
   }, []);
 
@@ -183,7 +183,7 @@ export function OpenRouterDetailView({
           setSavedConnection(updated);
           try {
             localStorage.setItem('finops_openrouter_connection', JSON.stringify(updated));
-          } catch (err) {}
+          } catch (err) { }
           setLastSyncText('Just now (Webhook)');
           return;
         }
@@ -240,18 +240,22 @@ export function OpenRouterDetailView({
     if (selectedKey !== 'all') {
       const matched = availableKeys.find((k: any) => k.name === selectedKey);
       const spend = matched?.usage ? Number(matched.usage) : 0;
-      const mSpend = matched?.usageMonthly ?? matched?.usage_monthly ?? 0;
+      const keyLimit = matched?.limit !== null && matched?.limit !== undefined ? Number(matched.limit) : 0;
       return {
         totalCost: Number(spend.toFixed(2)),
-        monthlySpend: Number(Number(mSpend).toFixed(2)),
         topKey: selectedKey,
         topKeyCost: Number(spend.toFixed(2)),
         topKeyShare: 100,
-        creditLimit: matched?.limit !== null && matched?.limit !== undefined ? Number(matched.limit) : null,
+        creditLimit: keyLimit > 0 ? keyLimit : null,
         remainingBalance: matched?.remaining !== null && matched?.remaining !== undefined ? Number(matched.remaining) : null,
         totalKeysCount: 1,
         activeKeysCount: spend > 0 ? 1 : 0,
         idleKeysCount: spend === 0 ? 1 : 0,
+        allocatedKeyLimits: keyLimit,
+        deletedKeysCount: 0,
+        deletedKeysAllocatedLimit: 0,
+        deletedKeysSpend: 0,
+        unallocatedBuffer: 0,
       };
     }
 
@@ -261,16 +265,30 @@ export function OpenRouterDetailView({
         ? Number(savedConnection.totalUsage)
         : availableKeys.reduce((acc: number, k: any) => acc + (Number(k.usage) || 0), 0);
 
-    const totalMonthly = availableKeys.reduce((acc: number, k: any) => acc + (Number(k.usageMonthly ?? k.usage_monthly) || 0), 0);
     const topKeyCost = topKeyItem?.usage ? Number(topKeyItem.usage) : 0;
     const topKeyShare = totalSpend > 0 ? Number(((topKeyCost / totalSpend) * 100).toFixed(1)) : 0;
 
     const creditLimit = savedConnection?.creditLimit ?? availableKeys.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0);
     const remainingBalance = savedConnection?.remainingBalance ?? availableKeys.reduce((acc: number, k: any) => acc + (Number(k.remaining) || 0), 0);
 
+    // Strictly dynamic derivation from workflow connection (Zero hardcoded constants)
+    const allocatedKeyLimits =
+      savedConnection?.allocatedKeyLimits !== undefined && savedConnection?.allocatedKeyLimits !== null
+        ? Number(savedConnection.allocatedKeyLimits)
+        : availableKeys.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0);
+
+    const deletedKeysList = Array.isArray(savedConnection?.deletedKeysList) ? savedConnection.deletedKeysList : [];
+    const deletedKeysCount = savedConnection?.deletedKeysCount ?? deletedKeysList.length;
+    const deletedKeysSpend = savedConnection?.deletedKeysSpend ?? Number(deletedKeysList.reduce((acc: number, k: any) => acc + (Number(k.usage) || 0), 0).toFixed(4));
+    const deletedKeysAllocatedLimit = savedConnection?.deletedKeysAllocatedLimit ?? Number(deletedKeysList.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0).toFixed(2));
+    const unallocatedBuffer = savedConnection?.unallocatedBuffer ?? (
+      creditLimit && creditLimit > 0
+        ? Math.max(0, Number((creditLimit - allocatedKeyLimits - deletedKeysAllocatedLimit).toFixed(2)))
+        : 0
+    );
+
     return {
       totalCost: Number(totalSpend.toFixed(2)),
-      monthlySpend: Number(totalMonthly.toFixed(2)),
       topKey: topKeyItem?.name || 'Active Key',
       topKeyCost: Number(topKeyCost.toFixed(2)),
       topKeyShare,
@@ -279,6 +297,11 @@ export function OpenRouterDetailView({
       totalKeysCount: availableKeys.length,
       activeKeysCount: activeCount,
       idleKeysCount: idleCount,
+      allocatedKeyLimits: Number(allocatedKeyLimits.toFixed(2)),
+      deletedKeysCount,
+      deletedKeysAllocatedLimit,
+      deletedKeysSpend,
+      unallocatedBuffer,
     };
   }, [selectedKey, availableKeys, savedConnection]);
 
@@ -306,14 +329,14 @@ export function OpenRouterDetailView({
 
       let filtered = savedConnection.dateWiseTelemetry.filter((row: any) => {
         if (activeKeysList.length === 0) return true;
-        const kn = (row.keyName || row.name || row.key || '').trim().toLowerCase();
+        const kn = (row.keyName || row.name || row.key || row.api_key_id || '').trim().toLowerCase();
         const kl = (row.keyLabel || row.label || '').trim().toLowerCase();
-        const kid = (row.apiKeyId || row.keyId || '').trim().toLowerCase();
+        const kid = (row.apiKeyId || row.keyId || row.api_key_id || '').trim().toLowerCase();
         return activeNames.has(kn) || activeLabels.has(kl) || activeIds.has(kid) || activeLabels.has(kn) || activeNames.has(kl);
       });
 
       if (selectedKey !== 'all') {
-        filtered = filtered.filter((row: any) => (row.keyName || row.name || row.key) === selectedKey);
+        filtered = filtered.filter((row: any) => (row.keyName || row.name || row.key || row.api_key_id) === selectedKey);
       }
       if (selectedModel !== 'all') {
         filtered = filtered.filter((row: any) => (row.model || '').toLowerCase().includes(selectedModel.toLowerCase()));
@@ -322,17 +345,17 @@ export function OpenRouterDetailView({
         // Cross-reference with topModelsBySpend to get token data if not present
         const modelRef = modelTokenMap[row.model || ''] || {};
         return {
-          id: row.id || `live-${row.date || 'item'}-${idx}`,
-          date: row.date || '',
-          keyName: row.keyName || row.key || row.name || (row.keyLabel ? `Key (${row.keyLabel})` : ''),
+          id: row.id || `live-${row.date || row.date__day || 'item'}-${idx}`,
+          date: row.date || row.date__day || '',
+          keyName: row.keyName || row.api_key_id || row.key || row.name || (row.keyLabel ? `Key (${row.keyLabel})` : ''),
           keyLabel: row.keyLabel || row.label || '',
           app: row.app || row.appName || '',
           model: row.model || '',
-          promptTokens: Number(row.promptTokens ?? row.prompt_tokens ?? modelRef.promptTokens ?? 0),
-          completionTokens: Number(row.completionTokens ?? row.completion_tokens ?? modelRef.completionTokens ?? 0),
+          promptTokens: Number(row.promptTokens ?? row.tokens_prompt ?? row.prompt_tokens ?? modelRef.promptTokens ?? 0),
+          completionTokens: Number(row.completionTokens ?? row.tokens_completion ?? row.completion_tokens ?? modelRef.completionTokens ?? 0),
           cachedTokens: Number(row.cachedTokens ?? row.cached_tokens ?? modelRef.cachedTokens ?? 0),
           requests: Number(row.requests ?? row.request_count ?? modelRef.requests ?? 0),
-          cost: Number(row.cost ?? 0),
+          cost: Number(row.cost ?? row.total_usage ?? 0),
         };
       });
     }
@@ -375,7 +398,7 @@ export function OpenRouterDetailView({
   };
 
   return (
-    <div className="space-y-4 w-full animate-in fade-in duration-300 font-sans selection:bg-blue-600 selection:text-white">
+    <div className="space-y-4 w-full animate-in fade-in duration-300 font-sans selection:bg-purple-500 selection:text-white">
       {/* 1. Header (Back button, Breadcrumb, Title, Product/Provider Badges) */}
       <DetailHeader
         productId={productId}

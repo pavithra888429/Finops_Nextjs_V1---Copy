@@ -1,0 +1,105 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-10-05T10:45:00.000Z",
+  "_fingerprint": "YWN0aW9uOmNvZGUuZXhlY3V0ZXxhY3Rpb246bW9uZ29kYi5maW5kX2RvY3VtZW50",
+  "nodes": [
+    {
+      "id": "webhook-1790843991079001",
+      "data": {
+        "label": "Webhook Trigger",
+        "inputs": {
+          "path": "7c53bda3-c369-4e08-bb54-c645901b89c2",
+          "method": "POST",
+          "options": {},
+          "allowedRoles": "admin, staff",
+          "jwtAlgorithm": "HS256",
+          "responseMode": "lastNode",
+          "roleClaimKey": "role",
+          "sessionClaim": "sub",
+          "sessionSource": "none",
+          "authentication": "none",
+          "requireRoleCheck": false
+        },
+        "toolId": "webhook",
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      },
+      "type": "webhook",
+      "position": {
+        "x": 16.48652361958233,
+        "y": 205.7297236042002
+      }
+    },
+    {
+      "id": "action-1791031894245-eei2eeypk",
+      "data": {
+        "label": "Find Document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awscostexplorer",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.find_document"
+      },
+      "type": "action",
+      "position": {
+        "x": 368.98776501857606,
+        "y": 199.44943087319194
+      }
+    },
+    {
+      "id": "action-1791031894245-a40a18nwf",
+      "data": {
+        "label": "Code",
+        "inputs": {
+          "code": "// ---------------------------------------------------------------\n// 1. Resolve Requested Billing Period (Live Webhook + Canvas Test)\n// ---------------------------------------------------------------\nconst webhookData = \n  $node[\"Webhook Trigger\"]?.json || \n  $node[\"Webhook\"]?.json || \n  $node[\"webhook-1790843991079001\"]?.json || \n  {};\n\nconst webhookBody = webhookData.body || webhookData;\nconst inputItem = (typeof $input !== 'undefined' && typeof $input.first === 'function') \n  ? ($input.first()?.json || {}) \n  : {};\n\nconst requestedBillingPeriod = \n  webhookBody.billingPeriod || \n  webhookData.query?.billingPeriod || \n  inputItem.billingPeriod || \n  '';\n\n// ---------------------------------------------------------------\n// 2. Resolve Documents from Upstream \"Find Document\" Node\n// ---------------------------------------------------------------\nconst docs = \n  inputItem.documents || \n  $node[\"Find Document\"]?.json?.documents || \n  $node[\"mongodb.find_document-1790844000266002\"]?.json?.documents || \n  [];\n\nconst availableBillingPeriods = Array.from(new Set(\n  docs.map(d => d.billingPeriod).filter(Boolean)\n)).sort();\n\n// Select current month document\nlet doc = null;\nif (requestedBillingPeriod) {\n  doc = docs.find(d => d.billingPeriod === requestedBillingPeriod);\n}\n\nif (!doc && docs.length > 0) {\n  const sortedDocs = [...docs].sort((a, b) => {\n    const periodA = a.billingPeriod || '';\n    const periodB = b.billingPeriod || '';\n    if (periodA !== periodB) return periodB.localeCompare(periodA);\n    const dateA = a.fetchedAt ? new Date(a.fetchedAt).getTime() : 0;\n    const dateB = b.fetchedAt ? new Date(b.fetchedAt).getTime() : 0;\n    return dateB - dateA;\n  });\n  doc = sortedDocs[0];\n}\n\nif (!doc) {\n  doc = (inputItem.billingPeriod ? inputItem : {}) || {};\n}\n\n// ---------------------------------------------------------------\n// 3. Find Previous Month Document for Real Comparison (e.g. Sep vs Oct)\n// ---------------------------------------------------------------\nconst currPeriod = doc.billingPeriod || (doc.timePeriod?.start ? doc.timePeriod.start.slice(0, 7) : '2026-10');\nlet prevDoc = null;\nif (currPeriod && /^\\d{4}-\\d{2}$/.test(currPeriod)) {\n  const [currY, currM] = currPeriod.split('-').map(Number);\n  const prevDate = new Date(currY, currM - 2, 1);\n  const prevPeriodStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;\n  prevDoc = docs.find(d => d.billingPeriod === prevPeriodStr);\n}\nif (!prevDoc && docs.length > 1) {\n  prevDoc = docs.find(d => d.billingPeriod !== currPeriod) || null;\n}\n\nconst prevTotalSpend = Number(prevDoc?.summary?.totalUnblendedCost || 0);\nconst prevDailyTotals = Array.isArray(prevDoc?.dailyTotals) ? prevDoc.dailyTotals : [];\nconst prevDaysCount = prevDailyTotals.length > 0 ? prevDailyTotals.length : 30;\nconst prevProjects = Array.isArray(prevDoc?.projectSummary) ? prevDoc.projectSummary : [];\nconst prevServices = Array.isArray(prevDoc?.serviceSummary) ? prevDoc.serviceSummary : [];\n\n// ---------------------------------------------------------------\n// 4. Extract Core Properties & Compute High-Level FinOps KPIs\n// ---------------------------------------------------------------\nconst accountId = doc.accountId || '864981730114';\nconst accountName = doc.accountName || 'Production AWS Account';\nconst billingPeriod = currPeriod;\nconst timePeriod = doc.timePeriod || { start: `${billingPeriod}-01`, end: `${billingPeriod}-30` };\n\nconst totalSpend = Number(doc.summary?.totalUnblendedCost || 0);\nconst totalAmortized = Number(doc.summary?.totalAmortizedCost || totalSpend);\nconst currency = doc.summary?.currency || 'USD';\n\nconst dailyTotals = Array.isArray(doc.dailyTotals) ? doc.dailyTotals : [];\nconst serviceWiseDaily = Array.isArray(doc.serviceWiseDaily) ? doc.serviceWiseDaily : [];\nconst daysCount = dailyTotals.length > 0 ? dailyTotals.length : 30;\nconst dailyAvg = totalSpend > 0 ? Number((totalSpend / daysCount).toFixed(2)) : 0;\n\n// Total spend comparison (Normalized Daily Run Rate)\nconst totalCurrDaily = totalSpend / Math.max(1, daysCount);\nconst totalPrevDaily = prevTotalSpend / Math.max(1, prevDaysCount);\nconst totalSpendChange = totalPrevDaily > 0 \n  ? Math.round(((totalCurrDaily - totalPrevDaily) / totalPrevDaily) * 1000) / 10 \n  : 0;\n\n// ---------------------------------------------------------------\n// 5. Enrich Projects & Services with 100% Real September Delta\n// ---------------------------------------------------------------\nconst rawProjects = Array.isArray(doc.projectSummary) ? doc.projectSummary : [];\nconst projects = rawProjects.map(p => {\n  const pName = p.projectName || p.project_name || 'Untagged';\n  const prevP = prevProjects.find(pp => (pp.projectName || pp.project_name) === pName);\n  const cost = Number(p.unblendedCost || 0);\n  const prevCost = Number(prevP?.unblendedCost || 0);\n\n  // Normalized daily rate comparison (Apples-to-apples: 5 days vs 30 days)\n  const currDaily = cost / Math.max(1, daysCount);\n  const prevDaily = prevCost / Math.max(1, prevDaysCount);\n  const projChange = prevDaily > 0 \n    ? Math.round(((currDaily - prevDaily) / prevDaily) * 1000) / 10 \n    : 0;\n\n  // Granular service level comparison inside this project\n  const pServices = Array.isArray(p.services) ? p.services : [];\n  const enrichedServices = pServices.map(s => {\n    const prevS = prevP?.services?.find(ps => ps.service === s.service);\n    const sCost = Number(s.unblendedCost || 0);\n    const sPrevCost = Number(prevS?.unblendedCost || 0);\n    const sCurrDaily = sCost / Math.max(1, daysCount);\n    const sPrevDaily = sPrevCost / Math.max(1, prevDaysCount);\n    const sChange = sPrevDaily > 0\n      ? Math.round(((sCurrDaily - sPrevDaily) / sPrevDaily) * 1000) / 10\n      : 0;\n\n    return {\n      ...s,\n      service: s.service,\n      unblendedCost: sCost,\n      prevCost: sPrevCost,\n      change: sChange\n    };\n  });\n\n  return {\n    ...p,\n    projectName: pName,\n    unblendedCost: cost,\n    prevCost: prevCost,\n    change: projChange,\n    services: enrichedServices\n  };\n});\n\nconst rawServices = Array.isArray(doc.serviceSummary) ? doc.serviceSummary : [];\nconst services = rawServices.map(s => {\n  const prevS = prevServices.find(ps => ps.service === s.service);\n  const cost = Number(s.unblendedCost || 0);\n  const prevCost = Number(prevS?.unblendedCost || 0);\n  const currDaily = cost / Math.max(1, daysCount);\n  const prevDaily = prevCost / Math.max(1, prevDaysCount);\n  const change = prevDaily > 0 \n    ? Math.round(((currDaily - prevDaily) / prevDaily) * 1000) / 10 \n    : 0;\n\n  return {\n    ...s,\n    service: s.service,\n    unblendedCost: cost,\n    prevCost,\n    change\n  };\n});\n\n// Top Project\nconst topProj = projects.find(p => (p.projectName || p.project_name) !== 'Untagged') || projects[0] || null;\nconst topProjName = topProj ? (topProj.projectName || topProj.project_name) : 'Agent_Builder';\nconst topProjCost = topProj ? Number(topProj.unblendedCost || 0) : 0;\nconst topProjShare = totalSpend > 0 ? Number(((topProjCost / totalSpend) * 100).toFixed(1)) : 0;\n\n// Top Service\nconst topSvc = services[0] || null;\nconst topSvcName = topSvc?.service || 'Amazon Elastic Compute Cloud - Compute';\nconst topSvcCost = topSvc ? Number(topSvc.unblendedCost || 0) : 0;\nconst topSvcShare = totalSpend > 0 ? Number(((topSvcCost / totalSpend) * 100).toFixed(1)) : 0;\n\n// Tag Coverage & Governance\nconst untaggedItem = projects.find(p => (p.projectName || p.project_name) === 'Untagged');\nconst untaggedSpend = untaggedItem ? Number(Number(untaggedItem.unblendedCost || 0).toFixed(2)) : 0;\nconst taggedSpend = Number(Math.max(0, totalSpend - untaggedSpend).toFixed(2));\nconst tagCoveragePercentage = totalSpend > 0 ? Number(((taggedSpend / totalSpend) * 100).toFixed(1)) : 0;\n\n// ---------------------------------------------------------------\n// 6. Generate Interactive Project x Service Heatmap Matrix\n// ---------------------------------------------------------------\nconst topMatrixProjects = projects.slice(0, 10);\nconst topMatrixServices = services.slice(0, 10).map(s => s.service);\n\nconst matrixRows = topMatrixProjects.map(p => {\n  const pName = p.projectName || p.project_name || 'Untagged';\n  const pServices = p.services || [];\n  const srvCostMap = {};\n  \n  pServices.forEach(s => {\n    srvCostMap[s.service] = Number(s.unblendedCost || 0);\n  });\n\n  return {\n    productId: pName,\n    productName: pName,\n    project: pName,\n    projectName: pName,\n    project_name: pName,\n    services: srvCostMap,\n    serviceCosts: srvCostMap,\n    total: Number(p.unblendedCost || 0),\n    totalCost: Number(p.unblendedCost || 0)\n  };\n});\n\nconst matrix = {\n  services: topMatrixServices,\n  rows: matrixRows\n};\n\n// ---------------------------------------------------------------\n// 7. Top Cost Drivers (for Table & Cards)\n// ---------------------------------------------------------------\nconst topCostDrivers = (doc.topCostDrivers && doc.topCostDrivers.length > 0)\n  ? doc.topCostDrivers\n  : projects.slice(0, 5).map(p => ({\n      name: p.projectName || p.project_name,\n      cost: Number(p.unblendedCost || 0),\n      share: totalSpend > 0 ? Number(((Number(p.unblendedCost || 0) / totalSpend) * 100).toFixed(1)) : 0\n    }));\n\n// ---------------------------------------------------------------\n// 8. Structure KPI Payload for UI\n// ---------------------------------------------------------------\nconst kpis = {\n  totalSpend,\n  totalAmortized,\n  currency,\n  dailyAvg,\n  daysCount,\n  projectsCount: projects.length,\n  servicesCount: services.length,\n  taggedSpend,\n  untaggedSpend,\n  tagCoveragePercentage,\n  prevTotalSpend,\n  totalSpendChange,\n  previousBillingPeriod: prevDoc?.billingPeriod || '2026-09',\n  topProject: {\n    name: topProjName,\n    cost: topProjCost,\n    share: topProjShare\n  },\n  topService: {\n    name: topSvcName,\n    cost: topSvcCost,\n    share: topSvcShare\n  }\n};\n\n// ---------------------------------------------------------------\n// 9. Return Payload for Webhook Response\n// ---------------------------------------------------------------\nreturn {\n  json: {\n    success: true,\n    source: 'agentbuilder_workflow',\n    accountId,\n    accountName,\n    billingPeriod,\n    previousBillingPeriod: prevDoc?.billingPeriod || '2026-09',\n    prevTotalSpend,\n    totalSpendChange,\n    timePeriod,\n    availableBillingPeriods,\n    kpis,\n    totalSpend,\n    totalAmortized,\n    currency,\n    dailyAvg,\n    daysCount,\n    projectsCount: projects.length,\n    servicesCount: services.length,\n    taggedSpend,\n    untaggedSpend,\n    tagCoveragePercentage,\n    topProject: kpis.topProject,\n    topService: kpis.topService,\n    projects,\n    projectSummary: projects,\n    services,\n    serviceSummary: services,\n    dailyTotals,\n    dailyTimeline: dailyTotals,\n    serviceWiseDaily,\n    matrix,\n    topCostDrivers,\n    fetchedAt: doc.fetchedAt || new Date().toISOString()\n  }\n};\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute"
+      },
+      "type": "action",
+      "position": {
+        "x": 667.5017039452534,
+        "y": 197.28480186624552
+      }
+    },
+    {
+      "id": "action-1791031894245-cymitknj6",
+      "data": {
+        "label": "Webhook Response",
+        "inputs": {
+          "respondWith": "All Incoming Items",
+          "inputFieldName": "data"
+        },
+        "toolId": "respondToWebhook"
+      },
+      "type": "action",
+      "position": {
+        "x": 990.0569799308416,
+        "y": 187.85511641961233
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-webhook-1790843991079001-action-1791031894245-eei2eeypk",
+      "source": "webhook-1790843991079001",
+      "target": "action-1791031894245-eei2eeypk",
+      "type": "custom"
+    },
+    {
+      "id": "edge-1791031894245-u94wfvasf",
+      "source": "action-1791031894245-eei2eeypk",
+      "target": "action-1791031894245-a40a18nwf",
+      "type": "custom"
+    },
+    {
+      "id": "edge-1791031894245-a4nd2jer3",
+      "source": "action-1791031894245-a40a18nwf",
+      "target": "action-1791031894245-cymitknj6",
+      "type": "custom"
+    }
+  ]
+}

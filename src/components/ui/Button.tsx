@@ -14,13 +14,13 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-150 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg disabled:opacity-50 disabled:pointer-events-none";
+  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-150 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
 
   const variantStyles = {
-    primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-600/30 focus:ring-blue-500",
-    secondary: "bg-dark-card hover:bg-dark-cardHover text-dark-heading border border-dark-border hover:border-dark-borderHover focus:ring-dark-border",
-    outline: "bg-transparent hover:bg-white/5 text-dark-heading border border-dark-border hover:border-dark-borderHover focus:ring-slate-500",
-    ghost: "bg-transparent hover:bg-white/5 text-dark-text hover:text-dark-heading",
+    primary: "bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-sm focus:ring-slate-900",
+    secondary: "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm hover:border-slate-300",
+    outline: "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm",
+    ghost: "bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900",
   };
 
   const sizeStyles = {

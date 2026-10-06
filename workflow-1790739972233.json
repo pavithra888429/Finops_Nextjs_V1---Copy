@@ -1,0 +1,1114 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-09-30T03:46:12.228Z",
+  "_fingerprint": "YWN0aW9uOmNvZGUuZXhlY3V0ZXxhY3Rpb246aHR0cFJlcXVlc3R8YWN0aW9uOm1v",
+  "nodes": [
+    {
+      "id": "webhook-1790220595488005",
+      "data": {
+        "label": "Webhook Trigger",
+        "inputs": {
+          "path": "3aebaff4-1e7f-411f-9976-98eab6c4d210",
+          "method": "POST",
+          "options": {},
+          "allowedRoles": "admin, staff",
+          "jwtAlgorithm": "HS256",
+          "responseMode": "respondWithNode",
+          "roleClaimKey": "role",
+          "sessionClaim": "sub",
+          "sessionSource": "none",
+          "authentication": "none",
+          "requireRoleCheck": false
+        },
+        "toolId": "webhook",
+        "toolData": {
+          "id": "webhook",
+          "displayName": "Webhook Trigger",
+          "category": "Input /  Output",
+          "icon": "webhook",
+          "description": "Trigger workflow via webhook",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The path to listen on (e.g. \"my-hook\")"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "PATCH",
+                  "HEAD"
+                ],
+                "default": "POST",
+                "description": "HTTP Method"
+              },
+              "responseMode": {
+                "type": "string",
+                "enum": [
+                  "onReceived",
+                  "lastNode",
+                  "respondWithNode",
+                  "streaming"
+                ],
+                "default": "lastNode",
+                "description": "When to respond"
+              },
+              "authentication": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "basicAuth",
+                  "headerAuth",
+                  "jwtAuth"
+                ],
+                "default": "none",
+                "description": "Authentication"
+              },
+              "basicAuthUser": {
+                "type": "string",
+                "description": "Username"
+              },
+              "basicAuthPassword": {
+                "type": "string",
+                "description": "Password"
+              },
+              "headerAuthName": {
+                "type": "string",
+                "description": "Name"
+              },
+              "headerAuthValue": {
+                "type": "string",
+                "description": "Value"
+              },
+              "jwtSecret": {
+                "type": "string",
+                "description": "Secret"
+              },
+              "jwtAlgorithm": {
+                "type": "string",
+                "enum": [
+                  "HS256",
+                  "HS384",
+                  "HS512"
+                ],
+                "default": "HS256",
+                "description": "Algorithm"
+              },
+              "sessionClaim": {
+                "type": "string",
+                "default": "sub",
+                "description": "JWT claim used to identify the session"
+              },
+              "requireRoleCheck": {
+                "type": "boolean",
+                "default": false,
+                "description": "Require Role Check (RBAC)"
+              },
+              "roleClaimKey": {
+                "type": "string",
+                "default": "role",
+                "description": "Role Claim Key"
+              },
+              "allowedRoles": {
+                "type": "string",
+                "default": "admin, staff",
+                "description": "Allowed Roles (comma separated)"
+              },
+              "sessionSource": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "auto",
+                  "header",
+                  "cookie",
+                  "body"
+                ],
+                "default": "none",
+                "description": "Session Source"
+              },
+              "sessionSourceName": {
+                "type": "string",
+                "description": "Session Source Name (header / cookie / body field)"
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "allowedOrigins": {
+                    "type": "string",
+                    "description": "Allowed Origins (CORS)"
+                  },
+                  "binaryDataFieldName": {
+                    "type": "string",
+                    "description": "Field Name for Binary Data"
+                  },
+                  "ignoreBots": {
+                    "type": "boolean",
+                    "description": "Ignore Bots"
+                  },
+                  "ipAllowlist": {
+                    "type": "string",
+                    "description": "IP(s) Allowlist"
+                  },
+                  "noResponseBody": {
+                    "type": "boolean",
+                    "description": "No Response Body"
+                  },
+                  "rawBody": {
+                    "type": "boolean",
+                    "description": "Raw Body"
+                  },
+                  "responseCode": {
+                    "type": "number",
+                    "description": "Response Code"
+                  },
+                  "responseData": {
+                    "type": "string",
+                    "description": "Response Data"
+                  }
+                },
+                "additionalProperties": false,
+                "default": {},
+                "description": "Options"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          },
+          "fields": [
+            {
+              "name": "path",
+              "displayName": "Path",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "description": "The path to listen on (e.g. \"my-hook\")"
+            },
+            {
+              "name": "method",
+              "displayName": "HTTP Method",
+              "type": "options",
+              "default": "POST",
+              "required": true,
+              "options": [
+                {
+                  "name": "GET",
+                  "value": "GET"
+                },
+                {
+                  "name": "POST",
+                  "value": "POST"
+                },
+                {
+                  "name": "PUT",
+                  "value": "PUT"
+                },
+                {
+                  "name": "DELETE",
+                  "value": "DELETE"
+                },
+                {
+                  "name": "PATCH",
+                  "value": "PATCH"
+                },
+                {
+                  "name": "HEAD",
+                  "value": "HEAD"
+                }
+              ],
+              "description": "HTTP Method to listen for"
+            },
+            {
+              "name": "responseMode",
+              "displayName": "Respond",
+              "type": "options",
+              "default": "lastNode",
+              "required": true,
+              "options": [
+                {
+                  "name": "Immediately",
+                  "value": "onReceived"
+                },
+                {
+                  "name": "When Last Node Finishes",
+                  "value": "lastNode"
+                },
+                {
+                  "name": "Using 'Respond to Webhook' Node",
+                  "value": "respondWithNode"
+                },
+                {
+                  "name": "Streaming",
+                  "value": "streaming"
+                }
+              ],
+              "description": "When to respond to the webhook request"
+            },
+            {
+              "name": "authentication",
+              "displayName": "Authentication",
+              "type": "options",
+              "default": "none",
+              "options": [
+                {
+                  "name": "Basic Auth",
+                  "value": "basicAuth"
+                },
+                {
+                  "name": "Header Auth",
+                  "value": "headerAuth"
+                },
+                {
+                  "name": "JWT Auth",
+                  "value": "jwtAuth"
+                },
+                {
+                  "name": "None",
+                  "value": "none"
+                }
+              ],
+              "description": "The type of authentication to use for incoming webhook requests"
+            },
+            {
+              "name": "sessionSource",
+              "displayName": "Session Source",
+              "type": "options",
+              "default": "none",
+              "options": [
+                {
+                  "name": "None (legacy, no session)",
+                  "value": "none"
+                },
+                {
+                  "name": "Auto (platform issues a session id)",
+                  "value": "auto"
+                },
+                {
+                  "name": "From Header",
+                  "value": "header"
+                },
+                {
+                  "name": "From Cookie",
+                  "value": "cookie"
+                },
+                {
+                  "name": "From Body Field",
+                  "value": "body"
+                }
+              ],
+              "description": "How the platform identifies the caller for per-user session continuity. Required when memory or loops should partition by caller."
+            },
+            {
+              "name": "sessionSourceName",
+              "displayName": "Session Source Name",
+              "type": "string",
+              "default": "",
+              "placeholder": "e.g. X-Caller-Id (header), userId (body field), session_id (cookie)",
+              "description": "Header name, body field path, or cookie name used as the caller id.",
+              "displayOptions": {
+                "show": {
+                  "sessionSource": [
+                    "header",
+                    "cookie",
+                    "body"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "basicAuthUser",
+              "displayName": "User",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "description": "The username for Basic Authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "basicAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "basicAuthPassword",
+              "displayName": "Password",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "typeOptions": {
+                "password": true
+              },
+              "description": "The password for Basic Authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "basicAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "headerAuthName",
+              "displayName": "Name",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "description": "The header name to check for authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "headerAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "headerAuthValue",
+              "displayName": "Value",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "typeOptions": {
+                "password": true
+              },
+              "description": "The expected header value for authentication",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "headerAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "jwtSecret",
+              "displayName": "Secret",
+              "type": "string",
+              "default": "",
+              "required": true,
+              "typeOptions": {
+                "password": true
+              },
+              "description": "The secret key used to verify the JWT token",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "jwtAlgorithm",
+              "displayName": "Algorithm",
+              "type": "options",
+              "default": "HS256",
+              "options": [
+                {
+                  "name": "HS256",
+                  "value": "HS256"
+                },
+                {
+                  "name": "HS384",
+                  "value": "HS384"
+                },
+                {
+                  "name": "HS512",
+                  "value": "HS512"
+                }
+              ],
+              "description": "The algorithm used to sign the JWT token",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "sessionClaim",
+              "displayName": "Session Claim",
+              "type": "string",
+              "default": "sub",
+              "description": "The claim in the JWT payload that identifies the user (e.g. sub, email, userId). Leave blank to skip session tracking.",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "requireRoleCheck",
+              "displayName": "Require Role Check (RBAC)",
+              "type": "boolean",
+              "default": false,
+              "description": "If enabled, the incoming JWT must contain an authorized role claim to execute the workflow.",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "roleClaimKey",
+              "displayName": "Role Claim Key",
+              "type": "string",
+              "default": "role",
+              "description": "The field name inside the JWT payload that contains the user's role (e.g., \"role\", \"groups\").",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ],
+                  "requireRoleCheck": [
+                    true
+                  ]
+                }
+              }
+            },
+            {
+              "name": "allowedRoles",
+              "displayName": "Allowed Roles",
+              "type": "string",
+              "default": "admin, staff",
+              "description": "A comma-separated list of roles that are allowed to trigger this workflow. If empty, all roles pass.",
+              "displayOptions": {
+                "show": {
+                  "authentication": [
+                    "jwtAuth"
+                  ],
+                  "requireRoleCheck": [
+                    true
+                  ]
+                }
+              }
+            },
+            {
+              "name": "options",
+              "displayName": "Options",
+              "type": "collection",
+              "default": {},
+              "placeholder": "Add option",
+              "fields": [
+                {
+                  "name": "allowedOrigins",
+                  "displayName": "Allowed Origins (CORS)",
+                  "type": "string",
+                  "default": "*",
+                  "placeholder": "*",
+                  "description": "Comma-separated list of allowed origins for CORS. Use * to allow all origins."
+                },
+                {
+                  "name": "binaryDataFieldName",
+                  "displayName": "Field Name for Binary Data",
+                  "type": "string",
+                  "default": "data",
+                  "placeholder": "data",
+                  "description": "The name of the field in the request that contains binary data (for file uploads)."
+                },
+                {
+                  "name": "ignoreBots",
+                  "displayName": "Ignore Bots",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If enabled, requests from known bots (crawlers, spiders) will be ignored."
+                },
+                {
+                  "name": "ipAllowlist",
+                  "displayName": "IP(s) Allowlist",
+                  "type": "string",
+                  "default": "",
+                  "placeholder": "e.g. 127.0.0.1, 192.168.1.0/24",
+                  "description": "Comma-separated list of IPs or CIDR ranges. Only these IPs can trigger the webhook."
+                },
+                {
+                  "name": "noResponseBody",
+                  "displayName": "No Response Body",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If enabled, the webhook will respond with an empty body (only status code)."
+                },
+                {
+                  "name": "rawBody",
+                  "displayName": "Raw Body",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If enabled, the raw request body will be passed as-is without parsing."
+                },
+                {
+                  "name": "responseData",
+                  "displayName": "Response Data",
+                  "type": "string",
+                  "default": "",
+                  "placeholder": "Response body content",
+                  "description": "Custom response data to return when the webhook is triggered (JSON or text)."
+                }
+              ]
+            }
+          ]
+        },
+        "isTrigger": true,
+        "isFormWait": false,
+        "executionId": "6aba6c92e3f0f64699b44620",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": true
+      },
+      "type": "webhook",
+      "width": 220,
+      "height": 100,
+      "dragging": false,
+      "position": {
+        "x": 304.4513479100465,
+        "y": 271.7896291580434
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 304.4513479100465,
+        "y": 271.7896291580434
+      }
+    },
+    {
+      "id": "httpRequest-1790220642630006",
+      "data": {
+        "label": "Http Request",
+        "inputs": {
+          "url": "https://sts.amazonaws.com/",
+          "method": "POST",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "timeout": 300000,
+          "bodyType": "json",
+          "contentType": "json",
+          "authentication": {
+            "type": "predefinedCredentialType",
+            "config": {
+              "credentialId": "ede77268-8d19-45df-bfbc-9b79d770ade5",
+              "credentialType": "awsApi"
+            }
+          },
+          "includeHeaders": false,
+          "responseFormat": "auto",
+          "queryParameters": {
+            "Action": "AssumeRole",
+            "RoleArn": "{{ 'arn:aws:iam::' + $json.body.awsAccountId.trim() + ':role/' + ($json.body.roleName || 'FinOpsAwsIntegrationRole').trim() }}      ",
+            "Version": "2011-06-15",
+            "ExternalId": "{{ $json.body.externalId }} ",
+            "RoleSessionName": "FinOpsVerificationSession"
+          },
+          "lowercaseHeaders": false,
+          "allowUnauthorized": false,
+          "ignoreResponseCode": false,
+          "outputPropertyName": "data"
+        },
+        "toolId": "httpRequest",
+        "toolData": {
+          "id": "httpRequest",
+          "displayName": "Http Request",
+          "category": "API & HTTP",
+          "icon": "Globe",
+          "description": "Make HTTP API requests to external services.",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "HEAD",
+                  "OPTIONS"
+                ],
+                "default": "GET",
+                "description": "HTTP method to use"
+              },
+              "url": {
+                "type": "string",
+                "description": "URL to send the request to"
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Headers to include in the request"
+              },
+              "queryParameters": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Query parameters to append to the URL"
+              },
+              "body": {
+                "description": "Request body"
+              },
+              "bodyType": {
+                "type": "string",
+                "enum": [
+                  "json",
+                  "fields"
+                ],
+                "default": "json",
+                "description": "How the body is defined"
+              },
+              "bodyFields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Body fields for key-value input"
+              },
+              "contentType": {
+                "type": "string",
+                "enum": [
+                  "json",
+                  "form-data",
+                  "form-urlencoded",
+                  "raw"
+                ],
+                "default": "json",
+                "description": "Content type of the request body"
+              },
+              "responseFormat": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "json",
+                  "text",
+                  "binary"
+                ],
+                "default": "auto",
+                "description": "Format of the response data"
+              },
+              "authentication": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "header",
+                      "query",
+                      "basic",
+                      "bearer",
+                      "predefinedCredentialType"
+                    ],
+                    "default": "none"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": {},
+                    "description": "Auth config. For predefinedCredentialType: { credentialType: string, credentialId: string }"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Authentication configuration"
+              },
+              "ignoreResponseCode": {
+                "type": "boolean",
+                "default": false,
+                "description": "If enabled, the node will not fail on non-2xx status codes"
+              },
+              "includeHeaders": {
+                "type": "boolean",
+                "default": false,
+                "description": "If enabled, response headers will be included in the output"
+              },
+              "allowUnauthorized": {
+                "type": "boolean",
+                "default": false,
+                "description": "If enabled, SSL certificate verification will be skipped"
+              },
+              "lowercaseHeaders": {
+                "type": "boolean",
+                "default": true,
+                "description": "If enabled, all header keys will be converted to lowercase"
+              },
+              "timeout": {
+                "type": "number",
+                "default": 300000,
+                "description": "Request timeout in milliseconds"
+              },
+              "outputPropertyName": {
+                "type": "string",
+                "default": "data",
+                "description": "The name of the property to store binary data in"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        "isTrigger": false,
+        "isFormWait": false,
+        "executionId": "6aba6c92e3f0f64699b44620",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "dragging": false,
+      "position": {
+        "x": 552.2364076889922,
+        "y": 272.74657698632285
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 552.2364076889922,
+        "y": 272.74657698632285
+      }
+    },
+    {
+      "id": "code.execute-1790220830219007",
+      "data": {
+        "label": "Code",
+        "inputs": {
+          "code": "// 1. Get raw input from previous node (Http Request)\nconst raw = (typeof $input !== 'undefined' && $input?.first?.()?.json) || \n            (typeof input !== 'undefined' && (input?.[0]?.json || input?.[0] || input)) || \n            (typeof $json !== 'undefined' && $json) || \n            {};\n\n// 2. Correctly extract AssumeRoleResponse from raw.body\nconst stsData = raw.body || raw.data || raw;\nconst assumeResult = stsData?.AssumeRoleResponse?.AssumeRoleResult || \n                     stsData?.AssumeRoleResult || \n                     stsData;\n\nconst credentials = assumeResult?.Credentials;\nconst assumedRoleUser = assumeResult?.AssumedRoleUser;\n\n// 3. Extract Account ID and Role directly from the AWS STS AssumedRoleUser ARN!\nconst arn = assumedRoleUser?.Arn || '';\nconst arnParts = arn.split(':');\nconst extractedAccountId = arnParts[4] || '';\nconst extractedRoleName = (arnParts[5] ? arnParts[5].split('/')[1] : null) || 'FinOpsAwsIntegrationRole';\nconst fullRoleArn = `arn:aws:iam::${extractedAccountId}:role/${extractedRoleName}`;\n\n// 4. Safely extract connectionId from context if available\nlet connectionId = '';\ntry {\n  if (typeof context !== 'undefined' && context) {\n    connectionId = context?.nodes?.['Webhook Trigger']?.json?.body?.connectionId || \n                   context?.steps?.['Webhook Trigger']?.body?.connectionId || \n                   '';\n  }\n} catch (e) {}\n\n// 5. Success: SessionToken exists!\nif (credentials?.SessionToken) {\n  return {\n    success: true,\n    status: 'connected',\n    roleStatus: 'verified',\n    awsAccountId: extractedAccountId,\n    roleArn: fullRoleArn,\n    connectionId: $node[\"webhook-1790220595488005\"].json[\"body\"][\"connectionId\"]  ,\n    assumedRoleUserArn: arn,\n    sessionTokenReceived: true,\n    verifiedAt: new Date().toISOString()\n  };\n}\n\n// 6. Failure fallback\nconst errMsg = stsData?.ErrorResponse?.Error?.Message || stsData?.Error?.Message || stsData?.message || 'AccessDenied';\nconst errCode = stsData?.ErrorResponse?.Error?.Code || stsData?.Error?.Code || 'AccessDenied';\n\nreturn {\n  success: false,\n  status: 'verification_failed',\n  roleStatus: 'failed',\n  awsAccountId: extractedAccountId,\n  roleArn: fullRoleArn,\n  connectionId:  $node[\"webhook-1790220595488005\"].json[\"body\"][\"connectionId\"] ,\n  lastError: {\n    errorCode: errCode,\n    message: errMsg\n  }\n};\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "toolData": {
+          "id": "code.execute",
+          "displayName": "Code",
+          "category": "Data  Processing",
+          "provider": "code",
+          "operation": "execute",
+          "icon": "💻",
+          "description": "Execute custom JavaScript or Python code",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "language": {
+                "type": "string",
+                "enum": [
+                  "javascript",
+                  "python"
+                ],
+                "description": "Programming language to execute"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "each"
+                ],
+                "default": "all",
+                "description": "Execution mode"
+              },
+              "code": {
+                "type": "string",
+                "description": "Code to execute"
+              },
+              "input": {
+                "description": "Input data available as \"input\" variable"
+              },
+              "context": {
+                "description": "Execution context including other node results"
+              }
+            },
+            "required": [
+              "language",
+              "code"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        "isTrigger": false,
+        "isFormWait": false,
+        "executionId": "6aba6c92e3f0f64699b44620",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "dragging": false,
+      "position": {
+        "x": 798.370886212134,
+        "y": 274.43510532006457
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 798.370886212134,
+        "y": 274.43510532006457
+      }
+    },
+    {
+      "id": "respondToWebhook-1790220881979008",
+      "data": {
+        "label": "Webhook Response",
+        "inputs": {
+          "respondWith": "JSON",
+          "responseBody": "{{ $json }}\r\n\r\n",
+          "inputFieldName": "data"
+        },
+        "toolId": "respondToWebhook",
+        "toolData": {
+          "id": "respondToWebhook",
+          "displayName": "Webhook Response",
+          "category": "Input /  Output",
+          "icon": "reply",
+          "description": "Send response to webhook",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "respondWith": {
+                "type": "string",
+                "enum": [
+                  "All Incoming Items",
+                  "First Incoming Item",
+                  "JSON",
+                  "Binary File",
+                  "JWT Token",
+                  "Text",
+                  "Redirect",
+                  "No Data"
+                ],
+                "default": "All Incoming Items",
+                "description": "What to respond with."
+              },
+              "responseBody": {
+                "type": "string",
+                "description": "The body of the response (can be an expression)"
+              },
+              "credentialId": {
+                "type": "string",
+                "description": "JWT credential ID"
+              },
+              "payload": {
+                "type": "string",
+                "description": "JWT Token Payload (JSON string or expression)"
+              },
+              "redirectUrl": {
+                "type": "string",
+                "description": "Redirect URL"
+              },
+              "inputFieldName": {
+                "type": "string",
+                "default": "data",
+                "description": "Input Field Name containing the binary file"
+              },
+              "responseCode": {
+                "type": "number",
+                "description": "HTTP Response Code"
+              },
+              "putResponseInField": {
+                "type": "string",
+                "description": "If set, put the response into this field instead of the default output"
+              },
+              "enableStreaming": {
+                "type": "boolean",
+                "description": "Stream the response back to the caller when supported"
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "headers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        "isTrigger": false,
+        "isFormWait": false,
+        "executionId": "6aba6c92e3f0f64699b44620",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "dragging": false,
+      "position": {
+        "x": 1337.4712434792782,
+        "y": 274.703339092165
+      },
+      "selected": true,
+      "positionAbsolute": {
+        "x": 1337.4712434792782,
+        "y": 274.703339092165
+      }
+    },
+    {
+      "id": "mongodb.update_document-1790305581527001",
+      "data": {
+        "label": "Update Document",
+        "inputs": {
+          "mode": "updateOne",
+          "query": "{\n  \"connectionId\": \"{{$node[\"webhook-1790220595488005\"].json[\"body\"][\"connectionId\"]}}\"\n}\n",
+          "update": "{   \"$set\": {     \"status\": \"connected\",     \"roleStatus\": \"verified\",     \"roleArn\": \"{{ $node[\\\"Code\\\"].json.roleArn || ('arn:aws:iam::' + $node[\\\"webhook-1790220595488005\\\"].json.body.awsAccountId + ':role/' + $node[\\\"webhook-1790220595488005\\\"].json.body.roleName) }}\",     \"verifiedAt\": \"{{ $now }}\"   } }     ",
+          "upsert": false,
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96"
+        },
+        "toolId": "mongodb.update_document",
+        "toolData": {
+          "id": "mongodb.update_document",
+          "displayName": "Update Document",
+          "category": "Memory & State",
+          "provider": "mongodb",
+          "operation": "update_document",
+          "icon": "https://www.mongodb.com/assets/images/global/favicon.ico",
+          "description": "Update one or more documents in MongoDB collection",
+          "inputSchemaJSON": {
+            "type": "object",
+            "properties": {
+              "connectionUri": {
+                "type": "string",
+                "description": "MongoDB connection URI (overrides credentials)"
+              },
+              "credentials": {
+                "description": "Optional credentials object for project auth flows"
+              },
+              "database": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Database name"
+              },
+              "collection": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Collection name"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "updateOne",
+                  "updateMany"
+                ],
+                "default": "updateOne",
+                "description": "Update mode"
+              },
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Query (JSON Format). Example: {\"status\": \"pending\"}"
+              },
+              "update": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Update (JSON Format). Example: {\"$set\": {\"status\": \"active\"}}"
+              },
+              "upsert": {
+                "type": "boolean",
+                "default": false,
+                "description": "Upsert (insert if no match)"
+              }
+            },
+            "required": [
+              "database",
+              "collection",
+              "query",
+              "update"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          },
+          "executionMode": "batch"
+        },
+        "isFormWait": false,
+        "executionId": "6aba6c92e3f0f64699b44620",
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": []
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "dragging": false,
+      "position": {
+        "x": 1070.3150044022211,
+        "y": 274.1296782667289
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1070.3150044022211,
+        "y": 274.1296782667289
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-webhook-1790220595488005-httpRequest-1790220642630006",
+      "data": {},
+      "type": "custom",
+      "source": "webhook-1790220595488005",
+      "target": "httpRequest-1790220642630006"
+    },
+    {
+      "id": "reactflow__edge-httpRequest-1790220642630006-code.execute-1790220830219007",
+      "data": {},
+      "type": "custom",
+      "source": "httpRequest-1790220642630006",
+      "target": "code.execute-1790220830219007"
+    },
+    {
+      "id": "e-code.execute-1790220830219007-mongodb.update_document-1790305581527001-1790305581527",
+      "data": {},
+      "type": "custom",
+      "source": "code.execute-1790220830219007",
+      "target": "mongodb.update_document-1790305581527001"
+    },
+    {
+      "id": "e-mongodb.update_document-1790305581527001-respondToWebhook-1790220881979008-1790305581527",
+      "data": {},
+      "type": "custom",
+      "source": "mongodb.update_document-1790305581527001",
+      "target": "respondToWebhook-1790220881979008"
+    }
+  ]
+}

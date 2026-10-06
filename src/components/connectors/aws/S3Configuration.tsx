@@ -45,22 +45,22 @@ export function S3Configuration({
   onExistingBucketRegionChange,
 }: S3ConfigurationProps) {
   return (
-    <div className="space-y-5 w-full animate-in fade-in duration-300 pt-6 border-t border-dark-border/80">
+    <div className="space-y-5 w-full animate-in fade-in duration-300 pt-6 border-t border-slate-100">
       <div>
-        <h3 className="text-sm font-semibold text-white">
+        <h3 className="text-sm font-bold text-slate-900">
           S3 Bucket Configuration
         </h3>
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs text-slate-500">
           Where will the Cost and Usage Report (CUR) Parquet files be stored?
         </p>
       </div>
 
       <div className="flex gap-4">
         <label
-          className={`flex-1 flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${
+          className={`flex-1 flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all shadow-xs ${
             createS3 === "yes"
-              ? "border-blue-500/60 bg-blue-500/10 text-white"
-              : "border-dark-border bg-dark-card text-slate-400 hover:border-dark-borderHover"
+              ? "border-purple-600 bg-purple-50/50 text-slate-900 ring-2 ring-purple-600/20"
+              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
           }`}
         >
           <input
@@ -69,19 +69,19 @@ export function S3Configuration({
             value="yes"
             checked={createS3 === "yes"}
             onChange={() => onCreateS3Change("yes")}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 bg-[#090d16] border-dark-border"
+            className="h-4 w-4 accent-purple-600"
           />
           <div>
-            <p className="text-xs font-semibold">Create New Bucket</p>
-            <p className="text-[11px] text-slate-400">Deploy dedicated S3 bucket via template</p>
+            <p className="text-xs font-bold text-slate-900">Create New Bucket</p>
+            <p className="text-[11px] text-slate-500">Deploy dedicated S3 bucket via template</p>
           </div>
         </label>
 
         <label
-          className={`flex-1 flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${
+          className={`flex-1 flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all shadow-xs ${
             createS3 === "no"
-              ? "border-blue-500/60 bg-blue-500/10 text-white"
-              : "border-dark-border bg-dark-card text-slate-400 hover:border-dark-borderHover"
+              ? "border-purple-600 bg-purple-50/50 text-slate-900 ring-2 ring-purple-600/20"
+              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
           }`}
         >
           <input
@@ -90,11 +90,11 @@ export function S3Configuration({
             value="no"
             checked={createS3 === "no"}
             onChange={() => onCreateS3Change("no")}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 bg-[#090d16] border-dark-border"
+            className="h-4 w-4 accent-purple-600"
           />
           <div>
-            <p className="text-xs font-semibold">Use Existing Bucket</p>
-            <p className="text-[11px] text-slate-400">Point to already configured bucket</p>
+            <p className="text-xs font-bold text-slate-900">Use Existing Bucket</p>
+            <p className="text-[11px] text-slate-500">Point to already configured bucket</p>
           </div>
         </label>
       </div>
@@ -103,10 +103,10 @@ export function S3Configuration({
         <div className="space-y-4 pt-2">
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                New S3 Bucket Name <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-slate-700">
+                New S3 Bucket Name <span className="text-purple-600">*</span>
               </label>
-              <span className="text-[10px] text-slate-500 font-sans">
+              <span className="text-[10px] text-slate-400 font-sans">
                 Lowercase letters, numbers, and hyphens only
               </span>
             </div>
@@ -121,10 +121,10 @@ export function S3Configuration({
                 onBucketNameChange(sanitized);
               }}
               placeholder="e.g. finops-cur2-864981730114"
-              className="w-full rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none font-mono"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none font-mono shadow-xs"
             />
             {bucketName.length > 0 && !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucketName) && (
-              <p className="mt-1 text-[11px] text-rose-400 font-sans">
+              <p className="mt-1 text-[11px] text-amber-600 font-medium font-sans">
                 Must be 3-63 characters, start/end with a letter or number, and contain only lowercase letters, numbers, and hyphens.
               </p>
             )}
@@ -132,15 +132,15 @@ export function S3Configuration({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Bucket Region <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Bucket Region <span className="text-purple-600">*</span>
               </label>
               <div className="relative">
                 <select
                   required
                   value={bucketRegion}
                   onChange={(e) => onBucketRegionChange(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none pr-8"
+                  className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none pr-8 shadow-xs"
                 >
                   {AWS_REGIONS.map((r) => (
                     <option key={r.value} value={r.value}>
@@ -153,7 +153,7 @@ export function S3Configuration({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Export Prefix
               </label>
               <input
@@ -161,13 +161,13 @@ export function S3Configuration({
                 value={exportPrefix}
                 onChange={(e) => onExportPrefixChange(e.target.value)}
                 placeholder="cur2/"
-                className="w-full rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none font-mono"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none font-mono shadow-xs"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Export Name
             </label>
             <input
@@ -175,15 +175,15 @@ export function S3Configuration({
               value={exportName}
               onChange={(e) => onExportNameChange(e.target.value)}
               placeholder="e.g. daily-cur-export"
-              className="w-full rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none font-mono"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none font-mono shadow-xs"
             />
           </div>
         </div>
       ) : (
         <div className="space-y-4 pt-2">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Existing S3 Bucket Name <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Existing S3 Bucket Name <span className="text-purple-600">*</span>
             </label>
             <input
               type="text"
@@ -191,20 +191,20 @@ export function S3Configuration({
               value={existingBucketName}
               onChange={(e) => onExistingBucketNameChange(e.target.value)}
               placeholder="e.g. my-existing-billing-bucket"
-              className="w-full rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none font-mono"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none font-mono shadow-xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Existing Bucket Region <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Existing Bucket Region <span className="text-purple-600">*</span>
             </label>
             <div className="relative">
               <select
                 required
                 value={existingBucketRegion}
                 onChange={(e) => onExistingBucketRegionChange(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-dark-border bg-dark-card px-3.5 py-2 text-xs text-white focus:border-blue-500 focus:outline-none pr-8"
+                className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 focus:outline-none pr-8 shadow-xs"
               >
                 {AWS_REGIONS.map((r) => (
                   <option key={r.value} value={r.value}>

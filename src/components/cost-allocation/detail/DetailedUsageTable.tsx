@@ -142,29 +142,29 @@ export function DetailedUsageTable({ productName = 'Workbench' }: { productName?
   });
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 overflow-hidden shadow-sm w-full space-y-2">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm w-full space-y-2">
       {/* Header & Toolbar */}
-      <div className="p-4 border-b border-dark-border/60 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-white tracking-tight">Detailed AWS Usage</h3>
+      <div className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-sm font-bold text-slate-900 tracking-tight">Detailed AWS Usage</h3>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Search Box */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search resource, service, usage type..."
-              className="h-7 w-60 pl-8 pr-3 text-xs bg-dark-surface border border-dark-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="h-8 w-60 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
             />
           </div>
 
           {/* Sort Buttons */}
           <button
             onClick={() => handleSort('cost')}
-            className={`h-7 flex items-center gap-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
-              sortField === 'cost' ? 'bg-blue-600/15 border-blue-500/40 text-blue-400' : 'border-dark-border text-slate-300 hover:text-white'
+            className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+              sortField === 'cost' ? 'bg-slate-900 text-white font-semibold border-slate-900 shadow-xs' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-xs'
             }`}
           >
             <ArrowUpDown className="h-3 w-3" />
@@ -173,8 +173,8 @@ export function DetailedUsageTable({ productName = 'Workbench' }: { productName?
 
           <button
             onClick={() => handleSort('usage')}
-            className={`h-7 flex items-center gap-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
-              sortField === 'usage' ? 'bg-blue-600/15 border-blue-500/40 text-blue-400' : 'border-dark-border text-slate-300 hover:text-white'
+            className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+              sortField === 'usage' ? 'bg-slate-900 text-white font-semibold border-slate-900 shadow-xs' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-xs'
             }`}
           >
             <ArrowUpDown className="h-3 w-3" />
@@ -182,13 +182,13 @@ export function DetailedUsageTable({ productName = 'Workbench' }: { productName?
           </button>
 
           {/* Column Visibility */}
-          <button className="h-7 flex items-center gap-1 px-2 rounded-lg border border-dark-border text-xs text-slate-300 hover:text-white transition-colors">
+          <button className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
             <SlidersHorizontal className="h-3 w-3" />
             <span>Column visibility</span>
           </button>
 
           {/* Export */}
-          <button className="h-7 flex items-center gap-1 px-2 rounded-lg border border-dark-border text-xs text-slate-300 hover:text-white transition-colors">
+          <button className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
             <Download className="h-3 w-3" />
             <span>Export</span>
           </button>
@@ -199,40 +199,40 @@ export function DetailedUsageTable({ productName = 'Workbench' }: { productName?
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/40 bg-dark-surface/40 whitespace-nowrap">
-              <th className="py-2.5 px-3 font-normal">Date</th>
-              <th className="py-2.5 px-3 font-normal">Account</th>
-              <th className="py-2.5 px-3 font-normal">Environment</th>
-              <th className="py-2.5 px-3 font-normal">Region</th>
-              <th className="py-2.5 px-3 font-normal">Service</th>
-              <th className="py-2.5 px-3 font-normal">Usage type</th>
-              <th className="py-2.5 px-3 font-normal">Operation</th>
-              <th className="py-2.5 px-3 font-normal">Resource ID</th>
-              <th className="py-2.5 px-3 font-normal">Instance type</th>
-              <th className="py-2.5 px-3 font-normal">Purchase option</th>
-              <th className="py-2.5 px-3 text-right font-normal">Usage amount</th>
-              <th className="py-2.5 px-4 text-right font-normal">Cost</th>
+            <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 bg-slate-50/95 whitespace-nowrap">
+              <th className="py-3 px-3">Date</th>
+              <th className="py-3 px-3">Account</th>
+              <th className="py-3 px-3">Environment</th>
+              <th className="py-3 px-3">Region</th>
+              <th className="py-3 px-3">Service</th>
+              <th className="py-3 px-3">Usage type</th>
+              <th className="py-3 px-3">Operation</th>
+              <th className="py-3 px-3">Resource ID</th>
+              <th className="py-3 px-3">Instance type</th>
+              <th className="py-3 px-3">Purchase option</th>
+              <th className="py-3 px-3 text-right">Usage amount</th>
+              <th className="py-3 px-4 text-right">Cost</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/30 text-slate-300 whitespace-nowrap font-sans">
+          <tbody className="divide-y divide-slate-100 text-slate-700 whitespace-nowrap font-sans">
             {filtered.slice(0, 4).map((item) => (
-              <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-2.5 px-3 text-slate-400 text-[11px]">{item.date}</td>
-                <td className="py-2.5 px-3 font-medium text-white">{item.account.replace('Workbench', productName)}</td>
-                <td className="py-2.5 px-3 text-slate-400">{item.environment}</td>
-                <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">{item.region}</td>
-                <td className="py-2.5 px-3 text-slate-200">{item.service}</td>
-                <td className="py-2.5 px-3 text-slate-300 font-mono text-[11px]">{item.usageType}</td>
-                <td className="py-2.5 px-3 text-slate-400">{item.operation}</td>
-                <td className="py-2.5 px-3 text-blue-400 font-mono text-[11px]">{item.resourceId}</td>
-                <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">{item.instanceType}</td>
+              <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                <td className="py-2.5 px-3 text-slate-500 text-[11px]">{item.date}</td>
+                <td className="py-2.5 px-3 font-semibold text-slate-800">{item.account.replace('Workbench', productName)}</td>
+                <td className="py-2.5 px-3 text-slate-500">{item.environment}</td>
+                <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px]">{item.region}</td>
+                <td className="py-2.5 px-3 text-slate-700">{item.service}</td>
+                <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">{item.usageType}</td>
+                <td className="py-2.5 px-3 text-slate-500">{item.operation}</td>
+                <td className="py-2.5 px-3 text-slate-800 font-mono text-[11px]">{item.resourceId}</td>
+                <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px]">{item.instanceType}</td>
                 <td className="py-2.5 px-3">
-                  <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-dark-surface border border-dark-border text-slate-300 font-medium">
+                  <span className="inline-block px-2 py-0.5 rounded-md text-[10px] bg-purple-50 border border-purple-200/60 text-purple-700 font-medium">
                     {item.purchaseOption}
                   </span>
                 </td>
-                <td className="py-2.5 px-3 text-right tabular-nums text-slate-300">{item.usageAmount}</td>
-                <td className="py-2.5 px-4 text-right font-semibold text-white tabular-nums">{format(item.cost)}</td>
+                <td className="py-2.5 px-3 text-right tabular-nums text-slate-600">{item.usageAmount}</td>
+                <td className="py-2.5 px-4 text-right font-bold text-slate-900 tabular-nums">{format(item.cost)}</td>
               </tr>
             ))}
           </tbody>

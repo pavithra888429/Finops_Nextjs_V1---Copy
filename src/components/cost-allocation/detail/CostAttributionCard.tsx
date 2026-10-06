@@ -25,10 +25,10 @@ export function CostAttributionCard({
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full space-y-3">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between shadow-sm h-full space-y-3">
       {/* Header */}
-      <div className="flex items-center gap-1.5 pb-2 border-b border-dark-border/60">
-        <h3 className="text-sm font-semibold text-white tracking-tight">Cost Attribution</h3>
+      <div className="flex items-center gap-1.5 pb-2.5 border-b border-slate-100">
+        <h3 className="text-sm font-bold text-slate-900 tracking-tight">Cost Attribution</h3>
         <Info className="h-3.5 w-3.5 text-slate-400" />
       </div>
 
@@ -36,36 +36,36 @@ export function CostAttributionCard({
       <div className="space-y-2 text-xs">
         {/* Direct */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#10b981]" />
-            <span className="text-slate-300">Direct {productName} cost</span>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-purple-600" />
+            <span className="text-slate-700 font-medium">Direct {productName} cost</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">{format(directCost)}</span>
-            <span className="text-slate-400 font-normal tabular-nums">{directPct.toFixed(1)}%</span>
+            <span className="text-slate-900 font-bold tabular-nums">{format(directCost)}</span>
+            <span className="text-slate-500 font-normal tabular-nums">{directPct.toFixed(1)}%</span>
           </div>
         </div>
 
         {/* Shared */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#ff781f]" />
-            <span className="text-slate-300">Shared AWS cost</span>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-indigo-400" />
+            <span className="text-slate-700 font-medium">Shared AWS cost</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">{format(sharedCost)}</span>
-            <span className="text-slate-400 font-normal tabular-nums">{sharedPct.toFixed(1)}%</span>
+            <span className="text-slate-900 font-bold tabular-nums">{format(sharedCost)}</span>
+            <span className="text-slate-500 font-normal tabular-nums">{sharedPct.toFixed(1)}%</span>
           </div>
         </div>
 
         {/* Unallocated */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#0070f3]" />
-            <span className="text-slate-300">Unallocated AWS cost</span>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-slate-300" />
+            <span className="text-slate-500 font-medium">Unallocated AWS cost</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">{format(unallocatedCost)}</span>
+            <span className="text-slate-700 font-semibold tabular-nums">{format(unallocatedCost)}</span>
             <span className="text-slate-400 font-normal tabular-nums">{unallocPct.toFixed(1)}%</span>
           </div>
         </div>
@@ -73,21 +73,21 @@ export function CostAttributionCard({
 
       {/* Stacked Horizontal Progress Bar */}
       <div className="space-y-1.5 pt-1">
-        <div className="h-2 w-full rounded-full flex overflow-hidden bg-dark-surface">
-          <div style={{ width: `${directPct}%` }} className="bg-[#10b981]" />
-          <div style={{ width: `${sharedPct}%` }} className="bg-[#ff781f]" />
-          <div style={{ width: `${unallocPct}%` }} className="bg-[#0070f3]" />
+        <div className="h-2 w-full rounded-full flex overflow-hidden bg-slate-100">
+          <div style={{ width: `${directPct}%` }} className="bg-purple-600 rounded-l-full" />
+          <div style={{ width: `${sharedPct}%` }} className="bg-indigo-400" />
+          <div style={{ width: `${unallocPct}%` }} className="bg-slate-300 rounded-r-full" />
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
           <span>Resource-linked cost</span>
-          <span className="font-semibold text-white tabular-nums">{resourceLinkedCost}%</span>
+          <span className="font-bold text-slate-900 tabular-nums">{resourceLinkedCost}%</span>
         </div>
       </div>
 
       {/* Alert Info Box */}
-      <div className="p-2.5 rounded-lg border border-blue-500/20 bg-blue-600/10 flex items-start gap-2 text-[11px] text-blue-300/90 leading-relaxed">
-        <Info className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+      <div className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/80 flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed">
+        <Info className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
         <p>Some AWS charges are available only at service, account, Region, or usage-type level.</p>
       </div>
     </div>

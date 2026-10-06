@@ -130,6 +130,21 @@ export async function GET() {
       topModelsBySpend,
       dateWiseTelemetry,
       focusRecords: firstWithMeta?.focusRecords || [],
+      deletedKeysCount: typeof firstWithMeta?.deletedKeysCount === 'number' ? firstWithMeta.deletedKeysCount : (Array.isArray(firstWithMeta?.deletedKeysList) ? firstWithMeta.deletedKeysList.length : 0),
+      deletedKeysAllocatedLimit: typeof firstWithMeta?.deletedKeysAllocatedLimit === 'number'
+        ? firstWithMeta.deletedKeysAllocatedLimit
+        : (Array.isArray(firstWithMeta?.deletedKeysList) ? Number(firstWithMeta.deletedKeysList.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0).toFixed(2)) : 0),
+      deletedKeysSpend: typeof firstWithMeta?.deletedKeysSpend === 'number'
+        ? firstWithMeta.deletedKeysSpend
+        : (Array.isArray(firstWithMeta?.deletedKeysList) ? Number(firstWithMeta.deletedKeysList.reduce((acc: number, k: any) => acc + (Number(k.usage) || 0), 0).toFixed(4)) : 0),
+      deletedKeysList: firstWithMeta?.deletedKeysList || [],
+      unallocatedBuffer: typeof firstWithMeta?.unallocatedBuffer === 'number' ? firstWithMeta.unallocatedBuffer : 0,
+      totalPurchasedCredits: firstWithMeta?.totalPurchasedCredits ?? creditLimit,
+      allocatedKeyLimits: typeof firstWithMeta?.allocatedKeyLimits === 'number'
+        ? firstWithMeta.allocatedKeyLimits
+        : (keysList.length > 0 ? Number(keysList.reduce((acc: number, k: any) => acc + (Number(k.limit) || 0), 0).toFixed(2)) : null),
+      accountRemainingWallet: firstWithMeta?.accountRemainingWallet ?? remainingBalance,
+      keysQuotaRemaining: firstWithMeta?.keysQuotaRemaining ?? null,
       lastSyncedAt: firstWithMeta?.lastSyncedAt || new Date().toISOString(),
     });
   } catch (err: any) {

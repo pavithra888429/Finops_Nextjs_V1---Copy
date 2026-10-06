@@ -15,18 +15,21 @@ import { TopCostDriversTable } from "@/components/cost-allocation/detail/TopCost
 import { DetailedUsageTable } from "@/components/cost-allocation/detail/DetailedUsageTable";
 import { DetailStatusBar } from "@/components/cost-allocation/detail/DetailStatusBar";
 import { OpenRouterDetailView } from "@/components/cost-allocation/detail/OpenRouterDetailView";
+import { AwsDetailView } from "@/components/cost-allocation/detail/AwsDetailView";
 import { Footer } from "@/components/layout/Footer";
 
 function ProductProviderDetailContent() {
   const searchParams = useSearchParams();
-  const productId = searchParams.get("product") || "workbench";
+  const productId = searchParams.get("product") || "all";
   const providerId = searchParams.get("provider") || "aws";
 
   const getProductName = (id: string) => {
+    if (id === "all") return "All Products";
     if (id === "dragon") return "Dragon Suite";
     if (id === "okrian") return "Okrian";
-    if (id === "unallocated") return "Unallocated";
-    return "Workbench";
+    if (id === "unallocated") return "Unallocated (Untagged)";
+    if (id === "agent_builder") return "Agent_Builder";
+    return id.replace(/[_-]/g, " ");
   };
 
   const getProviderName = (id: string) => {
@@ -39,16 +42,45 @@ function ProductProviderDetailContent() {
   const providerName = getProviderName(providerId);
   const router = useRouter();
 
+  if (providerId === "aws") {
+    return (
+      <div className="w-full flex-1 flex flex-col justify-between font-sans selection:bg-purple-500 selection:text-white bg-[#f8fafc] text-slate-800">
+        <main className="w-full max-w-[1600px] mx-auto flex-1 px-4 sm:px-6 lg:px-8 py-5 space-y-4">
+          <AwsDetailView
+            productId={productId}
+            productName={productName}
+            providerId={providerId}
+            providerName={providerName}
+            onBack={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/cost-allocation';
+              } else {
+                router.push('/cost-allocation');
+              }
+            }}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (providerId === "openrouter") {
     return (
-      <div className="w-full flex-1 flex flex-col justify-between font-sans selection:bg-purple-600 selection:text-white">
+      <div className="w-full flex-1 flex flex-col justify-between font-sans selection:bg-purple-500 selection:text-white bg-[#f8fafc] text-slate-800">
         <main className="w-full max-w-[1600px] mx-auto flex-1 px-4 sm:px-6 lg:px-8 py-5 space-y-4">
           <OpenRouterDetailView
             productId={productId}
             productName={productName}
             providerId={providerId}
             providerName={providerName}
-            onBack={() => router.push('/cost-allocation')}
+            onBack={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/cost-allocation';
+              } else {
+                router.push('/cost-allocation');
+              }
+            }}
           />
         </main>
         <Footer />
@@ -132,7 +164,7 @@ function ProductProviderDetailContent() {
   const metrics = getProductMetrics();
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white">
+    <div className="w-full flex-1 flex flex-col justify-between font-sans selection:bg-purple-500 selection:text-white bg-[#f8fafc] text-slate-800">
       {/* Main Content Area */}
       <main className="w-full max-w-[1600px] mx-auto flex-1 px-4 sm:px-6 lg:px-8 py-5 space-y-4">
         
@@ -142,7 +174,13 @@ function ProductProviderDetailContent() {
           productName={productName}
           providerId={providerId}
           providerName={providerName}
-          onBack={() => router.push('/cost-allocation')}
+          onBack={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/cost-allocation';
+            } else {
+              router.push('/cost-allocation');
+            }
+          }}
         />
 
         {/* 2. Filter Toolbar (2 rows of dropdowns & chips) */}
@@ -164,8 +202,20 @@ function ProductProviderDetailContent() {
           groupBy={groupBy}
           setGroupBy={setGroupBy}
           onResetFilters={handleResetFilters}
-          onRemoveProduct={() => router.push('/cost-allocation')}
-          onRemoveProvider={() => router.push('/cost-allocation')}
+          onRemoveProduct={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/cost-allocation';
+            } else {
+              router.push('/cost-allocation');
+            }
+          }}
+          onRemoveProvider={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/cost-allocation';
+            } else {
+              router.push('/cost-allocation');
+            }
+          }}
         />
 
         {/* 3. 6 KPI Cards (AWS Cost, Daily Avg, Top Service, Top Region, Top Account, Resource Coverage Ring) */}
@@ -220,7 +270,7 @@ function ProductProviderDetailContent() {
 
 export default function ProductProviderDetailPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading detailed analytics...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading detailed analytics...</div>}>
       <ProductProviderDetailContent />
     </Suspense>
   );

@@ -1,0 +1,310 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "name": "AWS Cost Explorer Daily Sync & Deduplication",
+  "nodes": [
+    {
+      "id": "webhook-trigger-ce-001",
+      "type": "trigger",
+      "data": {
+        "label": "Webhook Trigger",
+        "toolId": "webhook",
+        "inputs": {
+          "path": "5f28a43e-4f27-4a2a-9516-c0dc10196038",
+          "method": "POST",
+          "responseMode": "respondWithNode",
+          "authentication": "none"
+        }
+      },
+      "position": {
+        "x": 100,
+        "y": 300
+      }
+    },
+    {
+      "id": "find-connection-ce-002",
+      "type": "action",
+      "data": {
+        "label": "Find Active AWS Connection",
+        "toolId": "mongodb.find_document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "query": "{\n  \"status\": \"connected\"\n}"
+        }
+      },
+      "position": {
+        "x": 380,
+        "y": 300
+      }
+    },
+    {
+      "id": "code-dedup-check-ce-003",
+      "type": "action",
+      "data": {
+        "label": "Deduplication & Range Check",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "// 1. Resolve connection document from MongoDB\nconst inputItem = $input.first()?.json || {};\nconst docs = inputItem.documents || $node[\"Find Document\"]?.json?.documents || $node[\"Find Active AWS Connection\"]?.json?.documents || [];\nconst conn = docs[0] || (inputItem.connectionId ? inputItem : {}) || $node[\"Find Document\"]?.json || $node[\"Find Active AWS Connection\"]?.json || {};\n\nconst connectionId = conn.connectionId || inputItem.connectionId || 'conn_jw24oglhu2b';\nconst awsAccountId = conn.awsAccountId || inputItem.awsAccountId || '864981730114';\nconst roleName = conn.roleName || 'FinOpsAwsIntegrationRole';\nconst roleArn = conn.roleArn || `arn:aws:iam::${awsAccountId}:role/${roleName}`;\nconst externalId = conn.externalId || 'ext_tm59cfawqk';\n\n// 2. Check Today's Date in UTC (YYYY-MM-DD)\nconst now = new Date();\nconst todayStr = now.toISOString().slice(0, 10);\nconst currentYear = now.getUTCFullYear();\nconst currentMonth = String(now.getUTCMonth() + 1).padStart(2, '0');\nconst billingPeriod = `${currentYear}-${currentMonth}`;\n\n// Start of current month: YYYY-MM-01\nconst startDate = `${billingPeriod}-01`;\n\n// End of current month for Cost Explorer (Exclusive: 1st of next month)\nconst nextMonthDate = new Date(Date.UTC(currentYear, now.getUTCMonth() + 1, 1));\nconst endDate = nextMonthDate.toISOString().slice(0, 10);\n\n// 3. ⚡ SMART DEDUPLICATION & COOLDOWN: Allows Morning & Evening syncs (every 6 hours)\nconst lastSyncDate = conn.lastCostExplorerSyncDate || '';\nconst lastSyncedAt = conn.lastCostExplorerSyncedAt ? new Date(conn.lastCostExplorerSyncedAt) : null;\nconst hoursSinceLastSync = lastSyncedAt ? (now.getTime() - lastSyncedAt.getTime()) / (1000 * 60 * 60) : 999;\nconst forceSync = Boolean(inputItem.force || false);\n\nif (!forceSync && hoursSinceLastSync < 6) {\n  const nextEligibleHours = (6 - hoursSinceLastSync).toFixed(1);\n  return {\n    json: {\n      shouldSync: false,\n      status: 'already_synced_today',\n      message: `AWS Cost Explorer was synced ${hoursSinceLastSync.toFixed(1)}h ago (${todayStr}). Next automatic refresh eligible in ${nextEligibleHours} hours (or use Force Sync).`,\n      connectionId,\n      awsAccountId,\n      lastSyncDate,\n      hoursSinceLastSync: Number(hoursSinceLastSync.toFixed(2)),\n      todayDate: todayStr,\n      billingPeriod\n    }\n  };\n}\n\n// 4. Eligible for Daily Sync: Pass credentials to STS AssumeRole node\nreturn {\n  json: {\n    shouldSync: true,\n    status: 'ready_to_sync',\n    connectionId,\n    awsAccountId,\n    roleArn,\n    externalId,\n    startDate,\n    endDate,\n    billingPeriod,\n    todayDate: todayStr\n  }\n};\n"
+        }
+      },
+      "position": {
+        "x": 680,
+        "y": 300
+      }
+    },
+    {
+      "id": "if-condition-ce-004",
+      "type": "action",
+      "data": {
+        "label": "IF Condition (Run Once Today)",
+        "toolId": "ifnode",
+        "inputs": {
+          "conditions": {
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "cond_ce_sync",
+                "leftValue": "{{ $json.shouldSync }}",
+                "rightValue": "true",
+                "operator": {
+                  "name": "filter.operator.equals",
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "position": {
+        "x": 980,
+        "y": 300
+      }
+    },
+    {
+      "id": "respond-already-synced-ce-005",
+      "type": "action",
+      "data": {
+        "label": "Respond Already Synced",
+        "toolId": "respondToWebhook",
+        "inputs": {
+          "responseCode": 200,
+          "responseData": "{\n  \"success\": true,\n  \"status\": \"already_synced_today\",\n  \"message\": \"{{ $json.message }}\",\n  \"syncDate\": \"{{ $json.todayDate }}\",\n  \"billingPeriod\": \"{{ $json.billingPeriod }}\"\n}"
+        }
+      },
+      "position": {
+        "x": 1280,
+        "y": 480
+      }
+    },
+    {
+      "id": "http-request-sts-assume-ce-006",
+      "type": "action",
+      "data": {
+        "label": "AWS STS AssumeRole",
+        "toolId": "httpRequest",
+        "inputs": {
+          "url": "https://sts.amazonaws.com/",
+          "method": "POST",
+          "bodyType": "json",
+          "contentType": "json",
+          "authentication": {
+            "type": "predefinedCredentialType",
+            "config": {
+              "credentialId": "ede77268-8d19-45df-bfbc-9b79d770ade5",
+              "credentialType": "awsApi"
+            }
+          },
+          "headers": {
+            "Accept": "application/json"
+          },
+          "queryParameters": {
+            "Action": "AssumeRole",
+            "Version": "2011-06-15",
+            "RoleArn": "{{ $node[\"Deduplication & Range Check\"].json.roleArn }}",
+            "ExternalId": "{{ $node[\"Deduplication & Range Check\"].json.externalId }}",
+            "RoleSessionName": "FinOpsCostExplorerSync",
+            "DurationSeconds": "3600"
+          },
+          "lowercaseHeaders": true,
+          "responseFormat": "auto"
+        }
+      },
+      "position": {
+        "x": 1280,
+        "y": 180
+      }
+    },
+    {
+      "id": "code-transform-ce-008",
+      "type": "action",
+      "data": {
+        "label": "Transform & Aggregate CE Data",
+        "toolId": "code.execute",
+        "inputs": {
+          "language": "javascript",
+          "mode": "all",
+          "code": "const inputItem = $input.first()?.json || {};\n\n// 1. Resolve Cost Explorer API data (handles .body, .data, stringified JSON, or direct root)\nlet ceData = inputItem.body || inputItem.data || inputItem;\nif (typeof ceData === 'string') {\n  try {\n    ceData = JSON.parse(ceData);\n  } catch (e) {}\n}\n\nconst resultsByTime = ceData?.ResultsByTime || inputItem?.ResultsByTime || [];\n\n// 2. Resolve Previous Node Connection Info with robust fallbacks\nconst prevInfo = \n  $node[\"Deduplication & Range Check\"]?.json || \n  $node[\"Deduplication & Range Check\"]?.json?.documents?.[0] ||\n  $node[\"Code\"]?.json ||\n  $node[\"Find Active AWS Connection\"]?.json?.documents?.[0] ||\n  $node[\"Find Document\"]?.json?.documents?.[0] ||\n  inputItem.connection ||\n  {};\n\nconst now = new Date();\nconst currentYear = now.getUTCFullYear();\nconst currentMonth = String(now.getUTCMonth() + 1).padStart(2, '0');\nconst defaultBillingPeriod = `${currentYear}-${currentMonth}`;\n\nconst accountId = prevInfo.awsAccountId || prevInfo.accountId || '864981730114';\nconst billingPeriod = prevInfo.billingPeriod || defaultBillingPeriod;\nconst startDate = prevInfo.startDate || `${billingPeriod}-01`;\nconst nextMonthDate = new Date(Date.UTC(currentYear, now.getUTCMonth() + 1, 1));\nconst endDate = prevInfo.endDate || nextMonthDate.toISOString().slice(0, 10);\nconst todayDate = prevInfo.todayDate || now.toISOString().slice(0, 10);\n\nconst serviceSummaryMap = {};\nconst projectSummaryMap = {};\nconst dailyTotalsMap = {};\nconst serviceWiseDaily = [];\n\nlet totalUnblended = 0;\nlet totalBlended = 0;\nlet totalAmortized = 0;\nlet totalNetUnblended = 0;\nlet totalNetAmortized = 0;\n\nfor (const timeResult of resultsByTime) {\n  const date = timeResult.TimePeriod?.Start || '';\n  if (!dailyTotalsMap[date]) {\n    dailyTotalsMap[date] = {\n      date,\n      unblendedCost: 0,\n      blendedCost: 0,\n      amortizedCost: 0,\n      netUnblendedCost: 0,\n      netAmortizedCost: 0,\n      unit: 'USD'\n    };\n  }\n\n  for (const group of (timeResult.Groups || [])) {\n    // Keys[0] is DIMENSION: SERVICE\n    const service = group.Keys?.[0] || 'Unknown';\n    \n    // Keys[1] is TAG: project_name (AWS CE returns format 'project_name$tagValue' or 'project_name$' for untagged)\n    const rawProjectTag = group.Keys?.[1] || '';\n    let projectName = 'Untagged';\n    if (rawProjectTag) {\n      if (rawProjectTag.includes('$')) {\n        const parts = rawProjectTag.split('$');\n        projectName = parts.slice(1).join('$').trim() || 'Untagged';\n      } else {\n        projectName = rawProjectTag.trim() || 'Untagged';\n      }\n    }\n\n    const unblended = parseFloat(group.Metrics?.UnblendedCost?.Amount || '0');\n    const blended = parseFloat(group.Metrics?.BlendedCost?.Amount || '0');\n    const amortized = parseFloat(group.Metrics?.AmortizedCost?.Amount || '0');\n    const netUnblended = parseFloat(group.Metrics?.NetUnblendedCost?.Amount || '0');\n    const netAmortized = parseFloat(group.Metrics?.NetAmortizedCost?.Amount || '0');\n    const usageQty = parseFloat(group.Metrics?.UsageQuantity?.Amount || '0');\n\n    // Accumulate Daily Totals\n    dailyTotalsMap[date].unblendedCost += unblended;\n    dailyTotalsMap[date].blendedCost += blended;\n    dailyTotalsMap[date].amortizedCost += amortized;\n    dailyTotalsMap[date].netUnblendedCost += netUnblended;\n    dailyTotalsMap[date].netAmortizedCost += netAmortized;\n\n    // Accumulate Month Totals\n    totalUnblended += unblended;\n    totalBlended += blended;\n    totalAmortized += amortized;\n    totalNetUnblended += netUnblended;\n    totalNetAmortized += netAmortized;\n\n    // Accumulate Service Rollup\n    if (!serviceSummaryMap[service]) {\n      serviceSummaryMap[service] = {\n        service,\n        unblendedCost: 0,\n        blendedCost: 0,\n        amortizedCost: 0,\n        netUnblendedCost: 0,\n        netAmortizedCost: 0,\n        unit: 'USD'\n      };\n    }\n    serviceSummaryMap[service].unblendedCost += unblended;\n    serviceSummaryMap[service].blendedCost += blended;\n    serviceSummaryMap[service].amortizedCost += amortized;\n    serviceSummaryMap[service].netUnblendedCost += netUnblended;\n    serviceSummaryMap[service].netAmortizedCost += netAmortized;\n\n    // Accumulate Project Rollup & Per-Project Service Breakdown\n    if (!projectSummaryMap[projectName]) {\n      projectSummaryMap[projectName] = {\n        projectName,\n        project_name: projectName,\n        unblendedCost: 0,\n        blendedCost: 0,\n        amortizedCost: 0,\n        netUnblendedCost: 0,\n        netAmortizedCost: 0,\n        servicesMap: {}\n      };\n    }\n    projectSummaryMap[projectName].unblendedCost += unblended;\n    projectSummaryMap[projectName].blendedCost += blended;\n    projectSummaryMap[projectName].amortizedCost += amortized;\n    projectSummaryMap[projectName].netUnblendedCost += netUnblended;\n    projectSummaryMap[projectName].netAmortizedCost += netAmortized;\n\n    if (!projectSummaryMap[projectName].servicesMap[service]) {\n      projectSummaryMap[projectName].servicesMap[service] = {\n        service,\n        unblendedCost: 0,\n        blendedCost: 0,\n        amortizedCost: 0\n      };\n    }\n    projectSummaryMap[projectName].servicesMap[service].unblendedCost += unblended;\n    projectSummaryMap[projectName].servicesMap[service].blendedCost += blended;\n    projectSummaryMap[projectName].servicesMap[service].amortizedCost += amortized;\n\n    if (unblended > 0 || blended > 0 || amortized > 0) {\n      serviceWiseDaily.push({\n        date,\n        service,\n        projectName,\n        project_name: projectName,\n        unblendedCost: Number(unblended.toFixed(4)),\n        blendedCost: Number(blended.toFixed(4)),\n        amortizedCost: Number(amortized.toFixed(4)),\n        usageQuantity: usageQty,\n        unit: 'USD'\n      });\n    }\n  }\n}\n\nconst sortedServices = Object.values(serviceSummaryMap)\n  .map(s => ({\n    service: s.service,\n    unblendedCost: Number(s.unblendedCost.toFixed(2)),\n    blendedCost: Number(s.blendedCost.toFixed(2)),\n    amortizedCost: Number(s.amortizedCost.toFixed(2))\n  }))\n  .sort((a, b) => b.unblendedCost - a.unblendedCost);\n\nconst sortedProjects = Object.values(projectSummaryMap)\n  .map(p => ({\n    projectName: p.projectName,\n    project_name: p.project_name,\n    unblendedCost: Number(p.unblendedCost.toFixed(2)),\n    blendedCost: Number(p.blendedCost.toFixed(2)),\n    amortizedCost: Number(p.amortizedCost.toFixed(2)),\n    services: Object.values(p.servicesMap)\n      .map(s => ({\n        service: s.service,\n        unblendedCost: Number(s.unblendedCost.toFixed(2)),\n        blendedCost: Number(s.blendedCost.toFixed(2)),\n        amortizedCost: Number(s.amortizedCost.toFixed(2))\n      }))\n      .sort((a, b) => b.unblendedCost - a.unblendedCost)\n  }))\n  .sort((a, b) => b.unblendedCost - a.unblendedCost);\n\nconst dailyTotals = Object.values(dailyTotalsMap)\n  .map(d => ({\n    date: d.date,\n    unblendedCost: Number(d.unblendedCost.toFixed(2)),\n    blendedCost: Number(d.blendedCost.toFixed(2)),\n    amortizedCost: Number(d.amortizedCost.toFixed(2))\n  }))\n  .sort((a, b) => a.date.localeCompare(b.date));\n\nconst documentToStore = {\n  accountId,\n  accountName: 'Production AWS Account',\n  billingPeriod,\n  timePeriod: {\n    start: startDate,\n    end: endDate\n  },\n  fetchedAt: new Date(),\n  summary: {\n    totalUnblendedCost: Number(totalUnblended.toFixed(2)),\n    totalBlendedCost: Number(totalBlended.toFixed(2)),\n    totalNetUnblendedCost: Number(totalNetUnblended.toFixed(2)),\n    totalAmortizedCost: Number(totalAmortized.toFixed(2)),\n    currency: 'USD'\n  },\n  serviceSummary: sortedServices,\n  projectSummary: sortedProjects,\n  dailyTotals,\n  serviceWiseDaily,\n  totalRecordsCount: serviceWiseDaily.length\n};\n\nreturn {\n  json: {\n    accountId,\n    billingPeriod,\n    syncDate: todayDate,\n    syncedAt: new Date().toISOString(),\n    totalUnblendedCost: Number(totalUnblended.toFixed(2)),\n    totalAmortizedCost: Number(totalAmortized.toFixed(2)),\n    serviceCount: sortedServices.length,\n    projectCount: sortedProjects.length,\n    daysCount: dailyTotals.length,\n    document: documentToStore\n  }\n};\n"
+        }
+      },
+      "position": {
+        "x": 1880,
+        "y": 180
+      }
+    },
+    {
+      "id": "mongo-upsert-ce-009",
+      "type": "action",
+      "data": {
+        "label": "Save to awscostexplorer Collection",
+        "toolId": "mongodb.update_document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awscostexplorer",
+          "filter": "{\n  \"accountId\": \"{{ $json.accountId }}\",\n  \"billingPeriod\": \"{{ $json.billingPeriod }}\"\n}",
+          "update": "{\n  \"$set\": {{ JSON.stringify($json.document) }}\n}",
+          "upsert": true
+        }
+      },
+      "position": {
+        "x": 2180,
+        "y": 180
+      }
+    },
+    {
+      "id": "mongo-update-conn-010",
+      "type": "action",
+      "data": {
+        "label": "Update Connection Last Sync Date",
+        "toolId": "mongodb.update_document",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awsconnections",
+          "filter": "{\n  \"status\": \"connected\"\n}",
+          "update": "{\n  \"$set\": {\n    \"lastCostExplorerSyncDate\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.syncDate || $node[\\\"Code\\\"].json.syncDate }}\",\n    \"lastCostExplorerSyncedAt\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.syncedAt || $node[\\\"Code\\\"].json.syncedAt }}\",\n    \"totalSpend\": {{ $node[\\\"Transform & Aggregate CE Data\\\"].json.totalUnblendedCost || $node[\\\"Code\\\"].json.totalUnblendedCost }}\n  }\n}",
+          "upsert": false
+        }
+      },
+      "position": {
+        "x": 2480,
+        "y": 180
+      }
+    },
+    {
+      "id": "respond-success-ce-011",
+      "type": "action",
+      "data": {
+        "label": "Sync Success Response",
+        "toolId": "respondToWebhook",
+        "inputs": {
+          "responseCode": 200,
+          "responseData": "{\n  \"success\": true,\n  \"status\": \"synced_successfully\",\n  \"billingPeriod\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.billingPeriod || $node[\\\"Code\\\"].json.billingPeriod }}\",\n  \"totalUnblendedCost\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.totalUnblendedCost || $node[\\\"Code\\\"].json.totalUnblendedCost }}\",\n  \"totalAmortizedCost\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.totalAmortizedCost || $node[\\\"Code\\\"].json.totalAmortizedCost }}\",\n  \"totalServices\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.serviceCount || $node[\\\"Code\\\"].json.serviceCount }}\",\n  \"daysProcessed\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.daysCount || $node[\\\"Code\\\"].json.daysCount }}\",\n  \"syncedAt\": \"{{ $node[\\\"Transform & Aggregate CE Data\\\"].json.syncedAt || $node[\\\"Code\\\"].json.syncedAt }}\"\n}"
+        }
+      },
+      "position": {
+        "x": 2780,
+        "y": 180
+      }
+    },
+    {
+      "id": "http-request-ce-getcost-007",
+      "data": {
+        "label": "Call AWS Cost Explorer API",
+        "inputs": {
+          "url": "https://ce.us-east-1.amazonaws.com/",
+          "method": "POST",
+          "bodyType": "json",
+          "contentType": "json",
+          "authentication": {
+            "type": "predefinedCredentialType",
+            "config": {
+              "credentialId": "ede77268-8d19-45df-bfbc-9b79d770ade5",
+              "credentialType": "awsApi"
+            }
+          },
+          "headers": {
+            "Content-Type": "application/x-amz-json-1.1",
+            "X-Amz-Target": "AWSInsightsIndexService.GetCostAndUsage"
+          },
+          "body": "{\n  \"TimePeriod\": {\n    \"Start\": \"{{ $node[\\\"Deduplication & Range Check\\\"].json.startDate || $node[\\\"Code\\\"].json.startDate || $json.startDate || '2026-09-01' }}\",\n    \"End\": \"{{ $node[\\\"Deduplication & Range Check\\\"].json.endDate || $node[\\\"Code\\\"].json.endDate || $json.endDate || '2026-10-01' }}\"\n  },\n  \"Granularity\": \"DAILY\",\n  \"Metrics\": [\n    \"UnblendedCost\",\n    \"BlendedCost\",\n    \"NetUnblendedCost\",\n    \"AmortizedCost\",\n    \"NetAmortizedCost\",\n    \"UsageQuantity\"\n  ],\n  \"GroupBy\": [\n    {\n      \"Type\": \"DIMENSION\",\n      \"Key\": \"SERVICE\"\n    },\n    {\n      \"Type\": \"TAG\",\n      \"Key\": \"project_name\"\n    }\n  ]\n}"
+        },
+        "toolId": "httpRequest",
+        "isTrigger": false,
+        "isFormWait": false,
+        "isTimerWait": false,
+        "isWebhookWait": false,
+        "connectedHandles": [],
+        "isPrimaryTrigger": false
+      },
+      "type": "action",
+      "width": 220,
+      "height": 94,
+      "position": {
+        "x": 1580,
+        "y": 180
+      },
+      "selected": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "webhook-trigger-ce-001",
+      "target": "find-connection-ce-002"
+    },
+    {
+      "id": "edge-2",
+      "source": "find-connection-ce-002",
+      "target": "code-dedup-check-ce-003"
+    },
+    {
+      "id": "edge-3",
+      "source": "code-dedup-check-ce-003",
+      "target": "if-condition-ce-004"
+    },
+    {
+      "id": "edge-4",
+      "source": "if-condition-ce-004",
+      "sourceHandle": "true",
+      "target": "http-request-sts-assume-ce-006"
+    },
+    {
+      "id": "edge-5",
+      "source": "if-condition-ce-004",
+      "sourceHandle": "false",
+      "target": "respond-already-synced-ce-005"
+    },
+    {
+      "id": "edge-8",
+      "source": "code-transform-ce-008",
+      "target": "mongo-upsert-ce-009"
+    },
+    {
+      "id": "edge-9",
+      "source": "mongo-upsert-ce-009",
+      "target": "mongo-update-conn-010"
+    },
+    {
+      "id": "edge-10",
+      "source": "mongo-update-conn-010",
+      "target": "respond-success-ce-011"
+    },
+    {
+      "id": "reactflow__edge-http-request-sts-assume-ce-006-http-request-ce-getcost-007",
+      "data": {},
+      "type": "custom",
+      "source": "http-request-sts-assume-ce-006",
+      "target": "http-request-ce-getcost-007"
+    },
+    {
+      "id": "reactflow__edge-http-request-ce-getcost-007-code-transform-ce-008",
+      "data": {},
+      "type": "custom",
+      "source": "http-request-ce-getcost-007",
+      "target": "code-transform-ce-008"
+    }
+  ]
+}

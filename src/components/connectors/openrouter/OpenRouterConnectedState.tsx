@@ -135,62 +135,62 @@ export function OpenRouterConnectedState({
     <div className="space-y-6 max-w-4xl animate-in fade-in duration-300">
       
       {/* 1. OpenRouter Connection Overview Card */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 p-6 shadow-xl space-y-6">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
         {/* Card Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-dark-border/80">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100">
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">
               OpenRouter Enterprise AI Gateway
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Organization-wide shared gateway actively tracking all workspace project keys and token telemetry.
             </p>
           </div>
-          <Badge variant="connected">Connected & Synchronized</Badge>
+          <Badge variant="connected" className="rounded-full">Connected & Synchronized</Badge>
         </div>
 
         {/* Configuration Summary Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-          <div className="space-y-2.5 rounded-lg border border-dark-border bg-dark-card p-4">
+          <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-sans">Gateway Name:</span>
-              <span className="text-white font-semibold font-sans">{connection.connectionName}</span>
+              <span className="text-slate-500 font-sans">Gateway Name:</span>
+              <span className="text-slate-900 font-semibold font-sans">{connection.connectionName}</span>
             </div>
-            <div className="flex justify-between items-center border-t border-dark-border/40 pt-2">
-              <span className="text-slate-400 font-sans">Gateway Scope:</span>
-              <span className="text-blue-400 font-semibold uppercase">Organization Shared</span>
+            <div className="flex justify-between items-center border-t border-slate-200/80 pt-2">
+              <span className="text-slate-500 font-sans">Gateway Scope:</span>
+              <span className="text-slate-900 font-semibold uppercase">Organization Shared</span>
             </div>
-            <div className="flex justify-between items-center border-t border-dark-border/40 pt-2">
-              <span className="text-slate-400 font-sans">Status:</span>
-              <span className="text-emerald-400 font-semibold font-sans flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="flex justify-between items-center border-t border-slate-200/80 pt-2">
+              <span className="text-slate-500 font-sans">Status:</span>
+              <span className="text-emerald-700 font-semibold font-sans flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Active & Metering
               </span>
             </div>
           </div>
 
-          <div className="space-y-2.5 rounded-lg border border-dark-border bg-dark-card p-4">
+          <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-sans">Management Key:</span>
-              <span className="text-slate-300 font-mono text-[11px] truncate max-w-[200px]" title={connection.apiKey}>
+              <span className="text-slate-500 font-sans">Management Key:</span>
+              <span className="text-slate-700 font-mono text-[11px] truncate max-w-[200px]" title={connection.apiKey}>
                 {maskedKey}
               </span>
             </div>
-            <div className="flex justify-between items-center border-t border-dark-border/40 pt-2">
-              <span className="text-slate-400 font-sans">Low Balance Alert:</span>
-              <span className="text-amber-400 font-semibold">
+            <div className="flex justify-between items-center border-t border-slate-200/80 pt-2">
+              <span className="text-slate-500 font-sans">Low Balance Alert:</span>
+              <span className="text-slate-900 font-semibold font-mono">
                 ${(typeof connection?.lowBalanceThreshold === 'number' && !isNaN(connection.lowBalanceThreshold)
                   ? connection.lowBalanceThreshold
                   : (Number(connection?.lowBalanceThreshold) || 15.0)).toFixed(2)}
               </span>
             </div>
-            <div className="flex justify-between items-center border-t border-dark-border/40 pt-2">
-              <span className="text-slate-400 font-sans">Provider Portal:</span>
+            <div className="flex justify-between items-center border-t border-slate-200/80 pt-2">
+              <span className="text-slate-500 font-sans">Provider Portal:</span>
               <a
                 href="https://openrouter.ai/activity"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-sans text-[11px]"
+                className="text-purple-600 hover:text-purple-700 flex items-center gap-1 font-sans text-[11px] font-medium"
               >
                 <span>openrouter.ai/activity</span>
                 <ExternalLink className="h-3 w-3" />
@@ -200,97 +200,97 @@ export function OpenRouterConnectedState({
         </div>
       </div>
 
-      {/* 2. Data Ingestion Status Card (Informing User About Data Fetch) */}
-      <div className="rounded-xl border border-dark-border bg-dark-card/90 p-6 shadow-xl space-y-6">
-        <div className="flex items-start justify-between pb-4 border-b border-dark-border/80">
+      {/* 2. Data Ingestion Status Card */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100">
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              <Database className="h-5 w-5 text-blue-400" />
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Database className="h-5 w-5 text-purple-600" />
               <span>Workspace Ingestion & Telemetry Status</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Live automated token consumption telemetry ingestion for all workspace keys.
             </p>
           </div>
           <Button
-            variant="secondary"
+            variant="primary"
             size="md"
-            className="text-xs text-white"
+            className="text-xs rounded-lg shadow-sm"
             onClick={handleSyncNow}
             disabled={isSyncing}
           >
-            <RotateCw className={`h-3.5 w-3.5 mr-1.5 ${isSyncing ? 'animate-spin text-blue-400' : ''}`} />
+            <RotateCw className={`h-3.5 w-3.5 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
             <span>{isSyncing ? 'Fetching from OpenRouter...' : 'Sync Now'}</span>
           </Button>
         </div>
 
         {/* Informative Status Banner */}
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-start gap-3">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 flex items-start gap-3">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h4 className="text-xs font-semibold text-emerald-300">
+            <h4 className="text-xs font-bold text-emerald-900">
               Workspace telemetry synchronized from OpenRouter
             </h4>
-            <p className="text-[11px] text-emerald-300/80 leading-relaxed">
+            <p className="text-[11px] text-emerald-800 leading-relaxed">
               We have connected to your OpenRouter organization workspace and aggregated usage across all project keys. Token consumption, lifetime costs, and available credit pools are actively monitored.
             </p>
           </div>
         </div>
 
-        {/* 3 Metric Cards matching AWS */}
+        {/* 3 Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-dark-border bg-dark-card p-4 space-y-1">
-            <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-semibold">
-              <Database className="h-3.5 w-3.5 text-blue-400" />
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+              <Database className="h-3.5 w-3.5 text-purple-600" />
               <span>Tracked Project Keys</span>
             </div>
-            <div className="text-xl font-bold font-mono text-white">
+            <div className="text-xl font-bold font-mono text-slate-900">
               {recordsCount.toLocaleString()}
             </div>
-            <div className="text-[10px] text-slate-400">Active workspace keys</div>
+            <div className="text-[10px] text-slate-500">Active workspace keys</div>
           </div>
 
-          <div className="rounded-lg border border-dark-border bg-dark-card p-4 space-y-1">
-            <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-semibold">
-              <Coins className="h-3.5 w-3.5 text-amber-400" />
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+              <Coins className="h-3.5 w-3.5 text-amber-500" />
               <span>Total Workspace Spend</span>
             </div>
-            <div className="text-xl font-bold font-mono text-white">
+            <div className="text-xl font-bold font-mono text-slate-900">
               ${connection?.totalUsage !== undefined && connection?.totalUsage !== null && !isNaN(Number(connection.totalUsage))
                 ? Number(connection.totalUsage).toFixed(2)
                 : '0.00'}
             </div>
-            <div className="text-[10px] text-slate-400">Lifetime spend across all keys</div>
+            <div className="text-[10px] text-slate-500">Lifetime spend across all keys</div>
           </div>
 
-          <div className="rounded-lg border border-dark-border bg-dark-card p-4 space-y-1">
-            <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-semibold">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
               <span>Remaining Credit Pool</span>
             </div>
-            <div className="text-xl font-bold font-mono text-emerald-400">
+            <div className="text-xl font-bold font-mono text-slate-900">
               {connection?.remainingBalance !== null && connection?.remainingBalance !== undefined && !isNaN(Number(connection.remainingBalance))
                 ? `$${Number(connection.remainingBalance).toFixed(2)}`
                 : 'Active / Unlimited'}
             </div>
-            <div className="text-[10px] text-slate-400">Available workspace credits</div>
+            <div className="text-[10px] text-slate-500">Available workspace credits</div>
           </div>
         </div>
 
         {/* Discovered Keys Breakdown Table */}
         {connection.keysList && connection.keysList.length > 0 && (
-          <div className="rounded-lg border border-dark-border bg-dark-card/90 overflow-hidden space-y-2 p-4 pt-3">
-            <div className="flex items-center justify-between pb-2 border-b border-dark-border/60">
-              <div className="flex items-center gap-2 text-xs font-semibold text-white">
-                <Key className="h-4 w-4 text-amber-400" />
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden space-y-2 p-4 pt-3 shadow-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                <Key className="h-4 w-4 text-purple-600" />
                 <span>Workspace Project Keys Breakdown ({connection.keysList.length})</span>
               </div>
-              <span className="text-[10px] font-mono text-emerald-400">All Keys Active</span>
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full font-semibold">All Keys Active</span>
             </div>
             <div className="overflow-x-auto max-h-72 overflow-y-auto pr-1">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-dark-border/40 text-[10px] font-semibold uppercase text-slate-400">
+                  <tr className="border-b border-slate-100 text-[10px] font-semibold uppercase text-slate-400">
                     <th className="py-2.5 px-3">Project / Key Name</th>
                     <th className="py-2.5 px-3">Masked Token</th>
                     <th className="py-2.5 px-3 text-right">Lifetime Spend</th>
@@ -298,17 +298,17 @@ export function OpenRouterConnectedState({
                     <th className="py-2.5 px-3 text-right">Remaining Balance</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-border/30 font-mono text-[11px]">
+                <tbody className="divide-y divide-slate-100 font-mono text-[11px] text-slate-700">
                   {connection.keysList.map((k, idx) => (
-                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-2 px-3 font-sans font-medium text-white flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2 px-3 font-sans font-semibold text-slate-800 flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-600 shrink-0" />
                         <span className="truncate max-w-[200px]" title={k.name}>{k.name}</span>
                       </td>
-                      <td className="py-2 px-3 text-slate-400">{k.label}</td>
-                      <td className="py-2 px-3 text-right font-semibold text-amber-400">${(Number(k?.usage) || 0).toFixed(2)}</td>
-                      <td className="py-2 px-3 text-right text-slate-300">{k?.limit !== null && k?.limit !== undefined && !isNaN(Number(k.limit)) ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited'}</td>
-                      <td className="py-2 px-3 text-right text-emerald-400">{k?.remaining !== null && k?.remaining !== undefined && !isNaN(Number(k.remaining)) ? `$${Number(k.remaining).toFixed(2)}` : 'N/A'}</td>
+                      <td className="py-2 px-3 text-slate-500">{k.label}</td>
+                      <td className="py-2 px-3 text-right font-bold text-slate-900">${(Number(k?.usage) || 0).toFixed(2)}</td>
+                      <td className="py-2 px-3 text-right text-slate-600">{k?.limit !== null && k?.limit !== undefined && !isNaN(Number(k.limit)) ? `$${Number(k.limit).toFixed(2)}` : 'Unlimited'}</td>
+                      <td className="py-2 px-3 text-right text-slate-600">{k?.remaining !== null && k?.remaining !== undefined && !isNaN(Number(k.remaining)) ? `$${Number(k.remaining).toFixed(2)}` : 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -318,30 +318,30 @@ export function OpenRouterConnectedState({
         )}
 
         {/* Last Ingestion Metadata Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 border-t border-dark-border/40 pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-100 pt-3">
           <div className="flex items-center gap-2">
             <span>Last Synced:</span>
-            <span className="text-white font-medium">{lastSyncText}</span>
+            <span className="text-slate-900 font-semibold">{lastSyncText}</span>
           </div>
           <div className="flex items-center gap-2">
             <span>Sync Frequency:</span>
-            <span className="text-slate-300">Automated Hourly & On-Demand</span>
+            <span className="text-slate-600">Automated Hourly & On-Demand</span>
           </div>
         </div>
       </div>
 
       {/* 4. Danger Zone / Disconnect Action */}
-      <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-sm font-semibold text-rose-400">Disconnect OpenRouter AI Gateway</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h3 className="text-sm font-bold text-slate-900">Disconnect OpenRouter AI Gateway</h3>
+          <p className="text-xs text-slate-600 mt-0.5">
             Removes the encrypted API key and stops automatic token telemetry ingestion.
           </p>
         </div>
         <Button
-          variant="outline"
+          variant="secondary"
           size="md"
-          className="text-xs text-rose-400 border-rose-500/30 hover:bg-rose-500/10 shrink-0"
+          className="text-xs text-rose-700 border-rose-200 bg-white hover:bg-rose-100 transition-colors shrink-0 rounded-lg shadow-xs"
           onClick={() => setShowDisconnectModal(true)}
         >
           <Unplug className="h-3.5 w-3.5 mr-1.5" />
@@ -351,20 +351,20 @@ export function OpenRouterConnectedState({
 
       {/* Disconnect Confirmation Modal */}
       {showDisconnectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-2xl border border-dark-border bg-dark-card p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-rose-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
               <AlertTriangle className="h-6 w-6 shrink-0" />
-              <h3 className="text-base font-bold text-white">Disconnect OpenRouter?</h3>
+              <h3 className="text-base font-bold text-slate-900">Disconnect OpenRouter?</h3>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Are you sure you want to disconnect <strong>{connection.connectionName}</strong>? Future token telemetry and spend deltas will no longer be fetched for FinOps analytics.
             </p>
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-dark-border/40">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <Button
                 variant="secondary"
                 size="md"
-                className="text-xs"
+                className="text-xs rounded-lg"
                 onClick={() => setShowDisconnectModal(false)}
               >
                 Cancel
@@ -372,7 +372,7 @@ export function OpenRouterConnectedState({
               <Button
                 variant="primary"
                 size="md"
-                className="text-xs bg-rose-600 hover:bg-rose-500"
+                className="text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg shadow-sm"
                 onClick={handleConfirmDisconnect}
               >
                 Confirm Disconnect

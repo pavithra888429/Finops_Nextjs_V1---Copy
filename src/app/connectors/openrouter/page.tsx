@@ -11,7 +11,7 @@ export default function OpenRouterConnectorPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#070a11] flex items-center justify-center text-xs text-slate-500 font-mono">
+        <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-xs text-slate-500 font-mono">
           Loading OpenRouter setup session...
         </div>
       }

@@ -13,22 +13,22 @@ const DEFAULT_PROVIDERS: ProviderData[] = [
     id: "gemini",
     name: "Gemini",
     category: "AI Model Provider",
-    status: "connected",
+    status: "not_connected",
     description: "Track Gemini API usage, models, tokens, requests, and cost.",
-    accountText: "Production account",
-    syncText: "Synced 10 minutes ago",
-    metricsText: "Tokens, requests, models, cost",
+    accountText: "No API key configured",
+    syncText: "Not synchronized",
+    metricsText: "Waiting for connection",
     logoType: "gemini",
   },
   {
     id: "openrouter",
     name: "OpenRouter",
     category: "AI Model Gateway",
-    status: "connected",
+    status: "not_connected",
     description: "Track model usage, token consumption, requests, and provider cost.",
-    accountText: "Production account",
-    syncText: "Synced 15 minutes ago",
-    metricsText: "Models, tokens, requests, cost",
+    accountText: "No API key configured",
+    syncText: "Not synchronized",
+    metricsText: "Waiting for connection",
     logoType: "openrouter",
   },
   {
@@ -68,10 +68,10 @@ export function AvailableProviders({
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-bold tracking-tight text-dark-heading">
+        <h2 className="text-lg font-bold tracking-tight text-slate-900">
           Available Providers
         </h2>
-        <p className="mt-0.5 text-xs text-dark-muted">
+        <p className="mt-0.5 text-xs text-slate-500">
           Connect your provider accounts to collect cost and usage data.
         </p>
       </div>

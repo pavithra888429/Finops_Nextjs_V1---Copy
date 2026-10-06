@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
-import { Calendar, ChevronDown, SlidersHorizontal, RotateCcw, RotateCw, X, Key, Cpu } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal, RotateCcw, RotateCw, X } from 'lucide-react';
 
 interface OpenRouterFiltersProps {
   productName: string;
   providerName: string;
-  dateRange: string;
-  setDateRange: (v: string) => void;
-  comparePeriod: string;
-  setComparePeriod: (v: string) => void;
+  dateRange?: string;
+  setDateRange?: (v: string) => void;
+  comparePeriod?: string;
+  setComparePeriod?: (v: string) => void;
   keyStatus?: string;
   setKeyStatus?: (v: string) => void;
   environment?: string;
@@ -29,10 +29,6 @@ interface OpenRouterFiltersProps {
 export function OpenRouterFilters({
   productName,
   providerName,
-  dateRange,
-  setDateRange,
-  comparePeriod,
-  setComparePeriod,
   keyStatus = 'all',
   setKeyStatus,
   environment = 'production',
@@ -50,46 +46,6 @@ export function OpenRouterFilters({
   onSync,
   isSyncing = false,
 }: OpenRouterFiltersProps) {
-  // Dynamically generate all 12 calendar months (Jan to Dec) without hardcoding
-  const dynamicMonths = useMemo(() => {
-    // 1. Detect target year(s) from available keys, defaulting to current year
-    const yearSet = new Set<number>();
-    yearSet.add(new Date().getFullYear());
-
-    for (const key of availableKeys || []) {
-      const rawDate = key.createdAt || key.created_at || key.date;
-      if (rawDate) {
-        const d = new Date(rawDate);
-        if (!isNaN(d.getTime())) {
-          yearSet.add(d.getFullYear());
-        }
-      }
-    }
-
-    const sortedYears = Array.from(yearSet).sort((a, b) => b - a);
-    const months: { value: string; label: string }[] = [];
-    const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
-
-    // 2. Dynamically produce all 12 months (January to December) for each detected year
-    for (const yr of sortedYears) {
-      for (let m = 0; m < 12; m++) {
-        const d = new Date(yr, m, 1);
-        const yyyymm = `${yr}-${String(m + 1).padStart(2, '0')}`;
-        months.push({
-          value: yyyymm,
-          label: formatter.format(d),
-        });
-      }
-    }
-
-    return months;
-  }, [availableKeys]);
-
-  const activeDateLabel = useMemo(() => {
-    if (dateRange === 'all') return 'All Months (Lifetime)';
-    const found = dynamicMonths.find((m) => m.value === dateRange);
-    return found ? found.label : dateRange;
-  }, [dateRange, dynamicMonths]);
 
   const keyCounts = useMemo(() => {
     const list = availableKeys || [];
@@ -111,72 +67,34 @@ export function OpenRouterFilters({
   const keysToUse = availableKeys.length > 0 ? availableKeys : defaultKeys;
 
   return (
-    <div className="space-y-2.5 w-full">
+    <div className="space-y-3 w-full bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
       {/* Row 1: Dropdown Selects */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        {/* Month Selector */}
-        <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Billing Month</span>
-          <div className="relative">
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="h-8 appearance-none pl-8 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Months (Lifetime)</option>
-              {dynamicMonths.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* Comparison Period */}
-        <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Comparison period</span>
-          <div className="relative">
-            <select
-              value={comparePeriod}
-              onChange={(e) => setComparePeriod(e.target.value)}
-              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
-            >
-              <option value="prevMonth">Previous month</option>
-              <option value="prevYear">Same month last year</option>
-              <option value="none">No comparison</option>
-            </select>
-            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
-          </div>
-        </div>
-
+      <div className="flex flex-wrap items-center gap-2.5 text-xs">
         {/* Key Status (Active / Standby) */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Key Status</span>
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Key Status</span>
           <div className="relative">
             <select
               value={keyStatus}
               onChange={(e) => setKeyStatus && setKeyStatus(e.target.value)}
-              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
+              className="h-8.5 appearance-none pl-3 pr-7 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none cursor-pointer shadow-sm"
             >
               <option value="all">All Keys {keyCounts.total > 0 ? `(${keyCounts.total})` : ''}</option>
               <option value="active">Active Keys {keyCounts.total > 0 ? `(${keyCounts.active})` : ''}</option>
               <option value="standby">Standby Keys {keyCounts.total > 0 ? `(${keyCounts.standby})` : ''}</option>
             </select>
-            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
         {/* OpenRouter API Key */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">API Key</span>
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">API Key</span>
           <div className="relative">
             <select
               value={selectedKey}
               onChange={(e) => setSelectedKey(e.target.value)}
-              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer max-w-[200px] truncate"
+              className="h-8.5 appearance-none pl-3 pr-7 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none cursor-pointer max-w-[200px] truncate shadow-sm"
             >
               <option value="all">All API Keys</option>
               {keysToUse.map((k) => (
@@ -185,18 +103,18 @@ export function OpenRouterFilters({
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
         {/* AI Model */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">AI Model</span>
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">AI Model</span>
           <div className="relative">
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer max-w-[190px] truncate"
+              className="h-8.5 appearance-none pl-3 pr-7 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none cursor-pointer max-w-[190px] truncate shadow-sm"
             >
               <option value="all">All AI Models</option>
               <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
@@ -209,36 +127,35 @@ export function OpenRouterFilters({
               <option value="deepseek/deepseek-chat">DeepSeek V3</option>
               <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
             </select>
-            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Group by */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10.5px] font-medium text-slate-400">Group by</span>
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Group by</span>
           <div className="relative">
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value)}
-              className="h-8 appearance-none pl-3 pr-7 rounded-lg border border-dark-border bg-dark-card/90 text-xs font-normal text-slate-300 hover:border-dark-borderHover focus:outline-none cursor-pointer"
+              className="h-8.5 appearance-none pl-3 pr-7 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none cursor-pointer shadow-sm"
             >
               <option value="key">API Key</option>
               <option value="model">AI Model</option>
               <option value="provider">Model Provider</option>
               <option value="status">Key Status (Active/Standby)</option>
-              <option value="month">Billing Month</option>
             </select>
-            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-2.5 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
         </div>
 
-        {/* Action Buttons matching AWS DetailFilters */}
+        {/* Action Buttons */}
         <div className="flex items-center gap-2 self-end mb-0.5 ml-auto">
           {onSync && (
             <button
               onClick={onSync}
               disabled={isSyncing}
-              className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-blue-500/30 bg-blue-600/10 text-xs text-blue-400 hover:bg-blue-600/20 hover:text-blue-300 transition-colors cursor-pointer disabled:opacity-50"
+              className="h-8.5 flex items-center gap-1.5 px-3 rounded-lg bg-slate-900 text-xs font-semibold text-white hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
               title="Sync Latest OpenRouter Telemetry"
             >
               <RotateCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -246,65 +163,85 @@ export function OpenRouterFilters({
             </button>
           )}
 
-          <button className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-dark-border bg-dark-card/90 text-xs text-slate-300 hover:border-dark-borderHover transition-colors cursor-pointer">
+          <button className="h-8.5 flex items-center gap-1.5 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-sm">
             <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
             <span>More filters</span>
           </button>
 
           <button
             onClick={onResetFilters}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg border border-dark-border bg-dark-card/90 text-xs text-blue-400 hover:border-blue-500/40 hover:bg-blue-600/10 transition-colors cursor-pointer"
+            className="h-8.5 flex items-center gap-1.5 px-3 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shadow-sm"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
             <span>Reset filters</span>
           </button>
         </div>
       </div>
 
-      {/* Row 2: Active Filter Chips matching AWS DetailFilters */}
-      <div className="flex flex-wrap items-center gap-2 pt-1">
+      {/* Row 2: Active Filter Chips */}
+      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
         {/* Product Chip */}
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-200 bg-purple-50 text-xs text-purple-900">
           <span>
-            Product: <strong className="text-white font-medium">{productName}</strong>
+            Product: <strong className="font-bold">{productName}</strong>
           </span>
           {onRemoveProduct && (
             <button
-              onClick={onRemoveProduct}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onRemoveProduct) {
+                  onRemoveProduct();
+                } else if (typeof window !== 'undefined') {
+                  window.location.href = '/cost-allocation';
+                }
+              }}
               title="Clear product filter"
-              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+              className="p-0.5 rounded-full text-purple-600 hover:text-purple-900 hover:bg-purple-100 transition-colors cursor-pointer flex items-center justify-center"
+              aria-label="Clear product filter"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3 w-3 stroke-[2.5]" />
             </button>
           )}
         </div>
 
         {/* Provider Chip */}
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-xs text-blue-900">
           <span>
-            Provider: <strong className="text-white font-medium">{providerName}</strong>
+            Provider: <strong className="font-bold">{providerName}</strong>
           </span>
           {onRemoveProvider && (
             <button
-              onClick={onRemoveProvider}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onRemoveProvider) {
+                  onRemoveProvider();
+                } else if (typeof window !== 'undefined') {
+                  window.location.href = '/cost-allocation';
+                }
+              }}
               title="Clear provider filter"
-              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+              className="p-0.5 rounded-full text-blue-600 hover:text-blue-900 hover:bg-blue-100 transition-colors cursor-pointer flex items-center justify-center"
+              aria-label="Clear provider filter"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3 w-3 stroke-[2.5]" />
             </button>
           )}
         </div>
 
         {/* Key Chip if filtered */}
         {selectedKey !== 'all' && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 bg-slate-100 text-xs text-slate-800">
             <span>
-              API Key: <strong className="text-white font-medium">{selectedKey}</strong>
+              API Key: <strong className="font-bold">{selectedKey}</strong>
             </span>
             <button
               onClick={() => setSelectedKey('all')}
               title="Clear API key filter"
-              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+              className="text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="h-3 w-3" />
             </button>
@@ -313,14 +250,14 @@ export function OpenRouterFilters({
 
         {/* Model Chip if filtered */}
         {selectedModel !== 'all' && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 bg-slate-100 text-xs text-slate-800">
             <span>
-              Model: <strong className="text-white font-medium">{selectedModel}</strong>
+              Model: <strong className="font-bold">{selectedModel}</strong>
             </span>
             <button
               onClick={() => setSelectedModel('all')}
               title="Clear model filter"
-              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+              className="text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="h-3 w-3" />
             </button>
@@ -329,35 +266,19 @@ export function OpenRouterFilters({
 
         {/* Key Status Chip */}
         {keyStatus !== 'all' && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 bg-slate-100 text-xs text-slate-800">
             <span>
-              Status: <strong className="text-white font-medium capitalize">{keyStatus === 'active' ? 'Active Keys' : 'Standby Keys'}</strong>
+              Status: <strong className="font-bold capitalize">{keyStatus === 'active' ? 'Active Keys' : 'Standby Keys'}</strong>
             </span>
             <button
               onClick={() => setKeyStatus && setKeyStatus('all')}
               title="Reset key status filter to All Keys"
-              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+              className="text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <X className="h-3 w-3" />
             </button>
           </div>
         )}
-
-        {/* Month Chip */}
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dark-border bg-dark-card/80 text-xs text-slate-300">
-          <span>
-            Month: <strong className="text-white font-medium">{activeDateLabel}</strong>
-          </span>
-          {dateRange !== 'all' && (
-            <button
-              onClick={() => setDateRange('all')}
-              title="Reset month filter to All Months"
-              className="text-slate-500 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );

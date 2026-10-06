@@ -55,45 +55,45 @@ export function UsagePurchaseBreakdownCard() {
   const currentConfig = BREAKDOWN_DATA[activeTab];
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 p-4 sm:p-5 flex flex-col justify-between shadow-sm h-full">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between shadow-sm h-full">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-dark-border/60">
-        <h3 className="text-sm font-semibold text-white tracking-tight">AWS Usage and Purchase Breakdown</h3>
-        <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+        <h3 className="text-sm font-bold text-slate-900 tracking-tight">AWS Usage and Purchase Breakdown</h3>
+        <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors">
           View all
         </button>
       </div>
 
       {/* Pill Tabs */}
-      <div className="flex items-center gap-1.5 pt-2 pb-1 overflow-x-auto text-[11px]">
+      <div className="flex items-center gap-1.5 pt-3 pb-1 overflow-x-auto text-[11px]">
         <button
           onClick={() => setActiveTab('usage')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-            activeTab === 'usage' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30' : 'bg-dark-surface text-slate-400 hover:text-white'
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
+            activeTab === 'usage' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           Usage type
         </button>
         <button
           onClick={() => setActiveTab('purchase')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-            activeTab === 'purchase' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30' : 'bg-dark-surface text-slate-400 hover:text-white'
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
+            activeTab === 'purchase' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           Purchase option
         </button>
         <button
           onClick={() => setActiveTab('operation')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-            activeTab === 'operation' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30' : 'bg-dark-surface text-slate-400 hover:text-white'
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
+            activeTab === 'operation' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           Operation
         </button>
         <button
           onClick={() => setActiveTab('az')}
-          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
-            activeTab === 'az' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/30' : 'bg-dark-surface text-slate-400 hover:text-white'
+          className={`px-3 py-1 rounded-lg font-medium transition-all ${
+            activeTab === 'az' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
         >
           Availability zone
@@ -101,29 +101,29 @@ export function UsagePurchaseBreakdownCard() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto my-auto pt-1">
+      <div className="overflow-x-auto my-auto pt-2">
         <table className="w-full text-left text-xs border-collapse font-sans">
           <thead>
-            <tr className="text-[10.5px] font-medium text-slate-400 border-b border-dark-border/40">
-              <th className="py-2 pr-2 font-normal">{currentConfig.headerLabel}</th>
-              <th className="py-2 px-2 font-normal">Usage amount</th>
-              <th className="py-2 px-2 text-right font-normal">Cost</th>
-              <th className="py-2 pl-2 text-right font-normal">Unit cost</th>
+            <tr className="text-[10.5px] font-semibold text-slate-400 border-b border-slate-100">
+              <th className="py-2.5 pr-2">{currentConfig.headerLabel}</th>
+              <th className="py-2.5 px-2">Usage amount</th>
+              <th className="py-2.5 px-2 text-right">Cost</th>
+              <th className="py-2.5 pl-2 text-right">Unit cost</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/30 text-slate-300">
+          <tbody className="divide-y divide-slate-100 text-slate-700">
             {currentConfig.items.map((item) => (
-              <tr key={item.name} className="hover:bg-white/[0.02] transition-colors">
-                <td className="py-2.5 pr-2 font-medium text-white truncate max-w-[190px]" title={item.name}>
+              <tr key={item.name} className="hover:bg-slate-50/80 transition-colors">
+                <td className="py-2.5 pr-2 font-semibold text-slate-800 truncate max-w-[190px]" title={item.name}>
                   {item.name}
                 </td>
-                <td className="py-2.5 px-2 text-slate-400 text-xs tabular-nums whitespace-nowrap">
+                <td className="py-2.5 px-2 text-slate-500 text-xs tabular-nums whitespace-nowrap">
                   {item.amount}
                 </td>
-                <td className="py-2.5 px-2 text-right text-white font-medium tabular-nums whitespace-nowrap">
+                <td className="py-2.5 px-2 text-right text-slate-900 font-bold tabular-nums whitespace-nowrap">
                   {format(item.cost)}
                 </td>
-                <td className="py-2.5 pl-2 text-right text-slate-400 tabular-nums whitespace-nowrap">
+                <td className="py-2.5 pl-2 text-right text-slate-500 tabular-nums whitespace-nowrap">
                   {item.unitCost}
                 </td>
               </tr>

@@ -52,22 +52,23 @@ export function ProductProviderMatrix({
   const grandTotal = filteredRows.reduce((sum, r) => sum + calculateRowTotal(r), 0);
 
   const getProductIcon = (id: string) => {
-    if (id === 'dragon') return <Layers className="h-3.5 w-3.5 text-white" />;
-    if (id === 'okrian') return <Box className="h-3.5 w-3.5 text-white" />;
-    if (id === 'workbench') return <Monitor className="h-3.5 w-3.5 text-white" />;
-    return <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />;
+    const clean = id.toLowerCase();
+    if (clean === 'unallocated' || clean === 'untagged') return <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />;
+    if (clean.includes('agent')) return <Layers className="h-3.5 w-3.5 text-purple-600" />;
+    if (clean.includes('db') || clean.includes('sql') || clean.includes('mongo')) return <Monitor className="h-3.5 w-3.5 text-blue-600" />;
+    return <Box className="h-3.5 w-3.5 text-slate-600" />;
   };
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-dark-border flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
         <div>
-          <h3 className="text-sm sm:text-base font-semibold text-white tracking-tight">Product × Provider Cost</h3>
-          <p className="mt-0.5 text-xs text-slate-400">Cost breakdown by product and provider (USD)</p>
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">Product × Provider Cost</h3>
+          <p className="mt-0.5 text-xs text-slate-500">Cost breakdown by product and provider (USD)</p>
         </div>
         {(selectedProduct !== 'all' || selectedProvider !== 'all') && (
-          <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-sans">
             Filtered ({filteredRows.length} {filteredRows.length === 1 ? 'product' : 'products'})
           </span>
         )}
@@ -77,51 +78,60 @@ export function ProductProviderMatrix({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="border-b border-dark-border bg-dark-surface/40 text-[11px] font-medium text-slate-400">
-              <th className="py-3 px-5 font-normal">Product</th>
+            <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="py-3 px-5">Product</th>
 
               {/* Gemini Column Header */}
               <th
-                className={`py-3 px-4 font-normal transition-colors ${
-                  selectedProvider === 'gemini' ? 'bg-blue-600/15 text-blue-400 font-semibold' : ''
+                className={`py-3 px-4 transition-colors ${
+                  selectedProvider === 'gemini' ? 'bg-purple-50 text-purple-900 font-bold' : ''
                 }`}
               >
-                <div className="flex items-center gap-1.5 text-slate-200">
-                  <span className="text-blue-400 text-xs">✦</span>
+                <div className="flex items-center gap-1.5 text-slate-700">
+                  <span className="text-purple-600 text-xs">✦</span>
                   <span>Gemini</span>
                 </div>
               </th>
 
               {/* OpenRouter Column Header */}
               <th
-                className={`py-3 px-4 font-normal transition-colors ${
-                  selectedProvider === 'openrouter' ? 'bg-purple-600/15 text-purple-400 font-semibold' : ''
+                className={`py-3 px-4 transition-colors ${
+                  selectedProvider === 'openrouter' ? 'bg-purple-50 text-purple-900 font-bold' : ''
                 }`}
               >
-                <div className="flex items-center gap-1.5 text-slate-200">
-                  <span className="font-mono text-purple-400 text-xs">&lt;</span>
+                <div className="flex items-center gap-1.5 text-slate-700">
+                  <span className="font-sans text-blue-600 text-xs font-bold">&lt;</span>
                   <span>OpenRouter</span>
                 </div>
               </th>
 
               {/* AWS Column Header */}
               <th
-                className={`py-3 px-4 font-normal transition-colors ${
-                  selectedProvider === 'aws' ? 'bg-amber-600/15 text-amber-400 font-semibold' : ''
+                onClick={() => {
+                  if (onSelectProductProvider) {
+                    onSelectProductProvider('all', 'aws');
+                  } else {
+                    router.push('/cost-allocation?provider=aws');
+                  }
+                }}
+                className={`py-3 px-4 transition-colors cursor-pointer group hover:bg-slate-100 ${
+                  selectedProvider === 'aws' ? 'bg-purple-50 text-purple-900 font-bold' : ''
                 }`}
+                title="Click to view AWS Cost Explorer dashboard"
               >
-                <div className="flex items-center gap-1.5 text-slate-200">
-                  <span className="text-amber-500 font-bold text-[9px] tracking-tight">aws</span>
+                <div className="flex items-center gap-1.5 text-slate-700 group-hover:text-purple-600 transition-colors">
+                  <span className="text-amber-600 font-bold text-[9px] tracking-tight">aws</span>
                   <span>AWS</span>
+                  <ArrowUpRight className="h-3 w-3 text-slate-400 group-hover:text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </th>
 
-              <th className="py-3 px-4 text-right font-normal">Total cost</th>
-              <th className="py-3 px-4 text-right font-normal">Share of organization cost</th>
-              <th className="py-3 px-5 text-right font-normal">Change</th>
+              <th className="py-3 px-4 text-right">Total cost</th>
+              <th className="py-3 px-4 text-right">Share of cost</th>
+              <th className="py-3 px-5 text-right">Change</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/40 text-slate-300 font-sans">
+          <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
             {filteredRows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-slate-400">
@@ -130,9 +140,9 @@ export function ProductProviderMatrix({
               </tr>
             ) : (
               filteredRows.map((row) => (
-                <tr key={row.id} className="hover:bg-white/[0.02] transition-colors">
+                <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
                   {/* Product Name (Clickable to detail page) */}
-                  <td className="py-3 px-5 text-white">
+                  <td className="py-3 px-5 text-slate-900">
                     <button
                       onClick={() => {
                         const targetProv = selectedProvider !== 'all' ? selectedProvider : 'aws';
@@ -144,28 +154,28 @@ export function ProductProviderMatrix({
                       }}
                       className="flex items-center gap-2.5 text-left group hover:opacity-90 transition-opacity cursor-pointer"
                     >
-                      <div className={`flex h-5 w-5 items-center justify-center rounded ${row.iconBg}`}>
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 border border-slate-200">
                         {getProductIcon(row.id)}
                       </div>
-                      <span className="text-xs font-medium group-hover:text-blue-400 group-hover:underline transition-colors">
+                      <span className="text-xs font-semibold text-slate-900 group-hover:text-purple-600 group-hover:underline transition-colors">
                         {row.name}
                       </span>
-                      <ArrowUpRight className="h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowUpRight className="h-3 w-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </td>
 
                   {/* Gemini Column */}
                   <td
-                    className={`py-3 px-4 tabular-nums ${
+                    className={`py-3 px-4 tabular-nums font-sans ${
                       selectedProvider !== 'all' && selectedProvider !== 'gemini' ? 'opacity-30' : ''
-                    } ${selectedProvider === 'gemini' ? 'bg-blue-500/5' : ''}`}
+                    } ${selectedProvider === 'gemini' ? 'bg-purple-50/40' : ''}`}
                   >
                     {row.gemini > 0 ? (
                       <button
                         onClick={() => {
                           if (onSelectProductProvider) onSelectProductProvider(row.id, 'gemini');
                         }}
-                        className="inline-block px-2.5 py-0.5 rounded bg-[#0b3b24] text-[#4ade80] font-medium text-xs hover:ring-1 hover:ring-emerald-400/50 cursor-pointer transition-all"
+                        className="inline-block px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-700 font-semibold text-xs hover:bg-purple-100 border border-purple-200 cursor-pointer transition-all"
                       >
                         {formatCurrency(row.gemini)}
                       </button>
@@ -176,38 +186,38 @@ export function ProductProviderMatrix({
 
                   {/* OpenRouter Column */}
                   <td
-                    className={`py-3 px-4 text-xs tabular-nums ${
+                    className={`py-3 px-4 text-xs tabular-nums font-sans ${
                       selectedProvider !== 'all' && selectedProvider !== 'openrouter'
                         ? 'opacity-30'
-                        : 'text-slate-300'
-                    } ${selectedProvider === 'openrouter' ? 'bg-purple-500/5' : ''}`}
+                        : 'text-slate-700'
+                    } ${selectedProvider === 'openrouter' ? 'bg-purple-50/40' : ''}`}
                   >
                     {row.openrouter > 0 ? (
                       <button
                         onClick={() => {
                           if (onSelectProductProvider) onSelectProductProvider(row.id, 'openrouter');
                         }}
-                        className="hover:text-purple-300 hover:underline cursor-pointer"
+                        className="hover:text-purple-600 hover:underline cursor-pointer font-medium"
                       >
                         {formatCurrency(row.openrouter)}
                       </button>
                     ) : (
-                      <span>{formatCurrency(row.openrouter)}</span>
+                      <span className="text-slate-400">{formatCurrency(row.openrouter)}</span>
                     )}
                   </td>
 
                   {/* AWS Column */}
                   <td
-                    className={`py-3 px-4 tabular-nums ${
+                    className={`py-3 px-4 tabular-nums font-sans ${
                       selectedProvider !== 'all' && selectedProvider !== 'aws' ? 'opacity-30' : ''
-                    } ${selectedProvider === 'aws' ? 'bg-amber-500/5' : ''}`}
+                    } ${selectedProvider === 'aws' ? 'bg-purple-50/40' : ''}`}
                   >
                     {row.id === 'unallocated' ? (
                       <button
                         onClick={() => {
                           if (onSelectProductProvider) onSelectProductProvider(row.id, 'aws');
                         }}
-                        className="inline-block px-2.5 py-0.5 rounded bg-[#452b0f] text-[#fbbf24] font-medium text-xs hover:ring-1 hover:ring-amber-400/50 cursor-pointer transition-all"
+                        className="inline-block px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 font-semibold text-xs hover:bg-amber-100 border border-amber-200 cursor-pointer transition-all"
                       >
                         {formatCurrency(row.aws)}
                       </button>
@@ -216,7 +226,7 @@ export function ProductProviderMatrix({
                         onClick={() => {
                           if (onSelectProductProvider) onSelectProductProvider(row.id, 'aws');
                         }}
-                        className="inline-block px-2 py-0.5 rounded bg-[#101928] border border-amber-500/30 text-amber-300 font-semibold text-xs hover:border-amber-400 cursor-pointer transition-all"
+                        className="inline-block px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 font-semibold text-xs hover:bg-purple-100 cursor-pointer transition-all"
                       >
                         {formatCurrency(row.aws)}
                       </button>
@@ -225,7 +235,7 @@ export function ProductProviderMatrix({
                         onClick={() => {
                           if (onSelectProductProvider) onSelectProductProvider(row.id, 'aws');
                         }}
-                        className="text-xs text-slate-300 hover:text-amber-300 hover:underline cursor-pointer"
+                        className="text-xs text-slate-700 hover:text-purple-600 hover:underline cursor-pointer font-medium"
                       >
                         {formatCurrency(row.aws)}
                       </button>
@@ -233,17 +243,17 @@ export function ProductProviderMatrix({
                   </td>
 
                   {/* Total Cost */}
-                  <td className="py-3 px-4 text-right text-xs font-normal text-slate-200 tabular-nums">
+                  <td className="py-3 px-4 text-right text-xs font-semibold text-slate-900 tabular-nums font-sans">
                     {formatCurrency(calculateRowTotal(row))}
                   </td>
 
                   {/* Share of organization cost */}
-                  <td className="py-3 px-4 text-right text-xs text-slate-300 tabular-nums">
+                  <td className="py-3 px-4 text-right text-xs text-slate-500 tabular-nums font-sans">
                     {grandTotal > 0 ? `${((calculateRowTotal(row) / grandTotal) * 100).toFixed(1)}%` : `${row.share}%`}
                   </td>
 
                   {/* Change */}
-                  <td className="py-3 px-5 text-right text-xs text-emerald-400 font-medium">
+                  <td className="py-3 px-5 text-right text-xs text-emerald-600 font-medium font-sans">
                     <span className="inline-flex items-center gap-0.5 justify-end">
                       <ArrowUp className="h-3 w-3 stroke-[2.5]" />
                       <span>+{row.change}%</span>
@@ -254,36 +264,44 @@ export function ProductProviderMatrix({
             )}
 
             {/* Total Row */}
-            <tr className="bg-dark-surface/50 border-t border-dark-border font-semibold text-white">
+            <tr className="bg-slate-50/90 border-t-2 border-slate-200 font-bold text-slate-900">
               <td className="py-3.5 px-5 text-xs font-bold">Total</td>
               <td
-                className={`py-3.5 px-4 text-xs font-semibold tabular-nums ${
-                  selectedProvider !== 'all' && selectedProvider !== 'gemini' ? 'opacity-30' : 'text-slate-200'
+                className={`py-3.5 px-4 text-xs font-bold tabular-nums font-sans ${
+                  selectedProvider !== 'all' && selectedProvider !== 'gemini' ? 'opacity-30' : 'text-slate-800'
                 }`}
               >
                 {formatCurrency(totalGemini)}
               </td>
               <td
-                className={`py-3.5 px-4 text-xs font-semibold tabular-nums ${
-                  selectedProvider !== 'all' && selectedProvider !== 'openrouter' ? 'opacity-30' : 'text-slate-200'
+                className={`py-3.5 px-4 text-xs font-bold tabular-nums font-sans ${
+                  selectedProvider !== 'all' && selectedProvider !== 'openrouter' ? 'opacity-30' : 'text-slate-800'
                 }`}
               >
                 {formatCurrency(totalOpenrouter)}
               </td>
               <td
-                className={`py-3.5 px-4 text-xs font-semibold tabular-nums ${
-                  selectedProvider !== 'all' && selectedProvider !== 'aws' ? 'opacity-30' : 'text-slate-200'
+                onClick={() => {
+                  if (onSelectProductProvider) {
+                    onSelectProductProvider('all', 'aws');
+                  } else {
+                    router.push('/cost-allocation?provider=aws');
+                  }
+                }}
+                className={`py-3.5 px-4 text-xs font-bold tabular-nums font-sans cursor-pointer hover:text-purple-600 transition-colors ${
+                  selectedProvider !== 'all' && selectedProvider !== 'aws' ? 'opacity-30' : 'text-slate-800'
                 }`}
+                title="Click to view AWS Cost Explorer dashboard"
               >
                 {formatCurrency(totalAws)}
               </td>
-              <td className="py-3.5 px-4 text-right text-xs font-bold text-white tabular-nums">
+              <td className="py-3.5 px-4 text-right text-xs font-bold text-slate-900 tabular-nums font-sans">
                 {formatCurrency(grandTotal)}
               </td>
-              <td className="py-3.5 px-4 text-right text-xs font-semibold text-slate-200 tabular-nums">
+              <td className="py-3.5 px-4 text-right text-xs font-bold text-slate-600 tabular-nums font-sans">
                 100%
               </td>
-              <td className="py-3.5 px-5 text-right text-xs text-emerald-400 font-semibold">
+              <td className="py-3.5 px-5 text-right text-xs text-emerald-600 font-semibold font-sans">
                 <span className="inline-flex items-center gap-0.5 justify-end">
                   <ArrowUp className="h-3 w-3 stroke-[2.5]" />
                   <span>+12.1%</span>

@@ -37,10 +37,11 @@ export function ProductCostDetailsTable({
   });
 
   const getProductIcon = (id: string) => {
-    if (id === 'dragon') return <Layers className="h-3.5 w-3.5 text-white" />;
-    if (id === 'okrian') return <Box className="h-3.5 w-3.5 text-white" />;
-    if (id === 'workbench') return <Monitor className="h-3.5 w-3.5 text-white" />;
-    return <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />;
+    const clean = id.toLowerCase();
+    if (clean === 'unallocated' || clean === 'untagged') return <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />;
+    if (clean.includes('agent')) return <Layers className="h-3.5 w-3.5 text-purple-600" />;
+    if (clean.includes('db') || clean.includes('sql') || clean.includes('mongo')) return <Monitor className="h-3.5 w-3.5 text-blue-600" />;
+    return <Box className="h-3.5 w-3.5 text-slate-600" />;
   };
 
   const getRowCost = (row: ProductAllocationRecord) => {
@@ -53,15 +54,15 @@ export function ProductCostDetailsTable({
   const grandTotal = filteredRows.reduce((sum, r) => sum + getRowCost(r), 0);
 
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/90 overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-dark-border flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
         <div>
-          <h3 className="text-sm sm:text-base font-semibold text-white tracking-tight">Product Cost Details</h3>
-          <p className="mt-0.5 text-xs text-slate-400">Detailed product cost breakdown and key drivers</p>
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">Product Cost Details</h3>
+          <p className="mt-0.5 text-xs text-slate-500">Detailed product cost breakdown and key drivers</p>
         </div>
         {(selectedProduct !== 'all' || selectedProvider !== 'all') && (
-          <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-sans">
             Filtered ({filteredRows.length} {filteredRows.length === 1 ? 'product' : 'products'})
           </span>
         )}
@@ -71,17 +72,17 @@ export function ProductCostDetailsTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse font-sans">
           <thead>
-            <tr className="border-b border-dark-border bg-dark-surface/40 text-[11px] font-medium text-slate-400">
-              <th className="py-3 px-5 font-normal">Product</th>
-              <th className="py-3 px-4 font-normal">Total cost</th>
-              <th className="py-3 px-4 font-normal">Daily average</th>
-              <th className="py-3 px-4 font-normal">Top provider</th>
-              <th className="py-3 px-4 font-normal">Top model or AWS service</th>
-              <th className="py-3 px-4 text-right font-normal">Period change</th>
-              <th className="py-3 px-5 text-right font-normal">Cost share</th>
+            <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="py-3 px-5">Product</th>
+              <th className="py-3 px-4">Total cost</th>
+              <th className="py-3 px-4">Daily average</th>
+              <th className="py-3 px-4">Top provider</th>
+              <th className="py-3 px-4">Top model or AWS service</th>
+              <th className="py-3 px-4 text-right">Period change</th>
+              <th className="py-3 px-5 text-right">Cost share</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-border/40 text-slate-300">
+          <tbody className="divide-y divide-slate-100 text-slate-700">
             {filteredRows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-slate-400">
@@ -93,9 +94,9 @@ export function ProductCostDetailsTable({
                 const cost = getRowCost(row);
                 const share = grandTotal > 0 ? ((cost / grandTotal) * 100).toFixed(1) : row.share;
                 return (
-                  <tr key={row.id} className="hover:bg-white/[0.02] transition-colors">
+                  <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
                     {/* Product Name (Clickable to detail analytics) */}
-                    <td className="py-3 px-5 text-white">
+                    <td className="py-3 px-5 text-slate-900">
                       <button
                         onClick={() => {
                           const targetProv = selectedProvider !== 'all' ? selectedProvider : 'aws';
@@ -107,41 +108,41 @@ export function ProductCostDetailsTable({
                         }}
                         className="flex items-center gap-2.5 text-left group hover:opacity-90 transition-opacity cursor-pointer"
                       >
-                        <div className={`flex h-5 w-5 items-center justify-center rounded ${row.iconBg}`}>
+                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 border border-slate-200">
                           {getProductIcon(row.id)}
                         </div>
-                        <span className="text-xs font-medium group-hover:text-blue-400 group-hover:underline transition-colors">
+                        <span className="text-xs font-semibold text-slate-900 group-hover:text-purple-600 group-hover:underline transition-colors">
                           {row.name}
                         </span>
-                        <ArrowUpRight className="h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowUpRight className="h-3 w-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     </td>
 
                     {/* Total Cost */}
-                    <td className="py-3 px-4 text-xs font-normal text-slate-200 tabular-nums">
+                    <td className="py-3 px-4 text-xs font-bold text-slate-900 tabular-nums font-sans">
                       {formatCurrency(cost)}
                     </td>
 
                     {/* Daily Average */}
-                    <td className="py-3 px-4 text-xs text-slate-300 tabular-nums">
+                    <td className="py-3 px-4 text-xs text-slate-600 tabular-nums font-sans font-medium">
                       {formatCurrency(cost / 30)}
                     </td>
 
                     {/* Top Provider Badge */}
                     <td className="py-3 px-4">
-                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#101726] border border-dark-border text-xs">
-                        <span className="text-amber-500 font-bold text-[9px] tracking-tight">aws</span>
-                        <span className="text-slate-200 font-medium">{row.topProvider}</span>
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
+                        <span className="text-amber-600 font-bold text-[9px] tracking-tight">aws</span>
+                        <span>{row.topProvider}</span>
                       </div>
                     </td>
 
                     {/* Top Model or AWS Service */}
-                    <td className="py-3 px-4 text-xs text-slate-300">
+                    <td className="py-3 px-4 text-xs text-slate-700 font-medium">
                       {row.topService}
                     </td>
 
                     {/* Period Change */}
-                    <td className="py-3 px-4 text-right text-xs text-emerald-400 font-medium">
+                    <td className="py-3 px-4 text-right text-xs text-emerald-600 font-semibold font-sans">
                       <span className="inline-flex items-center gap-0.5 justify-end">
                         <ArrowUp className="h-3 w-3 stroke-[2.5]" />
                         <span>+{row.change}%</span>
@@ -149,7 +150,7 @@ export function ProductCostDetailsTable({
                     </td>
 
                     {/* Cost Share */}
-                    <td className="py-3 px-5 text-right text-xs text-slate-300 tabular-nums font-normal">
+                    <td className="py-3 px-5 text-right text-xs text-slate-500 tabular-nums font-medium font-sans">
                       {share}%
                     </td>
                   </tr>

@@ -25,14 +25,14 @@ const STEPS = [
 
 export function HowConnectionsWork() {
   return (
-    <div className="rounded-xl border border-dark-border bg-dark-card/95 p-5">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       
       {/* Header */}
       <div className="pb-4">
-        <h3 className="text-base font-bold text-dark-heading">
+        <h3 className="text-base font-bold text-slate-900">
           How connections work
         </h3>
-        <p className="mt-0.5 text-xs text-dark-muted">
+        <p className="mt-0.5 text-xs text-slate-500">
           Follow these steps to start analyzing your costs.
         </p>
       </div>
@@ -44,20 +44,20 @@ export function HowConnectionsWork() {
             
             {/* Connecting line between steps */}
             {idx !== STEPS.length - 1 && (
-              <span className="absolute left-3.5 top-8 -bottom-5 w-[1px] bg-dark-border" />
+              <span className="absolute left-3.5 top-8 -bottom-5 w-[1px] bg-slate-200" />
             )}
 
-            {/* Circular Number Badge */}
-            <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm shadow-blue-500/20">
+            {/* Sharp Number Badge */}
+            <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-purple-50 border border-purple-200 text-xs font-bold text-purple-700 shadow-sm font-sans">
               {item.step}
             </div>
 
             {/* Step Content */}
             <div className="pt-0.5">
-              <h4 className="text-xs font-semibold text-dark-heading">
+              <h4 className="text-xs font-semibold text-slate-900">
                 {item.title}
               </h4>
-              <p className="mt-0.5 text-xs text-dark-muted leading-relaxed">
+              <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">
                 {item.description}
               </p>
             </div>

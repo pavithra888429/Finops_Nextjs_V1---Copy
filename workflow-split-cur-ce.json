@@ -1,0 +1,222 @@
+{
+  "_platform": "agentbuilder",
+  "_version": 1,
+  "_exportedAt": "2026-10-03T12:25:45.295Z",
+  "_fingerprint": "YWN0aW9uOmNvZGUuZXhlY3V0ZXxhY3Rpb246bW9uZ29kYi5maW5kX2RvY3VtZW50",
+  "nodes": [
+    {
+      "id": "webhook-1790843991079001",
+      "data": {
+        "label": "Webhook Trigger",
+        "inputs": {
+          "path": "7c53bda3-c369-4e08-bb54-c645901b89c2",
+          "method": "POST",
+          "options": {},
+          "responseMode": "lastNode",
+          "authentication": "none"
+        },
+        "toolId": "webhook",
+        "toolData": {
+          "id": "webhook",
+          "displayName": "Webhook Trigger",
+          "category": "Input /  Output"
+        },
+        "isTrigger": true,
+        "isPrimaryTrigger": true
+      },
+      "type": "webhook",
+      "position": {
+        "x": 100,
+        "y": 250
+      }
+    },
+    {
+      "id": "mongo-ce-doc",
+      "data": {
+        "label": "Find Document (Cost Explorer)",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "awscostexplorer",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96",
+          "query": "{}"
+        },
+        "toolId": "mongodb.find_document",
+        "toolData": {
+          "id": "mongodb.find_document",
+          "displayName": "Find Document",
+          "category": "Memory & State"
+        }
+      },
+      "type": "action",
+      "position": {
+        "x": 400,
+        "y": 120
+      }
+    },
+    {
+      "id": "code-ce-process",
+      "data": {
+        "label": "Code: Process Cost Explorer",
+        "inputs": {
+          "code": "// ===============================================================\n// Code Node 1: Process AWS Cost Explorer Document\n// Upstream: Find Document (awscostexplorer)\n// ===============================================================\n\n// 1. Resolve Requested Billing Period\nconst webhookData = \n  $node[\"Webhook Trigger\"]?.json || \n  $node[\"Webhook\"]?.json || \n  {};\nconst webhookBody = webhookData.body || webhookData;\n\nconst inputItem = (typeof $input !== 'undefined' && typeof $input.first === 'function') \n  ? ($input.first()?.json || {}) \n  : {};\n\nconst requestedBillingPeriod = \n  webhookBody.billingPeriod || \n  webhookData.query?.billingPeriod || \n  inputItem.billingPeriod || \n  '';\n\n// 2. Resolve Cost Explorer documents\nconst docs = \n  inputItem.documents || \n  $node[\"Find Document (Cost Explorer)\"]?.json?.documents || \n  $node[\"Find Document\"]?.json?.documents || \n  [];\n\nconst availableBillingPeriods = Array.from(new Set(\n  docs.map(d => d.billingPeriod).filter(Boolean)\n)).sort();\n\nlet doc = null;\nif (requestedBillingPeriod) {\n  doc = docs.find(d => d.billingPeriod === requestedBillingPeriod);\n}\nif (!doc && docs.length > 0) {\n  doc = [...docs].sort((a, b) => {\n    const pa = a.billingPeriod || '', pb = b.billingPeriod || '';\n    if (pa !== pb) return pb.localeCompare(pa);\n    return (new Date(b.fetchedAt || 0).getTime()) - (new Date(a.fetchedAt || 0).getTime());\n  })[0];\n}\nif (!doc) doc = inputItem.billingPeriod ? inputItem : {};\n\n// 3. Extract Core Metrics\nconst accountId = doc.accountId || '864981730114';\nconst accountName = doc.accountName || 'Production AWS Account';\nconst billingPeriod = doc.billingPeriod || (doc.timePeriod?.start ? doc.timePeriod.start.slice(0, 7) : requestedBillingPeriod || '2026-09');\nconst timePeriod = doc.timePeriod || { start: `${billingPeriod}-01`, end: `${billingPeriod}-30` };\n\nconst totalSpend = Number(doc.summary?.totalUnblendedCost || 0);\nconst totalAmortized = Number(doc.summary?.totalAmortizedCost || totalSpend);\nconst currency = doc.summary?.currency || 'USD';\n\nconst projects = Array.isArray(doc.projectSummary) ? doc.projectSummary : [];\nconst services = Array.isArray(doc.serviceSummary) ? doc.serviceSummary : [];\nconst dailyTotals = Array.isArray(doc.dailyTotals) ? doc.dailyTotals : [];\nconst serviceWiseDaily = Array.isArray(doc.serviceWiseDaily) ? doc.serviceWiseDaily : [];\n\nconst daysCount = dailyTotals.length > 0 ? dailyTotals.length : 30;\nconst dailyAvg = totalSpend > 0 ? Number((totalSpend / daysCount).toFixed(2)) : 0;\n\n// Top Project\nconst topProj = projects.find(p => (p.projectName || p.project_name) !== 'Untagged') || projects[0] || null;\nconst topProjName = topProj ? (topProj.projectName || topProj.project_name) : 'N/A';\nconst topProjCost = topProj ? Number(topProj.unblendedCost || 0) : 0;\nconst topProjShare = totalSpend > 0 ? Number(((topProjCost / totalSpend) * 100).toFixed(1)) : 0;\n\n// Top Service\nconst topSvc = services[0] || null;\nconst topSvcName = topSvc?.service || 'N/A';\nconst topSvcCost = topSvc ? Number(topSvc.unblendedCost || 0) : 0;\nconst topSvcShare = totalSpend > 0 ? Number(((topSvcCost / totalSpend) * 100).toFixed(1)) : 0;\n\n// Governance\nconst untaggedItem = projects.find(p => (p.projectName || p.project_name) === 'Untagged');\nconst untaggedSpend = untaggedItem ? Number(Number(untaggedItem.unblendedCost || 0).toFixed(2)) : 0;\nconst taggedSpend = Number(Math.max(0, totalSpend - untaggedSpend).toFixed(2));\nconst tagCoveragePercentage = totalSpend > 0 ? Number(((taggedSpend / totalSpend) * 100).toFixed(1)) : 0;\n\n// Matrix\nconst topMatrixServices = services.slice(0, 10).map(s => s.service);\nconst matrixRows = projects.slice(0, 10).map(p => {\n  const pName = p.projectName || p.project_name || 'Untagged';\n  const srvCostMap = {};\n  (p.services || []).forEach(s => { srvCostMap[s.service] = Number(s.unblendedCost || 0); });\n  return {\n    productId: pName, productName: pName, project: pName, projectName: pName, project_name: pName,\n    services: srvCostMap, serviceCosts: srvCostMap,\n    total: Number(p.unblendedCost || 0), totalCost: Number(p.unblendedCost || 0),\n  };\n});\nconst matrix = { services: topMatrixServices, rows: matrixRows };\n\nconst topCostDrivers = projects.slice(0, 5).map(p => ({\n  name: p.projectName || p.project_name,\n  cost: Number(p.unblendedCost || 0),\n  share: totalSpend > 0 ? Number(((Number(p.unblendedCost || 0) / totalSpend) * 100).toFixed(1)) : 0,\n}));\n\nconst kpis = {\n  totalSpend, totalAmortized, currency, dailyAvg, daysCount,\n  projectsCount: projects.length, servicesCount: services.length,\n  taggedSpend, untaggedSpend, tagCoveragePercentage,\n  topProject: { name: topProjName, cost: topProjCost, share: topProjShare },\n  topService: { name: topSvcName, cost: topSvcCost, share: topSvcShare },\n};\n\nreturn {\n  json: {\n    accountId, accountName, billingPeriod, timePeriod, availableBillingPeriods,\n    kpis, totalSpend, totalAmortized, currency, dailyAvg, daysCount,\n    projectsCount: projects.length, servicesCount: services.length,\n    taggedSpend, untaggedSpend, tagCoveragePercentage,\n    topProject: kpis.topProject, topService: kpis.topService,\n    projects, projectSummary: projects,\n    services, serviceSummary: services,\n    dailyTotals, dailyTimeline: dailyTotals, serviceWiseDaily,\n    matrix, topCostDrivers,\n    fetchedAt: doc.fetchedAt || new Date().toISOString()\n  }\n};\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "toolData": {
+          "id": "code.execute",
+          "displayName": "Code",
+          "category": "Data  Processing"
+        }
+      },
+      "type": "action",
+      "position": {
+        "x": 700,
+        "y": 120
+      }
+    },
+    {
+      "id": "mongo-cur-doc",
+      "data": {
+        "label": "Find Document (Cost Records)",
+        "inputs": {
+          "database": "finops_3",
+          "collection": "finopscostrecords",
+          "credentialId": "692b7c41-2b38-462c-b30b-d6f3e3ceff96",
+          "query": "{}",
+          "projection": "{\"billingPeriod\": 1, \"records.service\": 1, \"records.usageType\": 1, \"records.unblendedCost\": 1}",
+          "sort": "{\"completedAt\": -1}",
+          "limit": 1
+        },
+        "toolId": "mongodb.find_document",
+        "toolData": {
+          "id": "mongodb.find_document",
+          "displayName": "Find Document",
+          "category": "Memory & State"
+        }
+      },
+      "type": "action",
+      "position": {
+        "x": 400,
+        "y": 380
+      }
+    },
+    {
+      "id": "code-cur-process",
+      "data": {
+        "label": "Code: Process CUR Region",
+        "inputs": {
+          "code": "// ===============================================================\n// Code Node 2: Process CUR Document for Region Mapping\n// Upstream: Find Document (finopscostrecords)\n// ===============================================================\n\nconst webhookData = \n  $node[\"Webhook Trigger\"]?.json || \n  $node[\"Webhook\"]?.json || \n  {};\nconst webhookBody = webhookData.body || webhookData;\nconst requestedBillingPeriod = \n  webhookBody.billingPeriod || \n  webhookData.query?.billingPeriod || \n  '';\n\nconst inputItem = (typeof $input !== 'undefined' && typeof $input.first === 'function') \n  ? ($input.first()?.json || {}) \n  : {};\n\n// Retrieve documents from upstream node\nconst curDocs = \n  inputItem.documents || \n  $node[\"Find Document (Cost Records)\"]?.json?.documents || \n  $node[\"Find Document 1\"]?.json?.documents || \n  [inputItem];\n\nlet curDoc = null;\nif (requestedBillingPeriod) {\n  curDoc = curDocs.find(d => d.billingPeriod === requestedBillingPeriod);\n}\nif (!curDoc && curDocs.length > 0) {\n  curDoc = curDocs[0];\n}\nif (!curDoc) curDoc = {};\n\nconst curRecords = Array.isArray(curDoc.records) ? curDoc.records : [];\nconst billingPeriod = curDoc.billingPeriod || requestedBillingPeriod || '';\n\n// Region Prefix Mapping (AWS Standard prefixes)\nconst REGION_PREFIX = {\n  USE1: 'us-east-1', USE2: 'us-east-2', USW1: 'us-west-1', USW2: 'us-west-2',\n  APS1: 'ap-southeast-1', APS2: 'ap-southeast-2', APS3: 'ap-south-1', APS4: 'ap-southeast-3',\n  APS5: 'ap-south-2', APN1: 'ap-northeast-1', APN2: 'ap-northeast-2', APN3: 'ap-northeast-3',\n  APE1: 'ap-east-1', EU: 'eu-west-1', EUW1: 'eu-west-1', EUW2: 'eu-west-2', EUW3: 'eu-west-3',\n  EUC1: 'eu-central-1', EUC2: 'eu-central-2', EUN1: 'eu-north-1', EUS1: 'eu-south-1',\n  CAN1: 'ca-central-1', SAE1: 'sa-east-1', MES1: 'me-south-1', MEC1: 'me-central-1', AFS1: 'af-south-1',\n};\nconst GLOBAL_PRODUCT_CODES = new Set(['AmazonRoute53', 'AmazonCloudFront', 'awswaf', 'AWSCostExplorer']);\nconst CUR_TO_CE = {\n  AWSELB: 'Amazon Elastic Load Balancing',\n  AmazonVPC: 'Amazon Virtual Private Cloud',\n  awswaf: 'AWS WAF',\n  AWSAmplify: 'AWS Amplify',\n  AmazonRoute53: 'Amazon Route 53',\n  AmazonS3: 'Amazon Simple Storage Service',\n  AmazonCloudWatch: 'AmazonCloudWatch',\n  AmazonECR: 'Amazon EC2 Container Registry (ECR)',\n  AWSSecretsManager: 'AWS Secrets Manager',\n  AWSCostExplorer: 'AWS Cost Explorer',\n  AmazonSES: 'Amazon Simple Email Service',\n  AWSGlue: 'AWS Glue',\n  awskms: 'AWS Key Management Service',\n  AWSLambda: 'AWS Lambda',\n  AmazonCloudFront: 'Amazon CloudFront',\n  AmazonECS: 'Amazon Elastic Container Service',\n  AWSEvents: 'CloudWatch Events',\n  ACM: 'AWS Certificate Manager',\n  AWSDataTransfer: 'AWS Data Transfer',\n};\nconst EC2_COMPUTE_PATTERN = /(BoxUsage|SpotUsage|DedicatedUsage|HostUsage|UnusedBox|ReservedHostUsage)/;\n\nfunction regionFromUsageType(productCode, usageType) {\n  const m = String(usageType || '').match(/^([A-Z]{2,4}\\d?)-/);\n  if (m && REGION_PREFIX[m[1]]) return REGION_PREFIX[m[1]];\n  if (GLOBAL_PRODUCT_CODES.has(productCode)) return 'global';\n  return 'us-east-1';\n}\n\nfunction ceServiceName(rec) {\n  const code = rec.service || '';\n  if (/^Tax\\b/i.test(rec.description || '')) return 'Tax';\n  if (code === 'AmazonEC2') {\n    return EC2_COMPUTE_PATTERN.test(rec.usageType || '')\n      ? 'Amazon Elastic Compute Cloud - Compute'\n      : 'EC2 - Other';\n  }\n  return CUR_TO_CE[code] || code;\n}\n\nconst svcRegionCost = {};\nconst regionCost = {};\nlet curTotal = 0;\n\n// High performance, low-memory loop\nfor (let i = 0; i < curRecords.length; i++) {\n  const rec = curRecords[i];\n  const cost = Number(rec.unblendedCost || 0);\n  if (cost <= 0) continue;\n\n  const svc = ceServiceName(rec);\n  const region = regionFromUsageType(rec.service, rec.usageType);\n\n  svcRegionCost[svc] = svcRegionCost[svc] || {};\n  svcRegionCost[svc][region] = (svcRegionCost[svc][region] || 0) + cost;\n\n  regionCost[region] = (regionCost[region] || 0) + cost;\n  curTotal += cost;\n}\n\n// Calculate service-level region breakdown\nconst serviceRegionBreakdown = {};\nfor (const svc in svcRegionCost) {\n  const regMap = svcRegionCost[svc];\n  let svcTotal = 0;\n  for (const r in regMap) svcTotal += regMap[r];\n\n  serviceRegionBreakdown[svc] = Object.entries(regMap)\n    .map(([region, cost]) => ({\n      region,\n      curCost: Number(cost.toFixed(4)),\n      share: svcTotal > 0 ? Number((cost / svcTotal).toFixed(4)) : 0\n    }))\n    .sort((a, b) => b.share - a.share);\n}\n\n// Overall region breakdown\nconst regionSummary = Object.entries(regionCost)\n  .map(([region, cost]) => ({\n    region,\n    curCost: Number(cost.toFixed(2)),\n    share: curTotal > 0 ? Number(((cost / curTotal) * 100).toFixed(1)) : 0\n  }))\n  .sort((a, b) => b.curCost - a.curCost);\n\nreturn {\n  json: {\n    curAvailable: curRecords.length > 0,\n    curBillingPeriod: billingPeriod,\n    curLineItems: curRecords.length,\n    curTotalCost: Number(curTotal.toFixed(2)),\n    serviceRegionBreakdown,\n    regionSummary\n  }\n};\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "toolData": {
+          "id": "code.execute",
+          "displayName": "Code",
+          "category": "Data  Processing"
+        }
+      },
+      "type": "action",
+      "position": {
+        "x": 700,
+        "y": 380
+      }
+    },
+    {
+      "id": "code-merge-process",
+      "data": {
+        "label": "Code: Merge Final Response",
+        "inputs": {
+          "code": "// ===============================================================\n// Code Node 3: Merge Cost Explorer & CUR Region Outputs\n// Upstream: Code: Process Cost Explorer + Code: Process CUR Region\n// ===============================================================\n\n// 1. Resolve outputs from both upstream Code nodes\nconst ceResult = \n  $node[\"Code: Process Cost Explorer\"]?.json || \n  $node[\"Code\"]?.json || \n  {};\n\nconst curResult = \n  $node[\"Code: Process CUR Region\"]?.json || \n  $node[\"Code 1\"]?.json || \n  {};\n\nconst totalSpend = ceResult.totalSpend || 0;\nconst projects = ceResult.projects || [];\nconst serviceRegionBreakdown = curResult.serviceRegionBreakdown || {};\n\n// 2. Scale regionSummary cost to match Cost Explorer totalSpend\nconst regionSummary = (curResult.regionSummary || []).map(r => ({\n  region: r.region,\n  share: r.share,\n  cost: Number(((r.share / 100) * totalSpend).toFixed(2))\n})).filter(r => r.cost >= 0.01);\n\n// 3. Build Explorer Rows: Project x Service x Region\nconst explorerRows = [];\nprojects.forEach(p => {\n  const pName = p.projectName || p.project_name || 'Untagged';\n  (p.services || []).forEach(s => {\n    const cost = Number(s.unblendedCost || 0);\n    if (cost <= 0) return;\n\n    const splits = serviceRegionBreakdown[s.service];\n    if (!splits || splits.length === 0) {\n      explorerRows.push({\n        project: pName,\n        service: s.service,\n        region: 'unmapped',\n        cost: Number(cost.toFixed(2)),\n        regionShare: 1,\n        regionSource: 'none'\n      });\n      return;\n    }\n\n    splits.forEach(sp => {\n      const allocated = cost * sp.share;\n      if (allocated < 0.005) return;\n      explorerRows.push({\n        project: pName,\n        service: s.service,\n        region: sp.region,\n        cost: Number(allocated.toFixed(2)),\n        regionShare: sp.share,\n        regionSource: splits.length === 1 ? 'cur_exact' : 'cur_allocated'\n      });\n    });\n  });\n});\nexplorerRows.sort((a, b) => b.cost - a.cost);\n\nconst topRegion = regionSummary[0] || null;\nconst kpis = {\n  ...(ceResult.kpis || {}),\n  topRegion\n};\n\n// 4. Return Final Combined Payload for Webhook Response\nreturn {\n  json: {\n    success: true,\n    source: 'agentbuilder_workflow',\n    ...ceResult,\n    kpis,\n    topRegion,\n    regionSummary,\n    serviceRegionBreakdown,\n    explorerRows,\n    curRegionMeta: {\n      available: curResult.curAvailable || false,\n      billingPeriod: curResult.curBillingPeriod,\n      curLineItems: curResult.curLineItems || 0,\n      curTotalCost: curResult.curTotalCost || 0,\n      costExplorerTotal: totalSpend,\n      curCoveragePct: totalSpend > 0 ? Number(((curResult.curTotalCost / totalSpend) * 100).toFixed(1)) : 0,\n      method: 'CUR usageType parsed in Code 2; merged with Cost Explorer in Code 3'\n    }\n  }\n};\n",
+          "mode": "all",
+          "language": "javascript"
+        },
+        "toolId": "code.execute",
+        "toolData": {
+          "id": "code.execute",
+          "displayName": "Code",
+          "category": "Data  Processing"
+        }
+      },
+      "type": "action",
+      "position": {
+        "x": 1000,
+        "y": 250
+      }
+    },
+    {
+      "id": "webhook-response-001",
+      "data": {
+        "label": "Webhook Response",
+        "inputs": {
+          "options": {},
+          "responseCode": 200,
+          "responseMode": "lastNode"
+        },
+        "toolId": "respondToWebhook",
+        "toolData": {
+          "id": "respondToWebhook",
+          "displayName": "Respond to Webhook",
+          "category": "Input / Output"
+        }
+      },
+      "type": "action",
+      "position": {
+        "x": 1300,
+        "y": 250
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-wh-to-ce",
+      "source": "webhook-1790843991079001",
+      "target": "mongo-ce-doc",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "edge-ce-to-code1",
+      "source": "mongo-ce-doc",
+      "target": "code-ce-process",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "edge-wh-to-cur",
+      "source": "webhook-1790843991079001",
+      "target": "mongo-cur-doc",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "edge-cur-to-code2",
+      "source": "mongo-cur-doc",
+      "target": "code-cur-process",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "edge-code1-to-merge",
+      "source": "code-ce-process",
+      "target": "code-merge-process",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "edge-code2-to-merge",
+      "source": "code-cur-process",
+      "target": "code-merge-process",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "edge-merge-to-resp",
+      "source": "code-merge-process",
+      "target": "webhook-response-001",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    }
+  ]
+}

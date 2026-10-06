@@ -25,9 +25,9 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 <div
                   className={cn(
                     "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-all duration-200",
-                    isCompleted && "border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-sm shadow-emerald-500/20",
-                    isActive && "border-blue-500 bg-blue-500/15 text-blue-400 shadow-sm shadow-blue-500/20 ring-2 ring-blue-500/30",
-                    !isCompleted && !isActive && "border-dark-border bg-dark-card text-dark-muted"
+                    isCompleted && "border-purple-600 bg-purple-600 text-white font-bold shadow-xs",
+                    isActive && "border-purple-600 bg-white text-purple-600 ring-4 ring-purple-100 font-bold shadow-xs",
+                    !isCompleted && !isActive && "border-slate-200 bg-slate-50 text-slate-400 font-medium"
                   )}
                   aria-current={isActive ? "step" : undefined}
                 >
@@ -35,8 +35,8 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 </div>
                 <span
                   className={cn(
-                    "mt-2 text-xs font-medium whitespace-nowrap",
-                    isActive ? "text-white font-semibold" : isCompleted ? "text-slate-300" : "text-dark-muted"
+                    "mt-2 text-xs whitespace-nowrap",
+                    isActive ? "text-purple-700 font-bold" : isCompleted ? "text-slate-700 font-semibold" : "text-slate-400 font-normal"
                   )}
                 >
                   {step.label}
@@ -47,8 +47,8 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
               {index < STEPS.length - 1 && (
                 <div
                   className={cn(
-                    "flex-1 mx-4 h-[1px] -mt-5 transition-colors",
-                    isCompleted ? "bg-emerald-500/50" : "bg-dark-border"
+                    "flex-1 mx-4 h-0.5 -mt-5 transition-colors rounded-full",
+                    isCompleted ? "bg-purple-600" : "bg-slate-200"
                   )}
                 />
               )}

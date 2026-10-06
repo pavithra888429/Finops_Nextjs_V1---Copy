@@ -104,25 +104,25 @@ export function OpenRouterSetupFlow() {
   const isDetailsView = activeConnection && !isExplicitNew;
 
   return (
-    <div className="w-full min-h-screen flex-1 flex flex-col justify-between font-sans bg-dark-bg selection:bg-blue-600 selection:text-white">
+    <div className="w-full min-h-screen flex-1 flex flex-col justify-between font-sans bg-[#f8fafc]">
       <div className="w-full flex-1 flex justify-center px-4 sm:px-6 lg:px-8 py-6">
         <main className="w-full max-w-4xl space-y-6">
           
-          {/* Header Banner matching AWS */}
-          <div className="mb-8 border-b border-dark-border/80 pb-4">
-            <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          {/* Header Banner */}
+          <div className="mb-8 border-b border-slate-200 pb-4">
+            <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               <span>FINOPS</span>
-              <span className="text-slate-600">/</span>
+              <span className="text-slate-300">/</span>
               <span>CONNECTORS</span>
-              <span className="text-slate-600">/</span>
-              <span className="text-blue-400">
+              <span className="text-slate-300">/</span>
+              <span className="text-purple-600 font-bold">
                 {isDetailsView ? 'OPENROUTER DETAILS' : 'OPENROUTER SETUP'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
               {isDetailsView ? 'OpenRouter Connection Details' : 'Connect OpenRouter AI Gateway'}
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-400 font-normal leading-relaxed">
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 font-normal leading-relaxed">
               {isDetailsView
                 ? 'Manage your OpenRouter connection, token synchronization, and allocation.'
                 : 'Follow the steps below to connect your OpenRouter account and ingest token telemetry.'}
@@ -150,11 +150,11 @@ export function OpenRouterSetupFlow() {
             />
           ) : (
             <>
-              {/* Step Progress Indicator matching AWS */}
+              {/* Step Progress Indicator */}
               <StepIndicator currentStep={activeStep} />
 
               {/* Step Container Card */}
-              <div className="mt-6 rounded-2xl border border-dark-border bg-dark-card/90 p-6 sm:p-8 shadow-xl shadow-black/20">
+              <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
                 {activeStep === 1 && (
                   <OpenRouterConfiguration
                     initialData={formData}
